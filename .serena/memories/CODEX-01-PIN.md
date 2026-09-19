@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 28de672 docs(serena): sync stack pin and bootstrap memories
+Last commit: 8a81ff2 docs: keep local gates offline and drop leftover checker lore
 Scope: build/codex-pin.json, docs/adr/0001-codex-cli-155-pin.md, install/modules/20-codex-cli/module.sh
 Area: CODEX
 -->
@@ -18,7 +18,7 @@ Record the verified Codex CLI pin for this repository.
 
 ## Current Behavior
 
-`./setup` installs the official standalone package to `$HOME/.local/bin/codex` and symlinks `$REPO/.local/bin/codex`. `. install/env.sh` puts those directories ahead of bun/npm/brew shims. bun global `@openai/codex@0.155.1` may still exist; PATH order decides which binary runs.
+`./setup` installs the official standalone package to `$HOME/.local/bin/codex` and symlinks `$REPO/.local/bin/codex`. `. install/env.sh` puts those directories ahead of other `codex` copies on PATH.
 
 ## Contracts And Data
 

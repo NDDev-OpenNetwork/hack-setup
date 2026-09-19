@@ -46,5 +46,6 @@ Hackathon re-verify: `python3 scripts/reverify_stack_pin.py`.
 ## Confirmation
 
 - `python3 scripts/check_codex_setup.py`
-- `python3 scripts/reverify_stack_pin.py`
+- `python3 scripts/check_stack.py`
 - `./setup --status`
+- Hackathon-day only: `python3 scripts/reverify_stack_pin.py`
