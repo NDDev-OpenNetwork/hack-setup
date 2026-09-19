@@ -5,7 +5,7 @@ description: Load the Saint Tibo team plugin. Use when installing the plugin, ch
 
 This plugin is the installable distribution unit. Repo workflows live in
 `.agents/skills/` and keep those names (`repo-orientation`, `quality-gate`,
-`one-repo-workflow`).
+`one-repo-workflow`, `apply-stack-rule`).
 
 Do not add plugin skills that reuse those names.
 
