@@ -1,9 +1,46 @@
 {
   "codex_cli": "0.155.1",
   "release_tag": "rust-v0.155.1",
+  "release_url": "https://github.com/openai/codex/releases/tag/rust-v0.155.1",
   "npm_package": "@openai/codex",
   "plugin_schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "mcp_schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "verified_on": "2026-09-19",
-  "do_not_use": ["0.156.0-alpha", "Codex.app"]
+  "do_not_use": ["0.156.0-alpha", "Codex.app"],
+  "installer": {
+    "name": "install.sh",
+    "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/install.sh",
+    "sha256": "dd4282a1a3c8188f792513f2f16afb852e63ce3b98dbbc67684f716ebcc1e862"
+  },
+  "checksum_manifest": {
+    "name": "codex-package_SHA256SUMS",
+    "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/codex-package_SHA256SUMS",
+    "sha256": "e7c267fa8cda3fb783be8380ef9c2b660ceea740426bbae17ac1df8cd1012937"
+  },
+  "packages": {
+    "darwin-arm64": {
+      "name": "codex-package-aarch64-apple-darwin.tar.gz",
+      "triple": "aarch64-apple-darwin",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/codex-package-aarch64-apple-darwin.tar.gz",
+      "sha256": "e6e08717da9e35b72332eff753527fe79a9ae876081033c5c6820a8e5f58b943"
+    },
+    "darwin-x86_64": {
+      "name": "codex-package-x86_64-apple-darwin.tar.gz",
+      "triple": "x86_64-apple-darwin",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/codex-package-x86_64-apple-darwin.tar.gz",
+      "sha256": "be752aebb2ac022c5bfed3fa14f46943d11ddb36a950b553b058794aba22496a"
+    },
+    "linux-arm64": {
+      "name": "codex-package-aarch64-unknown-linux-musl.tar.gz",
+      "triple": "aarch64-unknown-linux-musl",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/codex-package-aarch64-unknown-linux-musl.tar.gz",
+      "sha256": "71857dbc9bea3613410e8a69cfb46b07c0402d6d20fec18843dbaffd757634bd"
+    },
+    "linux-x86_64": {
+      "name": "codex-package-x86_64-unknown-linux-musl.tar.gz",
+      "triple": "x86_64-unknown-linux-musl",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/codex-package-x86_64-unknown-linux-musl.tar.gz",
+      "sha256": "a65b895c6ac1a73629bbe4b864640c86133e94a43b4d67b3103044e1a306d5a2"
+    }
+  }
 }

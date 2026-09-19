@@ -1,0 +1,3 @@
+#!/bin/sh
+# macOS/Linux entry. A root file named `install` cannot coexist with install/.
+exec "$(CDPATH= cd -- "$(dirname "$0")" && pwd)/install/bootstrap.sh" "$@"

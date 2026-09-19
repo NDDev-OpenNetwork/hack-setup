@@ -1,0 +1,17 @@
+schema_version = 1
+entry = "./setup"
+
+[[modules]]
+id = "prereqs"
+dir = "modules/10-prereqs"
+enabled = true
+
+[[modules]]
+id = "codex-cli"
+dir = "modules/20-codex-cli"
+enabled = true
+
+[[modules]]
+id = "project-verify"
+dir = "modules/30-project-verify"
+enabled = true
