@@ -12,6 +12,7 @@
 .serena/.auto_sync_head
 .serena/.dirty_stop_ack
 .serena/.sync_marker
+hackalemai-codex-serena-2026-09-19-reviewed-v1.1.zip
 __pycache__/
 *.pyc
 .pytest_cache/
