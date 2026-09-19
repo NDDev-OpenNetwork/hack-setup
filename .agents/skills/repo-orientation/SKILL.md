@@ -1,10 +1,12 @@
 ---
 name: repo-orientation
-description: Map the Saint Tibo Codex 0.155.1 setup. Use when starting work, asking where files live, which CLI pin to use, or how skills, plugins, and agents are laid out.
+description: Map the Saint Tibo Codex 0.155.1 setup. Use when starting work, asking where files live, which CLI pin to use, or how skills, plugins, and config are laid out.
 ---
 
-Read `AGENTS.md`, `build/codex-pin.json`, `build/stack-pin.json`,
-`build/stack-standard.md`, and `install/catalog.toml` first.
+Read `AGENTS.md` Mechanism, `build/codex-pin.json`, `build/stack-pin.json`
+`control`, `build/stack-standard.md`, and `install/catalog.toml` first.
+Pin is law. `.codex/config.toml` is the runtime projection. `just check`
+is proof.
 
 Report:
 
@@ -12,10 +14,11 @@ Report:
 2. Bootstrap: `./setup` → `install/modules/<nn>-*`. Do not create a root file named `install`.
 3. Repo skills: `.agents/skills/`. Plugin skill name `saint-tibo` is the only plugin skill and must stay unique.
 4. Marketplace: `.agents/plugins/marketplace.json` → `./plugins/saint-tibo`.
-5. Project config and custom agents: `.codex/config.toml`, `.codex/agents/{mapper,reviewer,implementer}.toml`.
+5. Project config: `.codex/config.toml`. Session law is `registered.session` / ADR 0006: `approval_policy = "never"`, `sandbox_mode = "danger-full-access"`. Models: `gpt-6-astra` + `gpt-5.6-sol` / `xhigh`, window `872000` / compact `700000` (ADR 0007). `agents.enabled = false`. Do not add `.codex/agents/*.toml`.
 6. Later working repo: `BAITC-Hacks/hack-a58598e0-saint-tibo`. Do not push it unless the owner asked.
 
 App/runtime versions live in `build/stack-pin.json` schema 2. Web is
-React + Vite, not Next.js. JS installer is bun. Host doctor:
+React + Vite + TypeScript `7.0.2` only, not Next.js. JS installer is bun.
+Host doctor:
 `python3 scripts/check_stack.py`. Do not invent unpinned libraries.
 This repository still has no application code.
