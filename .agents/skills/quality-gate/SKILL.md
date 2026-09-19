@@ -1,6 +1,6 @@
 ---
 name: quality-gate
-description: Run the Saint Tibo Codex setup checks. Use before calling work done, after changing AGENTS.md, skills, plugin, marketplace, agents, or config.
+description: Run the Saint Tibo Codex setup checks. Use before calling work done, after changing AGENTS.md, skills, plugin, marketplace, or config.
 ---
 
 Run these commands and quote their output:
@@ -15,7 +15,10 @@ codex --version
 `codex --version` must be `codex-cli 0.155.1`. After clone, `./setup` is
 the installer; `. install/env.sh` puts the pinned binary first.
 
-Hackathon-day live drift only: `python3 scripts/reverify_stack_pin.py`.
+`just gate` is the same four commands. `just check` is
+`stack-pin.control.proof` (the two Python scripts). Do not use `make`.
+
+Hackathon-day live drift only: `just reverify`.
 
 If any command fails, fix the artifact or the local CLI. Do not claim a
 pass without running the commands.
