@@ -26,7 +26,9 @@ re-checked on hackathon day.
 
 ## Decision Outcome
 
-Chosen option: `build/stack-pin.json` is the stack SoT.
+Chosen option: `build/stack-pin.json` is the stack SoT. `control`
+names the loop: pin files are law, `.codex/config.toml` is the runtime
+projection, `just check` is proof, `docs/rules/` is on-demand detail.
 
 - Node `24.21.0` Active LTS. Reject Node 26 Current until 2026-10-28.
 - Python `3.14.7` via `uv python install`. Bootstrap scripts still
@@ -36,16 +38,18 @@ Chosen option: `build/stack-pin.json` is the stack SoT.
 - pnpm is rejected.
 - Product web/backend/data choices: `docs/adr/0004-product-stack.md`.
   Next.js is rejected; React + Vite is the web app.
-- Models stay `gpt-5.6` / `gpt-5.6-luna` / `gpt-5.6-terra`.
+- Codex models are `gpt-6-astra` + `gpt-5.6-sol` at `xhigh` (ADR 0007).
+- Codex session law is `registered.session` (ADR 0006): no sandbox,
+  never ask.
 
 `./setup` module `30-runtimes` downloads the pinned official Node/bun
 archives and the official uv installer, then pins CPython through uv.
 
-Hackathon re-verify: `python3 scripts/reverify_stack_pin.py`.
+Hackathon re-verify: `just reverify`.
 
 ## Confirmation
 
 - `python3 scripts/check_codex_setup.py`
 - `python3 scripts/check_stack.py`
 - `./setup --status`
-- Hackathon-day only: `python3 scripts/reverify_stack_pin.py`
+- Hackathon-day only: `just reverify`
