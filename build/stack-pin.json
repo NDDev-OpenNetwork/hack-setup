@@ -9,7 +9,7 @@
     "runtime": ".codex/config.toml",
     "generated": "build/stack-standard.md",
     "router": "AGENTS.md",
-    "rules": "docs/rules/INDEX.md",
+    "rules": "plugins/hack-agent-standards/standards/INDEX.md",
     "proof": "just check",
     "gate": "just gate"
   },
@@ -80,6 +80,14 @@
       "cli": "codex plugin add saint-tibo@saint-tibo",
       "status": "enabled in project config after trust; plugin add not run by ./setup"
     },
+    "standards_plugin": {
+      "id": "hack-agent-standards@saint-tibo",
+      "path": "plugins/hack-agent-standards/plugin.json",
+      "standards": "plugins/hack-agent-standards/standards/INDEX.md",
+      "policy": "INSTALLED_BY_DEFAULT",
+      "enabled_in": ".codex/config.toml",
+      "status": "first setup component; frames live in the plugin"
+    },
     "agents": [],
     "agents_enabled": false,
     "repo_skills": [
@@ -89,6 +97,7 @@
       "apply-stack-rule"
     ],
     "plugin_skills": ["saint-tibo"],
+    "standards_plugin_skills": ["apply-agent-standard"],
     "features": {
       "multi_agent": false,
       "multi_agent_v2": false,

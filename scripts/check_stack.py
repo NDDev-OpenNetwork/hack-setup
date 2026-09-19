@@ -331,6 +331,15 @@ def render_standard(stack: dict[str, Any], probes: list[Probe]) -> str:
                     f"- ignore-rules CLI: `{session.get('ignore_rules_cli')}`",
                 ]
             )
+        plugin = registered.get("plugin")
+        standards_plugin = registered.get("standards_plugin")
+        if isinstance(plugin, dict) or isinstance(standards_plugin, dict):
+            lines.extend(["", "## Plugins", ""])
+            if isinstance(plugin, dict):
+                lines.append(f"- team: `{plugin.get('id')}`")
+            if isinstance(standards_plugin, dict):
+                lines.append(f"- standards: `{standards_plugin.get('id')}`")
+                lines.append(f"- frames: `{standards_plugin.get('standards')}`")
 
     if isinstance(banned, list) and banned:
         lines.extend(["", "## Do not use", ""])

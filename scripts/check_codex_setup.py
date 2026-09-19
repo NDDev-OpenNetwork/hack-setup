@@ -166,14 +166,21 @@ def check_stack_pin() -> None:
         ("runtime", ".codex/config.toml"),
         ("generated", "build/stack-standard.md"),
         ("router", "AGENTS.md"),
-        ("rules", "docs/rules/INDEX.md"),
+        ("rules", "plugins/hack-agent-standards/standards/INDEX.md"),
         ("proof", "just check"),
         ("gate", "just gate"),
     ):
         if control.get(key) != expected:
             raise CheckError(f"stack-pin.control.{key} must be {expected}")
-    for rel in ("build/codex-pin.json", "build/stack-pin.json", ".codex/config.toml",
-                "build/stack-standard.md", "AGENTS.md", "docs/rules/INDEX.md", "justfile"):
+    for rel in (
+        "build/codex-pin.json",
+        "build/stack-pin.json",
+        ".codex/config.toml",
+        "build/stack-standard.md",
+        "AGENTS.md",
+        "plugins/hack-agent-standards/standards/INDEX.md",
+        "justfile",
+    ):
         if not (ROOT / rel).is_file():
             raise CheckError(f"control path missing: {rel}")
     justfile = read_text(ROOT / "justfile")
@@ -187,6 +194,22 @@ def check_stack_pin() -> None:
     plugin = registered.get("plugin")
     if not isinstance(plugin, dict) or plugin.get("id") != "saint-tibo@saint-tibo":
         raise CheckError("stack-pin must register plugin id saint-tibo@saint-tibo")
+    standards_plugin = registered.get("standards_plugin")
+    if (
+        not isinstance(standards_plugin, dict)
+        or standards_plugin.get("id") != "hack-agent-standards@saint-tibo"
+    ):
+        raise CheckError(
+            "stack-pin must register standards_plugin id hack-agent-standards@saint-tibo"
+        )
+    if standards_plugin.get("path") != "plugins/hack-agent-standards/plugin.json":
+        raise CheckError(
+            "standards_plugin.path must be plugins/hack-agent-standards/plugin.json"
+        )
+    if standards_plugin.get("standards") != "plugins/hack-agent-standards/standards/INDEX.md":
+        raise CheckError(
+            "standards_plugin.standards must be plugins/hack-agent-standards/standards/INDEX.md"
+        )
     if registered.get("agents_enabled") is not False:
         raise CheckError("stack-pin.registered.agents_enabled must be false")
     if registered.get("agents") != []:
@@ -569,12 +592,19 @@ def check_agents_md() -> None:
     if "## Mechanism" not in text or "just check" not in text:
         raise CheckError("AGENTS.md must describe the pin → config → just check loop")
     if "docs/rules" in text:
-        index = ROOT / "docs" / "rules" / "INDEX.md"
-        if not index.is_file():
-            raise CheckError("AGENTS.md routes to docs/rules but INDEX.md is missing")
-        for linked in re.findall(r"\]\(([a-z0-9-]+\.md)\)", read_text(index)):
-            if not (index.parent / linked).is_file():
-                raise CheckError(f"docs/rules/INDEX.md links to missing {linked}")
+        raise CheckError("AGENTS.md must not route to stale docs/rules/")
+    if "plugins/hack-agent-standards/standards" not in text:
+        raise CheckError("AGENTS.md must route to plugins/hack-agent-standards/standards")
+    index = ROOT / "plugins" / "hack-agent-standards" / "standards" / "INDEX.md"
+    if not index.is_file():
+        raise CheckError("standards INDEX.md is missing")
+    for linked in re.findall(r"\]\(([A-Za-z0-9_.-]+\.md)\)", read_text(index)):
+        if not (index.parent / linked).is_file():
+            raise CheckError(f"standards/INDEX.md links to missing {linked}")
+    if (ROOT / "docs" / "rules").exists():
+        raise CheckError("docs/rules/ is stale; frames live in the standards plugin")
+    if (ROOT / "docs" / "agent-standards").exists():
+        raise CheckError("docs/agent-standards/ is stale; frames live in the standards plugin")
 
 
 def check_config() -> None:
@@ -676,8 +706,12 @@ def check_config() -> None:
     if "model_catalog_json" in config:
         raise CheckError("do not set model_catalog_json; remote catalog stays authoritative")
     plugins = config.get("plugins")
-    if not isinstance(plugins, dict) or "saint-tibo@saint-tibo" not in plugins:
-        raise CheckError('.codex/config.toml must enable plugins."saint-tibo@saint-tibo"')
+    if not isinstance(plugins, dict):
+        raise CheckError(".codex/config.toml [plugins] is required")
+    for plugin_id in ("saint-tibo@saint-tibo", "hack-agent-standards@saint-tibo"):
+        entry = plugins.get(plugin_id)
+        if not isinstance(entry, dict) or entry.get("enabled") is not True:
+            raise CheckError(f'.codex/config.toml must enable plugins."{plugin_id}"')
     rules_dir = ROOT / ".codex" / "rules"
     if rules_dir.is_dir():
         leftover = sorted(
@@ -706,34 +740,27 @@ def check_custom_agents() -> None:
         )
 
 
-def check_plugin_and_marketplace() -> None:
-    plugin = load_json(ROOT / "plugins" / "saint-tibo" / "plugin.json")
+def check_portable_plugin(rel: str, expected_name: str) -> None:
+    plugin = load_json(ROOT / rel)
     if not isinstance(plugin, dict):
-        raise CheckError("plugin.json must be an object")
+        raise CheckError(f"{rel} must be an object")
     if plugin.get("$schema") != PLUGIN_SCHEMA:
-        raise CheckError("plugin.json must declare Agent Plugins 1.0.0 $schema")
-    if plugin.get("name") != "saint-tibo":
-        raise CheckError("plugin.json name must be saint-tibo")
+        raise CheckError(f"{rel} must declare Agent Plugins 1.0.0 $schema")
+    if plugin.get("name") != expected_name:
+        raise CheckError(f"{rel} name must be {expected_name}")
     extra = set(plugin).difference(ROOT_PLUGIN_KEYS)
     if extra:
-        raise CheckError(f"plugin.json has non-portable root keys: {sorted(extra)}")
+        raise CheckError(f"{rel} has non-portable root keys: {sorted(extra)}")
     for forbidden in ("skills", "interface", "mcpServers", "apps", "hooks"):
         if forbidden in plugin:
-            raise CheckError(f"plugin.json must not set root {forbidden}")
+            raise CheckError(f"{rel} must not set root {forbidden}")
 
-    marketplace = load_json(ROOT / ".agents" / "plugins" / "marketplace.json")
-    if not isinstance(marketplace, dict):
-        raise CheckError("marketplace.json must be an object")
-    if marketplace.get("name") != "saint-tibo":
-        raise CheckError("marketplace name must be saint-tibo")
-    plugins = marketplace.get("plugins")
-    if not isinstance(plugins, list) or not plugins:
-        raise CheckError("marketplace.plugins must be a non-empty list")
-    entry = plugins[0]
+
+def check_marketplace_entry(entry: object, expected_name: str, dest: str) -> None:
     if not isinstance(entry, dict):
         raise CheckError("marketplace plugin entry must be an object")
-    if entry.get("name") != "saint-tibo":
-        raise CheckError("marketplace plugin name must be saint-tibo")
+    if entry.get("name") != expected_name:
+        raise CheckError(f"marketplace plugin name must be {expected_name}")
     source = entry.get("source")
     if not isinstance(source, dict):
         raise CheckError("marketplace source must be an object")
@@ -741,8 +768,8 @@ def check_plugin_and_marketplace() -> None:
     if not isinstance(path, str) or not path.startswith("./"):
         raise CheckError("marketplace source.path must start with ./")
     plugin_dir = (ROOT / path).resolve()
-    if plugin_dir != (ROOT / "plugins" / "saint-tibo").resolve():
-        raise CheckError(f"marketplace source.path does not resolve to plugins/saint-tibo: {path}")
+    if plugin_dir != (ROOT / dest).resolve():
+        raise CheckError(f"marketplace source.path does not resolve to {dest}: {path}")
     policy = entry.get("policy")
     if not isinstance(policy, dict):
         raise CheckError("marketplace policy must be an object")
@@ -752,22 +779,59 @@ def check_plugin_and_marketplace() -> None:
         raise CheckError("marketplace entry needs category")
 
 
+def check_plugin_and_marketplace() -> None:
+    check_portable_plugin("plugins/saint-tibo/plugin.json", "saint-tibo")
+    check_portable_plugin("plugins/hack-agent-standards/plugin.json", "hack-agent-standards")
+
+    marketplace = load_json(ROOT / ".agents" / "plugins" / "marketplace.json")
+    if not isinstance(marketplace, dict):
+        raise CheckError("marketplace.json must be an object")
+    if marketplace.get("name") != "saint-tibo":
+        raise CheckError("marketplace name must be saint-tibo")
+    plugins = marketplace.get("plugins")
+    expected = (
+        ("saint-tibo", "plugins/saint-tibo"),
+        ("hack-agent-standards", "plugins/hack-agent-standards"),
+    )
+    if not isinstance(plugins, list) or len(plugins) != len(expected):
+        raise CheckError(
+            "marketplace.plugins must list saint-tibo then hack-agent-standards"
+        )
+    for entry, (name, dest) in zip(plugins, expected, strict=True):
+        check_marketplace_entry(entry, name, dest)
+
+
 def check_skills() -> None:
     repo_skills = collect_skill_names(ROOT / ".agents" / "skills")
     plugin_skills = collect_skill_names(ROOT / "plugins" / "saint-tibo" / "skills")
+    standards_skills = collect_skill_names(
+        ROOT / "plugins" / "hack-agent-standards" / "skills"
+    )
     expected_repo = {
         "repo-orientation",
         "quality-gate",
         "one-repo-workflow",
         "apply-stack-rule",
     }
+    expected_plugin = {"saint-tibo"}
+    expected_standards = {"apply-agent-standard"}
     if set(repo_skills) != expected_repo:
         raise CheckError(f"repo skills must be {sorted(expected_repo)}, got {sorted(repo_skills)}")
-    if set(plugin_skills) != {"saint-tibo"}:
-        raise CheckError(f"plugin skills must be {{saint-tibo}}, got {sorted(plugin_skills)}")
-    overlap = set(repo_skills).intersection(plugin_skills)
-    if overlap:
-        raise CheckError(f"skill name collision between repo and plugin: {sorted(overlap)}")
+    if set(plugin_skills) != expected_plugin:
+        raise CheckError(f"plugin skills must be {sorted(expected_plugin)}, got {sorted(plugin_skills)}")
+    if set(standards_skills) != expected_standards:
+        raise CheckError(
+            f"standards plugin skills must be {sorted(expected_standards)}, "
+            f"got {sorted(standards_skills)}"
+        )
+    seen: dict[str, Path] = {}
+    for group in (repo_skills, plugin_skills, standards_skills):
+        for name, path in group.items():
+            if name in seen:
+                raise CheckError(
+                    f"skill name collision {name}: {seen[name]} and {path}"
+                )
+            seen[name] = path
     pin = load_json(STACK_PIN_PATH)
     if not isinstance(pin, dict):
         raise CheckError("build/stack-pin.json must be an object")
@@ -778,6 +842,17 @@ def check_skills() -> None:
     if not isinstance(listed, list) or set(listed) != expected_repo:
         raise CheckError(
             "stack-pin.registered.repo_skills must match the repo skill set"
+        )
+    listed_plugin = registered.get("plugin_skills")
+    if not isinstance(listed_plugin, list) or set(listed_plugin) != expected_plugin:
+        raise CheckError(
+            "stack-pin.registered.plugin_skills must match the saint-tibo skill set"
+        )
+    listed_standards = registered.get("standards_plugin_skills")
+    if not isinstance(listed_standards, list) or set(listed_standards) != expected_standards:
+        raise CheckError(
+            "stack-pin.registered.standards_plugin_skills must match "
+            "the standards plugin skill set"
         )
 
 

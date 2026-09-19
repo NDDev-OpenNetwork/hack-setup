@@ -14,7 +14,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 - runtime: `.codex/config.toml`
 - generated: `build/stack-standard.md`
 - router: `AGENTS.md`
-- rules: `docs/rules/INDEX.md`
+- rules: `plugins/hack-agent-standards/standards/INDEX.md`
 - proof: `just check`
 - gate: `just gate`
 
@@ -164,6 +164,12 @@ Refresh with `python3 scripts/check_stack.py --write`.
 - project execpolicy `.rules`: `false`
 - ignore-rules config key: `false`
 - ignore-rules CLI: `codex exec --ignore-rules`
+
+## Plugins
+
+- team: `saint-tibo@saint-tibo`
+- standards: `hack-agent-standards@saint-tibo`
+- frames: `plugins/hack-agent-standards/standards/INDEX.md`
 
 ## Do not use
 

@@ -14,8 +14,9 @@ One loop. Do not fork numbers outside the pin.
    `registered.session`, `models`, and `registered.features`.
 3. Proof: `just check` (pin == config == this file == generated standard).
    Ready: `just gate`.
-4. Tech detail: `docs/rules/INDEX.md` → one file. Pin numbers win.
-5. Why: ADRs 0001–0007.
+4. Tech detail: `plugins/hack-agent-standards/standards/INDEX.md`
+   → one file. Pin numbers win.
+5. Why: ADRs 0001–0008.
 
 ## Pin
 
@@ -51,12 +52,13 @@ One loop. Do not fork numbers outside the pin.
 ## Technology rules
 
 Codex 0.155.1 has no glob / `.mdc` / `alwaysApply` loader. Do not dump the
-catalogue into this file. Do not add `docs/rules/*` to
-`project_doc_fallback_filenames`.
+catalogue into this file. Do not add `plugins/hack-agent-standards/standards/*`
+to `project_doc_fallback_filenames`.
 
-1. Read `docs/rules/INDEX.md`.
-2. Open only the matching rule file.
-3. Prefer `$apply-stack-rule` for a technology or format change.
+1. Read `plugins/hack-agent-standards/standards/INDEX.md`.
+2. Open only the matching standard.
+3. Prefer `$apply-agent-standard` or `$apply-stack-rule` for a technology
+   or format change.
 
 If a later product directory has its own `AGENTS.md`, read that file before
 editing that tree. Nested `AGENTS.override.md` wins in that directory.
@@ -66,7 +68,8 @@ editing that tree. Nested `AGENTS.override.md` wins in that directory.
 | Surface | Path | Rule |
 | --- | --- | --- |
 | Instructions | `AGENTS.md` | This file. Nested `AGENTS.override.md` wins in that directory. |
-| Tech rules | `docs/rules/` | On-demand catalogue. Router is `INDEX.md`. |
+| Tech rules | `plugins/hack-agent-standards/standards/` | On-demand frames. Router is `INDEX.md`. |
+| Standards plugin | `plugins/hack-agent-standards/plugin.json` | First setup component. Portable Agent Plugins 1.0.0. |
 | Repo skills | `.agents/skills/<name>/SKILL.md` | Source of truth. Do not copy these names into the plugin. |
 | Marketplace | `.agents/plugins/marketplace.json` | Paths are relative to the repo root. |
 | Plugin | `plugins/saint-tibo/plugin.json` | Portable Agent Plugins 1.0.0. |
@@ -94,7 +97,8 @@ root `plugin.json` fields other than the portable schema. Do not mix
 
 - Versions come from `build/stack-pin.json`. Do not invent unpinned libraries.
 - Do not add application source in this staging repo.
-- Reject pnpm, Next.js, a second JS lockfile, and items in `docs/rules/do-not-use.md`.
+- Reject pnpm, Next.js, a second JS lockfile, and items in
+  `build/stack-pin.json` `do_not_use`.
 - Reject `gpt-5.6-luna`, `gpt-5.6-terra`, and Codex `spawn_agent` / multi-agent.
 
 ## Bootstrap
