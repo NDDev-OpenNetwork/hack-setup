@@ -296,6 +296,38 @@ def check_standard_fresh(stack: dict[str, Any], probes: list[Probe]) -> None:
         raise CheckError("build/stack-standard.md is stale; run python3 scripts/check_stack.py --write")
 
 
+def doctor_decision(results: list[ProbeResult], *, strict: bool) -> tuple[int, list[str]]:
+    failed = [result for result in results if result.probe.kind == "required" and result.status != "OK"]
+    declared_bad = [
+        result
+        for result in results
+        if result.probe.kind == "declared" and result.status not in {"OK", "MISSING"}
+    ]
+    missing_declared = [
+        result for result in results if result.probe.kind == "declared" and result.status == "MISSING"
+    ]
+    messages: list[str] = []
+    if declared_bad:
+        messages.append(
+            "declared drift/unparsed: " + ", ".join(item.probe.probe_id for item in declared_bad)
+        )
+    if missing_declared:
+        messages.append(
+            "declared missing (ok until installer exists): "
+            + ", ".join(item.probe.probe_id for item in missing_declared)
+        )
+    if failed:
+        messages.append(
+            "FAIL required: " + ", ".join(item.probe.probe_id + "=" + item.status for item in failed)
+        )
+        return 1, messages
+    if strict and (declared_bad or missing_declared):
+        messages.append("FAIL --strict: declared host tools must match the pin")
+        return 1, messages
+    messages.append("PASS required host tools match the pin")
+    return 0, messages
+
+
 def cmd_doctor(probes: list[Probe], *, strict: bool) -> int:
     results = [run_probe(probe) for probe in probes]
     rows = [
@@ -310,27 +342,10 @@ def cmd_doctor(probes: list[Probe], *, strict: bool) -> int:
         for result in results
     ]
     print_table(["class", "id", "want", "got", "status", "bin"], rows)
-    failed = [result for result in results if result.probe.kind == "required" and result.status != "OK"]
-    declared_bad = [
-        result
-        for result in results
-        if result.probe.kind == "declared" and result.status not in {"OK", "MISSING"}
-    ]
-    missing_declared = [
-        result for result in results if result.probe.kind == "declared" and result.status == "MISSING"
-    ]
-    if declared_bad:
-        print(f"declared drift/unparsed: {', '.join(item.probe.probe_id for item in declared_bad)}")
-    if missing_declared:
-        print(f"declared missing (ok until installer exists): {', '.join(item.probe.probe_id for item in missing_declared)}")
-    if failed:
-        print(f"FAIL required: {', '.join(item.probe.probe_id + '=' + item.status for item in failed)}")
-        return 1
-    if strict and (declared_bad or missing_declared):
-        print("FAIL --strict: declared host tools must match the pin")
-        return 1
-    print("PASS required host tools match the pin")
-    return 0
+    code, messages = doctor_decision(results, strict=strict)
+    for message in messages:
+        print(message)
+    return code
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -65,13 +65,24 @@ def test_check_stack_doctor_passes() -> None:
     assert "24.21.0" in result.stdout
 
 
-def test_check_stack_strict_reports_declared() -> None:
-    result = subprocess.run(
-        [sys.executable, str(SCRIPTS / "check_stack.py"), "--strict"],
-        cwd=REPO,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode == 1, result.stdout
-    assert "FAIL --strict" in result.stdout
+def _probe(kind: str, probe_id: str, status: str, expected: str = "1.0.0") -> check_stack.ProbeResult:
+    probe = check_stack.Probe(kind, probe_id, "stack-pin.json", "x", probe_id, ("--version",), "x", expected)
+    return check_stack.ProbeResult(probe, status, "0.9.0" if status == "DRIFT" else expected, "/bin/" + probe_id)
+
+
+def test_doctor_decision_required_and_strict() -> None:
+    required_ok = _probe("required", "node", "OK", "24.21.0")
+    declared_drift = _probe("declared", "rustc", "DRIFT", "1.98.1")
+    declared_missing = _probe("declared", "docker", "MISSING", "29.8.1")
+    code, messages = check_stack.doctor_decision([required_ok, declared_drift], strict=False)
+    assert code == 0
+    assert any("PASS required" in item for item in messages)
+    code, messages = check_stack.doctor_decision([required_ok, declared_drift], strict=True)
+    assert code == 1
+    assert any("FAIL --strict" in item for item in messages)
+    code, _ = check_stack.doctor_decision([required_ok, declared_missing], strict=True)
+    assert code == 1
+    required_bad = _probe("required", "node", "DRIFT", "24.21.0")
+    code, messages = check_stack.doctor_decision([required_bad], strict=False)
+    assert code == 1
+    assert any("FAIL required" in item for item in messages)

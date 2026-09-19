@@ -28,7 +28,6 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `frontend.shadcn` | `4.21.0` | `shadcn` |
 | `frontend.forms.react_hook_form` | `7.88.0` | `react-hook-form` |
 | `frontend.forms.resolvers` | `5.9.1` | `@hookform/resolvers` |
-| `frontend.forms.zod` | `4.6.5` | `zod` |
 | `frontend.zod` | `4.6.5` | `zod` |
 | `frontend.i18n.i18next` | `26.4.2` | `i18next` |
 | `frontend.i18n.react_i18next` | `17.0.14` | `react-i18next` |
