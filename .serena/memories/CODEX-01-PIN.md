@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 8a81ff2 docs: keep local gates offline and drop leftover checker lore
+Last commit: 2d182e1 docs(plugin): list apply-stack-rule among repo skill names
 Scope: build/codex-pin.json, docs/adr/0001-codex-cli-155-pin.md, install/modules/20-codex-cli/module.sh
 Area: CODEX
 -->
@@ -9,23 +9,23 @@ Area: CODEX
 
 ## Purpose
 
-Record the verified Codex CLI pin for this repository.
+Record the Codex CLI pin for this repository.
 
 ## Source Of Truth
 
 - `build/codex-pin.json`: `codex_cli=0.155.1`, `release_tag=rust-v0.155.1`, official `install.sh` URL/sha256, per-platform package hashes.
-- `docs/adr/0001-codex-cli-155-pin.md`: accepted 2026-09-19.
+- `docs/adr/0001-codex-cli-155-pin.md`.
+- `AGENTS.md` records release commit `be2951ea34f0d295ed0becf97079f92fa5f6950e`.
 
 ## Current Behavior
 
-`./setup` installs the official standalone package to `$HOME/.local/bin/codex` and symlinks `$REPO/.local/bin/codex`. `. install/env.sh` puts those directories ahead of other `codex` copies on PATH.
+`./setup` installs the official standalone package to `$HOME/.local/bin/codex` and symlinks `$REPO/.local/bin/codex`. The module verifies `install.sh` sha256 and skips when `--version` already matches. Per-platform `packages.*.sha256` are stored in the pin and unused by the installer.
 
 ## Contracts And Data
 
 - Reject `0.156.0-alpha.*` and discontinued `codex-app` / `Codex.app`.
 - Official installer: `https://github.com/openai/codex/releases/download/rust-v0.155.1/install.sh`.
 - Installer env: `CODEX_RELEASE`, `CODEX_NON_INTERACTIVE`, `CODEX_INSTALL_DIR`, `CODEX_INSTALLER_USE_RELEASES_OPENAI_COM`.
-- Official docs: `https://developers.openai.com/codex` and `https://developers.openai.com/plugins/build/plugins`.
 - Plugin schema: `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`.
 
 ## Invariants
@@ -37,3 +37,7 @@ Record the verified Codex CLI pin for this repository.
 
 - `codex --version`
 - `python3 -c "import json; print(json.load(open('build/codex-pin.json'))['codex_cli'])"`
+
+## Known Gaps
+
+- Installer does not verify downloaded package bytes against `packages.*.sha256`.
