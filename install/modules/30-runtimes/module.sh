@@ -1,5 +1,5 @@
 #!/bin/sh
-# Pin Node LTS, bun, uv, and CPython 3.14 into ~/.local and $REPO/.local/bin.
+# Pin Node LTS, bun, uv, and CPython from stack-pin.json into ~/.local and $REPO/.local/bin.
 set -eu
 
 # shellcheck source=../../lib/common.sh
@@ -64,9 +64,21 @@ install_uv() {
   log "uv $wanted installed"
 }
 
+link_python() {
+  py="$1"
+  wanted="$2"
+  py_mm="${wanted%.*}"
+  mkdir -p "$HACK_LOCAL_BIN"
+  ln -sfn "$py" "$HACK_LOCAL_BIN/python3"
+  ln -sfn "$py" "$HACK_LOCAL_BIN/python"
+  ln -sfn "$py" "$HACK_LOCAL_BIN/python${py_mm}"
+}
+
 install_python() {
   wanted="$(pin_get runtimes.python.version)"
   if [ "$(bin_version "$HACK_LOCAL_BIN/python3" --version || true)" = "$wanted" ]; then
+    py_mm="${wanted%.*}"
+    ln -sfn "$HACK_LOCAL_BIN/python3" "$HACK_LOCAL_BIN/python${py_mm}"
     log "python $wanted already at $HACK_LOCAL_BIN/python3"
     return 0
   fi
@@ -77,10 +89,7 @@ install_python() {
   "$uv_bin" python install "$wanted"
   py="$("$uv_bin" python find "$wanted")"
   [ -x "$py" ] || die "uv python find $wanted failed"
-  mkdir -p "$HACK_LOCAL_BIN"
-  ln -sfn "$py" "$HACK_LOCAL_BIN/python3"
-  ln -sfn "$py" "$HACK_LOCAL_BIN/python"
-  ln -sfn "$py" "$HACK_LOCAL_BIN/python3.14"
+  link_python "$py" "$wanted"
   log "python $wanted linked"
 }
 
