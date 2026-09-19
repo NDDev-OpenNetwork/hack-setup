@@ -34,7 +34,8 @@ symlink `$REPO/.local/bin/codex`.
 
 Do not use `$CODEX_HOME/skills`, `approval_policy = "untrusted"`,
 `features.web_search*`, the discontinued `Codex.app` cask, or an unpinned
-installer URL.
+installer URL. Session law is ADR 0006 (`never` +
+`danger-full-access`), not `--full-auto`.
 
 ## Consequences
 
