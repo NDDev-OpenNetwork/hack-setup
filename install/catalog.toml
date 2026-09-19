@@ -12,6 +12,11 @@ dir = "modules/20-codex-cli"
 enabled = true
 
 [[modules]]
+id = "runtimes"
+dir = "modules/30-runtimes"
+enabled = true
+
+[[modules]]
 id = "project-verify"
-dir = "modules/30-project-verify"
+dir = "modules/40-project-verify"
 enabled = true

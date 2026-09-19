@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN_PATH = ROOT / "build" / "codex-pin.json"
+STACK_PIN_PATH = ROOT / "build" / "stack-pin.json"
 CATALOG_PATH = ROOT / "install" / "catalog.toml"
 PLUGIN_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -23,7 +24,8 @@ PINNED_PLATFORMS = (
 CATALOG_MODULES = (
     ("prereqs", "modules/10-prereqs"),
     ("codex-cli", "modules/20-codex-cli"),
-    ("project-verify", "modules/30-project-verify"),
+    ("runtimes", "modules/30-runtimes"),
+    ("project-verify", "modules/40-project-verify"),
 )
 ROOT_PLUGIN_KEYS = {
     "$schema",
@@ -130,6 +132,153 @@ def check_pin() -> str:
     return version
 
 
+def require_versioned_package(block: object, label: str) -> None:
+    if not isinstance(block, dict):
+        raise CheckError(f"{label} must be an object")
+    version = block.get("version")
+    if not isinstance(version, str) or not version.strip():
+        raise CheckError(f"{label}.version must be a non-empty string")
+
+
+def check_stack_pin() -> None:
+    pin = load_json(STACK_PIN_PATH)
+    if not isinstance(pin, dict):
+        raise CheckError("build/stack-pin.json must be an object")
+    if pin.get("schema_version") != 2:
+        raise CheckError("stack-pin schema_version must be 2")
+    verified_on = pin.get("verified_on")
+    if not isinstance(verified_on, str) or re.fullmatch(r"\d{4}-\d{2}-\d{2}", verified_on) is None:
+        raise CheckError("stack-pin.verified_on must be YYYY-MM-DD")
+    if pin.get("codex_pin") != "build/codex-pin.json":
+        raise CheckError("stack-pin.codex_pin must point at build/codex-pin.json")
+    registered = pin.get("registered")
+    if not isinstance(registered, dict):
+        raise CheckError("stack-pin.registered must be an object")
+    plugin = registered.get("plugin")
+    if not isinstance(plugin, dict) or plugin.get("id") != "saint-tibo@saint-tibo":
+        raise CheckError("stack-pin must register plugin id saint-tibo@saint-tibo")
+    if registered.get("agents") != ["mapper", "reviewer", "implementer"]:
+        raise CheckError("stack-pin agents must be mapper, reviewer, implementer")
+    models = pin.get("models")
+    if not isinstance(models, dict) or models.get("default") != "gpt-5.6":
+        raise CheckError("stack-pin models.default must be gpt-5.6")
+    if pin.get("package_manager") != "bun":
+        raise CheckError("stack-pin.package_manager must be bun")
+    if "pnpm" in pin.get("runtimes", {}):
+        raise CheckError("stack-pin must not include pnpm")
+    runtimes = pin.get("runtimes")
+    if not isinstance(runtimes, dict):
+        raise CheckError("stack-pin.runtimes must be an object")
+    for key in ("node", "bun", "uv", "typescript", "rust", "go"):
+        require_versioned_package(runtimes.get(key), f"stack-pin.runtimes.{key}")
+    python = runtimes.get("python")
+    if not isinstance(python, dict):
+        raise CheckError("stack-pin.runtimes.python must be an object")
+    require_versioned_package(python, "stack-pin.runtimes.python")
+    node_file = read_text(ROOT / ".node-version").strip()
+    if node_file != runtimes["node"]["version"]:
+        raise CheckError(".node-version must match stack-pin runtimes.node.version")
+    python_file = read_text(ROOT / ".python-version").strip()
+    if python_file != python["version"]:
+        raise CheckError(".python-version must match stack-pin runtimes.python.version")
+    package = load_json(ROOT / "package.json")
+    if not isinstance(package, dict):
+        raise CheckError("package.json must be an object")
+    expected_pm = f"bun@{runtimes['bun']['version']}"
+    if package.get("packageManager") != expected_pm:
+        raise CheckError(f"package.json packageManager must be {expected_pm}")
+    frontend = pin.get("frontend")
+    if not isinstance(frontend, dict):
+        raise CheckError("stack-pin.frontend must be an object")
+    if "next" in frontend:
+        raise CheckError("stack-pin.frontend must not include Next.js")
+    for key in ("react", "vite", "tailwindcss", "shadcn", "zod"):
+        require_versioned_package(frontend.get(key), f"stack-pin.frontend.{key}")
+    backend = pin.get("backend")
+    if not isinstance(backend, dict):
+        raise CheckError("stack-pin.backend must be an object")
+    require_versioned_package(backend.get("fastapi"), "stack-pin.backend.fastapi")
+    environments = pin.get("environments")
+    if not isinstance(environments, dict):
+        raise CheckError("stack-pin.environments must be an object")
+    telegram = environments.get("telegram")
+    if not isinstance(telegram, dict) or telegram.get("redis_py") != "7.4.1":
+        raise CheckError("telegram env must pin redis_py 7.4.1")
+    api_workers = environments.get("api_workers")
+    if not isinstance(api_workers, dict) or api_workers.get("redis_py") != "8.1.0":
+        raise CheckError("api_workers env must pin redis_py 8.1.0")
+    quality = pin.get("quality")
+    if not isinstance(quality, dict):
+        raise CheckError("stack-pin.quality must be an object")
+    for key in ("biome", "vitest", "playwright", "ruff"):
+        require_versioned_package(quality.get(key), f"stack-pin.quality.{key}")
+    banned = pin.get("do_not_use")
+    if not isinstance(banned, list) or "Next.js" not in banned or "pnpm" not in banned:
+        raise CheckError("stack-pin.do_not_use must include Next.js and pnpm")
+    check_verify_block(pin)
+    if not (ROOT / "build" / "stack-standard.md").is_file():
+        raise CheckError("missing build/stack-standard.md; run python3 scripts/check_stack.py --write")
+
+
+def check_verify_block(pin: dict[str, object]) -> None:
+    verify = pin.get("verify")
+    if not isinstance(verify, dict):
+        raise CheckError("stack-pin.verify must be an object")
+    required = verify.get("required")
+    declared = verify.get("declared")
+    if not isinstance(required, list) or not isinstance(declared, list):
+        raise CheckError("stack-pin.verify.required and verify.declared must be lists")
+    required_ids = []
+    for index, entry in enumerate(required):
+        probe_id = require_probe_entry(entry, f"verify.required[{index}]", pin)
+        required_ids.append(probe_id)
+    if required_ids != ["codex", "node", "bun", "python", "uv"]:
+        raise CheckError("verify.required ids must be codex, node, bun, python, uv")
+    seen = set(required_ids)
+    for index, entry in enumerate(declared):
+        probe_id = require_probe_entry(entry, f"verify.declared[{index}]", pin)
+        if probe_id in seen:
+            raise CheckError(f"duplicate verify probe id {probe_id}")
+        seen.add(probe_id)
+
+
+def require_probe_entry(entry: object, label: str, pin: dict[str, object]) -> str:
+    if not isinstance(entry, dict):
+        raise CheckError(f"{label} must be an object")
+    probe_id = entry.get("id")
+    path = entry.get("path")
+    bin_name = entry.get("bin")
+    argv = entry.get("argv")
+    pattern = entry.get("pattern")
+    source = entry.get("source", "stack-pin.json")
+    if not isinstance(probe_id, str) or not probe_id:
+        raise CheckError(f"{label}.id must be a non-empty string")
+    if not isinstance(path, str) or not path:
+        raise CheckError(f"{label}.path must be a non-empty string")
+    if not isinstance(bin_name, str) or not bin_name:
+        raise CheckError(f"{label}.bin must be a non-empty string")
+    if not isinstance(argv, list) or not all(isinstance(item, str) for item in argv):
+        raise CheckError(f"{label}.argv must be a list of strings")
+    if not isinstance(pattern, str):
+        raise CheckError(f"{label}.pattern must be a string")
+    try:
+        re.compile(pattern)
+    except re.error as exc:
+        raise CheckError(f"{label}.pattern is invalid: {exc}") from exc
+    if source == "codex-pin.json":
+        return probe_id
+    if source != "stack-pin.json":
+        raise CheckError(f"{label}.source must be stack-pin.json or codex-pin.json")
+    current: object = pin
+    for part in path.split("."):
+        if not isinstance(current, dict) or part not in current:
+            raise CheckError(f"{label}.path {path} does not resolve")
+        current = current[part]
+    if not isinstance(current, str) or not current.strip():
+        raise CheckError(f"{label}.path {path} must resolve to a version string")
+    return probe_id
+
+
 def check_bootstrap() -> None:
     if (ROOT / "install").is_file():
         raise CheckError("root file named install cannot coexist with install/")
@@ -149,7 +298,7 @@ def check_bootstrap() -> None:
         raise CheckError("install/catalog.toml entry must be ./setup")
     modules = catalog.get("modules")
     if not isinstance(modules, list) or len(modules) != len(CATALOG_MODULES):
-        raise CheckError("install/catalog.toml must list the three bootstrap modules")
+        raise CheckError("install/catalog.toml must list the four bootstrap modules")
     for expected, raw in zip(CATALOG_MODULES, modules, strict=True):
         if not isinstance(raw, dict):
             raise CheckError("catalog module must be a table")
@@ -271,6 +420,7 @@ def check_skills() -> None:
 def main() -> int:
     checks = (
         check_pin,
+        check_stack_pin,
         check_bootstrap,
         check_agents_md,
         check_config,

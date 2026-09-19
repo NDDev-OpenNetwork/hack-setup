@@ -1,0 +1,494 @@
+{
+  "schema_version": 2,
+  "verified_on": "2026-09-20",
+  "reverify_on_hackathon": true,
+  "policy": "latest-compatible-stable; freeze after prep; hackathon bumps are explicit",
+  "codex_pin": "build/codex-pin.json",
+  "package_manager": "bun",
+  "locales": ["ru", "kk", "en"],
+  "do_not_use": [
+    "pnpm",
+    "npm as the project installer",
+    "Next.js",
+    "openapi-typescript as the primary generator",
+    "React Three Fiber / @react-three/drei",
+    "LangChain / LlamaIndex as required orchestration",
+    "Elasticsearch / pgvector",
+    "pasync as a PostgreSQL driver",
+    "independent Dart upgrades outside Flutter",
+    "Tauri 3 alpha",
+    "Node.js 26 Current",
+    "openai Python SDK 3.x in the API env",
+    "LiteLLM proxy-runtime extra in the API env",
+    "opencv-python together with opencv-python-headless",
+    "second JS lockfile",
+    "0.156.0-alpha",
+    "Codex.app",
+    "gpt-6-astra until Codex CLI pin changes"
+  ],
+  "environments": {
+    "api_workers": {
+      "python": "3.14.7",
+      "redis_py": "8.1.0",
+      "shares": "FastAPI API and Taskiq workers may share this env"
+    },
+    "telegram": {
+      "python": "3.14.7",
+      "redis_py": "7.4.1",
+      "reason": "aiogram[redis] requires redis<8; isolate from taskiq-redis >=8"
+    },
+    "gpu_ml": {
+      "isolates": ["faster-whisper", "CTranslate2", "PyTorch", "ONNX Runtime", "FastEmbed"]
+    },
+    "litellm_proxy": {
+      "isolates": "optional full proxy-runtime container with its own OTel 1.28.0 pins"
+    }
+  },
+  "registered": {
+    "marketplace": {
+      "name": "saint-tibo",
+      "path": ".agents/plugins/marketplace.json",
+      "cli": "codex plugin marketplace add .",
+      "status": "in-repo; not yet added to this machine's Codex marketplace list"
+    },
+    "plugin": {
+      "id": "saint-tibo@saint-tibo",
+      "path": "plugins/saint-tibo/plugin.json",
+      "policy": "INSTALLED_BY_DEFAULT",
+      "enabled_in": ".codex/config.toml",
+      "cli": "codex plugin add saint-tibo@saint-tibo",
+      "status": "enabled in project config after trust; plugin add not run by ./setup"
+    },
+    "agents": ["mapper", "reviewer", "implementer"],
+    "repo_skills": ["repo-orientation", "quality-gate", "one-repo-workflow"],
+    "plugin_skills": ["saint-tibo"],
+    "features": {
+      "multi_agent": true,
+      "hooks": true,
+      "memories": false,
+      "web_search": "cached"
+    }
+  },
+  "models": {
+    "default": "gpt-5.6",
+    "alias_of": "gpt-5.6-sol",
+    "mapper": "gpt-5.6-luna",
+    "reviewer": "gpt-5.6-terra",
+    "implementer": "gpt-5.6",
+    "source": "https://developers.openai.com/api/docs/models"
+  },
+  "runtimes": {
+    "node": {
+      "version": "24.21.0",
+      "channel": "Active LTS Krypton",
+      "role": "JS tool compatibility and Node-only services",
+      "source": "https://nodejs.org/dist/v24.21.0/",
+      "published": "2026-09-08",
+      "reject": "26.x Current until it enters LTS (2026-10-28)",
+      "packages": {
+        "darwin-arm64": {
+          "name": "node-v24.21.0-darwin-arm64.tar.gz",
+          "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-darwin-arm64.tar.gz",
+          "sha256": "bed7eea5325e1108f32ce5228ddd6a5f0f08a499ee42aa7442aea583702f6057"
+        },
+        "darwin-x86_64": {
+          "name": "node-v24.21.0-darwin-x64.tar.gz",
+          "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-darwin-x64.tar.gz",
+          "sha256": "1462cb3b3046b815cf8ea436d3da450ec1a9f11dac7e5a46b0ada5305d7e8097"
+        },
+        "linux-arm64": {
+          "name": "node-v24.21.0-linux-arm64.tar.gz",
+          "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-arm64.tar.gz",
+          "sha256": "724282c3b43aec998aa9527380465b45d229e021b58035f5f4f63095eabfe5d5"
+        },
+        "linux-x86_64": {
+          "name": "node-v24.21.0-linux-x64.tar.gz",
+          "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.gz",
+          "sha256": "6e1db87ef58b8819e5d5402eff1536491b18edd8eb7bee5ef7897876e88dc5ff"
+        }
+      }
+    },
+    "bun": {
+      "version": "1.4.2",
+      "tag": "bun-v1.4.2",
+      "role": "JS dependencies, workspaces, project commands",
+      "source": "https://github.com/oven-sh/bun/releases/tag/bun-v1.4.2",
+      "published": "2026-09-05",
+      "checksum_manifest": {
+        "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/SHASUMS256.txt",
+        "sha256": "99ebf3e6afe003b57eae3f257abce7e9aa851452429e84ef16b1b401e9d7cff1"
+      },
+      "packages": {
+        "darwin-arm64": {
+          "name": "bun-darwin-aarch64.zip",
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-darwin-aarch64.zip",
+          "sha256": "90987a3a16d7db556d886ac3d551e7b6d3edf0a1cf43acaed622e8676be1d12f"
+        },
+        "darwin-x86_64": {
+          "name": "bun-darwin-x64.zip",
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-darwin-x64.zip",
+          "sha256": "80520d7e17526308c9185d261679ac6d27798d3803a0e9f7ff9121ab8affb012"
+        },
+        "linux-arm64": {
+          "name": "bun-linux-aarch64.zip",
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-linux-aarch64.zip",
+          "sha256": "54328bbc2d9c8e0c9f892c544d66c57a83b84139e34909e5ee81758f1ac8fda7"
+        },
+        "linux-x86_64": {
+          "name": "bun-linux-x64.zip",
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-linux-x64.zip",
+          "sha256": "36368faef7527875d5ffa52e53cd48021741f2a83eb6208a8dd64068d422a913"
+        }
+      }
+    },
+    "python": {
+      "version": "3.14.7",
+      "bootstrap_min": "3.11",
+      "role": "backend, orchestration, data",
+      "via": "uv python install",
+      "source": "https://endoflife.date/python"
+    },
+    "uv": {
+      "version": "0.12.17",
+      "role": "Python envs, deps, lockfiles, tool runner",
+      "source": "https://github.com/astral-sh/uv/releases/tag/0.12.17",
+      "published": "2026-09-18",
+      "installer": {
+        "name": "uv-installer.sh",
+        "url": "https://github.com/astral-sh/uv/releases/download/0.12.17/uv-installer.sh",
+        "sha256": "37b82230b28617c6c24fa52364fa28aa37f2aa40c114809a623f6b064a9730e5"
+      }
+    },
+    "typescript": {
+      "version": "7.0.2",
+      "role": "primary compiler; native Go port, not tsgo preview",
+      "compat_package": "@typescript/typescript6"
+    },
+    "rust": {
+      "version": "1.98.1",
+      "role": "native modules, PyO3, Tauri; rustup + Cargo",
+      "source": "https://static.rust-lang.org/dist/channel-rust-stable.toml"
+    },
+    "go": {
+      "version": "1.27.1",
+      "role": "optional extra toolchain, not a second required backend",
+      "source": "https://go.dev/VERSION?m=text"
+    }
+  },
+  "frontend": {
+    "architecture": {
+      "frontend": "Feature-Sliced Design",
+      "tokens": "W3C DTCG / Tailwind v4 CSS variables",
+      "ui": "shadcn/ui v4 + Base UI",
+      "state": "React local state + TanStack Query; no required global store"
+    },
+    "react": { "package": "react", "version": "19.3.0" },
+    "react_dom": { "package": "react-dom", "version": "19.3.0" },
+    "vite": { "package": "vite", "version": "8.3.0", "role": "dev server and web/PWA/desktop webview build" },
+    "router": { "package": "@tanstack/react-router", "version": "1.170.38" },
+    "query": { "package": "@tanstack/react-query", "version": "5.103.1" },
+    "tailwindcss": { "package": "tailwindcss", "version": "4.3.3", "plugin": "@tailwindcss/postcss@4.3.3" },
+    "shadcn": { "package": "shadcn", "version": "4.21.0", "primitives": "@base-ui/react@1.8.0", "cli": "bunx shadcn@4.21.0" },
+    "forms": {
+      "react_hook_form": { "package": "react-hook-form", "version": "7.88.0" },
+      "resolvers": { "package": "@hookform/resolvers", "version": "5.9.1" },
+      "zod": { "package": "zod", "version": "4.6.5" }
+    },
+    "zod": { "package": "zod", "version": "4.6.5" },
+    "i18n": {
+      "i18next": { "package": "i18next", "version": "26.4.2" },
+      "react_i18next": { "package": "react-i18next", "version": "17.0.14" },
+      "locales": ["ru", "kk", "en"]
+    },
+    "lucide_react": { "package": "lucide-react", "version": "1.47.0" },
+    "motion": { "package": "motion", "version": "13.4.0" },
+    "markdown": {
+      "react_markdown": { "package": "react-markdown", "version": "10.1.0" },
+      "remark_gfm": { "package": "remark-gfm", "version": "4.0.1" }
+    },
+    "pwa": {
+      "vite_plugin_pwa": { "package": "vite-plugin-pwa", "version": "1.3.0" },
+      "workbox": "via vite-plugin-pwa"
+    },
+    "dexie": { "package": "dexie", "version": "4.4.6", "role": "IndexedDB drafts and PWA local data when needed" },
+    "api_client": {
+      "package": "@hey-api/openapi-ts",
+      "version": "0.99.0",
+      "engines": "node >=22.18",
+      "contract": "FastAPI OpenAPI is the only API source; clients are generated"
+    },
+    "types_react": { "package": "@types/react", "version": "19.3.0" },
+    "types_node": { "package": "@types/node", "version": "24.13.6" }
+  },
+  "backend": {
+    "fastapi": { "package": "fastapi", "version": "0.141.1" },
+    "uvicorn": { "package": "uvicorn", "version": "0.53.0" },
+    "pydantic": { "package": "pydantic", "version": "2.13.5" },
+    "pydantic_settings": { "package": "pydantic-settings", "version": "2.15.0" },
+    "sqlalchemy": { "package": "SQLAlchemy", "version": "2.0.54", "style": "async primary" },
+    "psycopg": { "package": "psycopg", "version": "3.3.6" },
+    "alembic": { "package": "alembic", "version": "1.20.0" },
+    "httpx": { "package": "httpx", "version": "0.28.1" },
+    "taskiq": { "package": "taskiq", "version": "0.12.6" },
+    "taskiq_redis": { "package": "taskiq-redis", "version": "1.2.3", "broker": "RedisStreamBroker" },
+    "pyo3": { "package": "pyo3", "version": "0.29.2", "via": "crates.io" },
+    "maturin": { "package": "maturin", "version": "1.15.0" },
+    "transports": {
+      "api": "HTTP/OpenAPI",
+      "ai_stream": "SSE",
+      "realtime": "WebSocket"
+    }
+  },
+  "data": {
+    "postgresql": { "version": "18.6", "role": "source of truth" },
+    "qdrant": { "version": "1.19.1", "role": "derived vector/hybrid index" },
+    "qdrant_client": { "package": "qdrant-client", "version": "1.19.1" },
+    "redis_server": { "version": "8.10.2", "role": "sessions, cache, Taskiq streams; split instances if cache may evict" },
+    "redis_py": { "package": "redis", "version": "8.1.0", "env": "api_workers" },
+    "rustfs": { "version": "1.0.0", "role": "S3-compatible object store" },
+    "boto3": { "package": "boto3", "version": "1.43.98" },
+    "duckdb": { "package": "duckdb", "version": "1.5.5", "role": "analytics/Parquet only, not a second OLTP" },
+    "polars": { "package": "polars", "version": "1.44.2" },
+    "pyarrow": { "package": "pyarrow", "version": "25.0.1" },
+    "search": {
+      "path": "multilingual dense + sparse/BM25 -> RRF -> optional reranker",
+      "filters_before_context": ["access", "locale", "course", "source"],
+      "fastembed": "local embedding pipeline; model chosen against ru/kk/en materials"
+    }
+  },
+  "clients": {
+    "flutter": {
+      "version": "3.47.5",
+      "dart": { "version": "3.13.4", "bundled": true },
+      "note": "research listed 3.47.2; prep-time stable is 3.47.5 (2026-09-18)",
+      "riverpod": { "package": "flutter_riverpod", "version": "3.4.3" },
+      "go_router": { "package": "go_router", "version": "18.0.1" },
+      "dio": { "package": "dio", "version": "5.11.1" },
+      "openapi": "dart-dio from the same FastAPI contract",
+      "also": ["freezed", "flutter_localizations", "intl", "ARB", "flutter_secure_storage", "app_links"]
+    },
+    "tauri": {
+      "line": "2",
+      "cli": { "package": "@tauri-apps/cli", "version": "2.11.4" },
+      "api": { "package": "@tauri-apps/api", "version": "2.11.1" },
+      "shell": "reuse React/Vite web UI",
+      "reject": "3.0.0-alpha"
+    },
+    "telegram": {
+      "aiogram": { "package": "aiogram", "version": "3.31.0" },
+      "mini_app": "same React/Vite UI + Telegram Web Apps; verify initData on backend"
+    }
+  },
+  "auth": {
+    "authlib": { "package": "Authlib", "version": "1.8.0" },
+    "providers": {
+      "google": "OIDC",
+      "github": "OAuth2",
+      "yandex": "OAuth2"
+    },
+    "web": "server session + Redis + HttpOnly cookie + CSRF",
+    "native": "system browser + backend callback + one-time return code",
+    "identity": "internal PostgreSQL user + linked provider identities",
+    "google_calendar": "google-api-python-client + google-auth, explicit scopes",
+    "payments_test": "Stripe Python SDK + Checkout + Stripe CLI sandbox"
+  },
+  "ai": {
+    "cliproxyapi": { "version": "7.3.8" },
+    "litellm": { "package": "litellm", "version": "1.101.0", "mode": "SDK/Router in API; no proxy-runtime extra" },
+    "openai": {
+      "package": "openai",
+      "version": "2.9.0",
+      "reverify": "pinned-compatible",
+      "reason": "litellm 1.101.0 requires openai>=2.20,<3; latest 3.16.2 is a different env"
+    },
+    "orchestration": "plain Python + Pydantic + explicit steps; no required agent framework",
+    "accuracy": "schema validity, subject correctness, and source citation are separate checks"
+  },
+  "media": {
+    "docling": { "package": "docling", "version": "2.129.0" },
+    "pypdf": { "package": "pypdf", "version": "6.19.0" },
+    "ocr": { "engine": "Tesseract", "langs": ["rus", "kaz", "eng"] },
+    "pillow": { "package": "pillow", "version": "12.3.0" },
+    "opencv": { "package": "opencv-python-headless", "version": "5.0.0.93", "only_one_cv2": true },
+    "python_docx": { "package": "python-docx", "version": "1.2.0" },
+    "python_pptx": { "package": "python-pptx", "version": "1.0.2" },
+    "openpyxl": { "package": "openpyxl", "version": "3.1.5" },
+    "trafilatura": { "package": "trafilatura", "version": "2.2.0" },
+    "faster_whisper": { "package": "faster-whisper", "version": "1.2.1", "env": "gpu_ml" },
+    "sympy": { "package": "sympy", "version": "1.14.0" },
+    "ffmpeg": "system FFmpeg + ffprobe",
+    "livekit": "optional live classroom/voice",
+    "reports": "HTML/CSS + Playwright/Chromium"
+  },
+  "education": {
+    "tiptap": "lesson editor",
+    "yjs_hocuspocus": "collaboration process, not a Python replacement",
+    "katex": "display",
+    "sympy": "compute, never via KaTeX",
+    "excalidraw": "whiteboard",
+    "xyflow": { "package": "@xyflow/react", "version": "12.11.6" },
+    "echarts": "charts",
+    "fsrs": "Python spaced repetition",
+    "ortools": "scheduling",
+    "pyodide": "in-browser Python",
+    "user_code": "isolated executor; gVisor extra isolation; never in the API process",
+    "three": { "package": "three", "version": "0.186.0", "no_r3f": true }
+  },
+  "deploy": {
+    "docker": { "version": "29.8.1" },
+    "compose": { "version": "5.5.1" },
+    "caddy": "stable line, reverse proxy + HTTPS",
+    "openobserve": { "version": "1.0.3" },
+    "vector": { "version": "0.58.0" },
+    "otel": {
+      "api_sdk": "1.44.0",
+      "instrumentation": "0.65b0",
+      "not_in_api_with_litellm_proxy_runtime": true
+    },
+    "structlog": { "package": "structlog", "version": "26.1.0" },
+    "pipeline": "JSON logs -> Vector -> OpenObserve; traces/metrics OTLP -> OpenObserve"
+  },
+  "quality": {
+    "biome": { "package": "@biomejs/biome", "version": "2.5.14", "role": "JS/TS lint+format; types stay with tsc 7" },
+    "vitest": { "package": "vitest", "version": "5.0.1" },
+    "playwright": { "package": "@playwright/test", "version": "1.63.0" },
+    "ruff": { "package": "ruff", "version": "0.16.8" },
+    "ty": { "package": "ty", "version": "0.0.82" },
+    "pytest": { "package": "pytest", "version": "9.1.1" },
+    "just": { "role": "monorepo command runner; pin at scaffold" },
+    "required_gates": [
+      "OpenAPI contract sync",
+      "TypeScript 7 check",
+      "Alembic migrations",
+      "frontend + backend build"
+    ]
+  },
+  "conflicts": [
+    {
+      "id": "ts7-compiler-api",
+      "decision": "TS7 is the typechecker; @typescript/typescript6 only for tools that still need the JS compiler API"
+    },
+    {
+      "id": "openapi-typescript-ts5",
+      "decision": "Hey API @hey-api/openapi-ts 0.99.0; do not force openapi-typescript onto TS7"
+    },
+    {
+      "id": "aiogram-redis-vs-taskiq",
+      "decision": "API/worker redis-py 8.1.0; Telegram env redis-py 7.4.1; one Redis server 8.10.2"
+    },
+    {
+      "id": "litellm-otel",
+      "decision": "API uses LiteLLM SDK only; proxy-runtime stays in its own container"
+    },
+    {
+      "id": "r3f-react-19-3",
+      "decision": "direct three 0.186.0; no R3F/Drei"
+    },
+    {
+      "id": "flutter-dart",
+      "decision": "pin Flutter 3.47.5 and its bundled Dart 3.13.4"
+    },
+    {
+      "id": "openai-sdk-major",
+      "decision": "API env openai 2.9.0 because litellm 1.101.0 is openai<3"
+    }
+  ],
+  "verify": {
+    "required": [
+      {
+        "id": "codex",
+        "source": "codex-pin.json",
+        "path": "codex_cli",
+        "bin": "codex",
+        "argv": ["--version"],
+        "pattern": "codex-cli\\s+([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "node",
+        "path": "runtimes.node.version",
+        "bin": "node",
+        "argv": ["--version"],
+        "pattern": "v?([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "bun",
+        "path": "runtimes.bun.version",
+        "bin": "bun",
+        "argv": ["--version"],
+        "pattern": "([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "python",
+        "path": "runtimes.python.version",
+        "bin": "python3",
+        "argv": ["--version"],
+        "pattern": "Python\\s+([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "uv",
+        "path": "runtimes.uv.version",
+        "bin": "uv",
+        "argv": ["--version"],
+        "pattern": "uv\\s+([0-9]+(?:\\.[0-9]+)*)"
+      }
+    ],
+    "declared": [
+      {
+        "id": "rustc",
+        "path": "runtimes.rust.version",
+        "bin": "rustc",
+        "argv": ["--version"],
+        "pattern": "rustc\\s+([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "go",
+        "path": "runtimes.go.version",
+        "bin": "go",
+        "argv": ["version"],
+        "pattern": "go([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "docker",
+        "path": "deploy.docker.version",
+        "bin": "docker",
+        "argv": ["--version"],
+        "pattern": "Docker version\\s+([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "compose",
+        "path": "deploy.compose.version",
+        "bin": "docker",
+        "argv": ["compose", "version"],
+        "pattern": "v?([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "psql",
+        "path": "data.postgresql.version",
+        "bin": "psql",
+        "argv": ["--version"],
+        "pattern": "PostgreSQL\\)\\s+([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "redis-server",
+        "path": "data.redis_server.version",
+        "bin": "redis-server",
+        "argv": ["--version"],
+        "pattern": "v=([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "ruff",
+        "path": "quality.ruff.version",
+        "bin": "ruff",
+        "argv": ["--version"],
+        "pattern": "ruff\\s+([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "pytest",
+        "path": "quality.pytest.version",
+        "bin": "pytest",
+        "argv": ["--version"],
+        "pattern": "pytest\\s+([0-9]+(?:\\.[0-9]+)*)"
+      }
+    ]
+  }
+}

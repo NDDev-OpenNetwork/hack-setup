@@ -1,0 +1,362 @@
+#!/usr/bin/env python3
+"""Doctor for the frozen product stack. Python 3.11+. No third-party deps.
+
+Pin is the source of truth. build/stack-standard.md is generated from it.
+Required host tools must match. Declared host tools are reported; --strict
+fails on declared MISSING/DRIFT.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+STACK_PIN_PATH = ROOT / "build" / "stack-pin.json"
+CODEX_PIN_PATH = ROOT / "build" / "codex-pin.json"
+STANDARD_PATH = ROOT / "build" / "stack-standard.md"
+SKIP_WALK = {
+    "verify",
+    "do_not_use",
+    "conflicts",
+    "registered",
+    "models",
+    "locales",
+    "policy",
+    "schema_version",
+    "verified_on",
+    "reverify_on_hackathon",
+    "package_manager",
+    "codex_pin",
+}
+SECTION_ORDER = (
+    "runtimes",
+    "frontend",
+    "backend",
+    "data",
+    "clients",
+    "auth",
+    "ai",
+    "media",
+    "education",
+    "deploy",
+    "quality",
+)
+REQUIRED_PROBE_IDS = ("codex", "node", "bun", "python", "uv")
+DEFAULT_TIMEOUT = 8.0
+
+
+class CheckError(Exception):
+    pass
+
+
+@dataclass(frozen=True)
+class Probe:
+    kind: str
+    probe_id: str
+    source: str
+    path: str
+    bin: str
+    argv: tuple[str, ...]
+    pattern: str
+    expected: str
+
+
+@dataclass(frozen=True)
+class ProbeResult:
+    probe: Probe
+    status: str
+    got: str
+    binary: str
+    detail: str = ""
+
+
+def load_json(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise CheckError(f"invalid JSON {path.relative_to(ROOT)}: {exc}") from exc
+    if not isinstance(payload, dict):
+        raise CheckError(f"{path.relative_to(ROOT)} must be an object")
+    return payload
+
+
+def lookup(data: dict[str, Any], dotted: str) -> Any:
+    current: Any = data
+    for part in dotted.split("."):
+        if not isinstance(current, dict) or part not in current:
+            raise CheckError(f"missing {dotted}")
+        current = current[part]
+    return current
+
+
+def extract_version(text: str, pattern: str) -> str | None:
+    match = re.search(pattern, text)
+    if match is None:
+        return None
+    return match.group(1)
+
+
+def prepend_pin_path() -> None:
+    local = str(ROOT / ".local" / "bin")
+    home = str(Path.home() / ".local" / "bin")
+    os.environ["PATH"] = os.pathsep.join([local, home, os.environ.get("PATH", "")])
+
+
+def collect_version_rows(pin: dict[str, Any]) -> list[tuple[str, str, str]]:
+    rows: list[tuple[str, str, str]] = []
+
+    def walk(node: Any, prefix: str) -> None:
+        if not isinstance(node, dict):
+            return
+        version = node.get("version")
+        if isinstance(version, str) and version.strip():
+            package = node.get("package")
+            package_name = package if isinstance(package, str) else ""
+            rows.append((prefix, version, package_name))
+        for key, value in node.items():
+            if key in SKIP_WALK or key == "version":
+                continue
+            path = f"{prefix}.{key}" if prefix else key
+            walk(value, path)
+
+    for section in SECTION_ORDER:
+        block = pin.get(section)
+        if isinstance(block, dict):
+            walk(block, section)
+    return rows
+
+
+def load_probes(stack: dict[str, Any], codex: dict[str, Any]) -> list[Probe]:
+    verify = stack.get("verify")
+    if not isinstance(verify, dict):
+        raise CheckError("stack-pin.verify must be an object")
+    probes: list[Probe] = []
+    for kind in ("required", "declared"):
+        entries = verify.get(kind)
+        if not isinstance(entries, list) or not entries:
+            raise CheckError(f"stack-pin.verify.{kind} must be a non-empty list")
+        for raw in entries:
+            probes.append(parse_probe(kind, raw, stack, codex))
+    return probes
+
+
+def parse_probe(kind: str, raw: object, stack: dict[str, Any], codex: dict[str, Any]) -> Probe:
+    if not isinstance(raw, dict):
+        raise CheckError(f"verify.{kind} entry must be an object")
+    probe_id = raw.get("id")
+    path = raw.get("path")
+    bin_name = raw.get("bin")
+    argv = raw.get("argv")
+    pattern = raw.get("pattern")
+    source_name = raw.get("source", "stack-pin.json")
+    if not isinstance(probe_id, str) or not probe_id:
+        raise CheckError(f"verify.{kind} entry missing id")
+    if not isinstance(path, str) or not path:
+        raise CheckError(f"verify.{kind}.{probe_id} missing path")
+    if not isinstance(bin_name, str) or not bin_name:
+        raise CheckError(f"verify.{kind}.{probe_id} missing bin")
+    if not isinstance(pattern, str) or not pattern:
+        raise CheckError(f"verify.{kind}.{probe_id} missing pattern")
+    if not isinstance(argv, list) or not all(isinstance(item, str) for item in argv):
+        raise CheckError(f"verify.{kind}.{probe_id}.argv must be a string list")
+    try:
+        re.compile(pattern)
+    except re.error as exc:
+        raise CheckError(f"verify.{kind}.{probe_id}.pattern is invalid: {exc}") from exc
+    if source_name == "codex-pin.json":
+        expected = lookup(codex, path)
+    elif source_name == "stack-pin.json":
+        expected = lookup(stack, path)
+    else:
+        raise CheckError(f"verify.{kind}.{probe_id}.source must be stack-pin.json or codex-pin.json")
+    if not isinstance(expected, str) or not expected.strip():
+        raise CheckError(f"verify.{kind}.{probe_id} path {path} is not a version string")
+    return Probe(kind, probe_id, source_name, path, bin_name, tuple(argv), pattern, expected)
+
+
+def run_probe(probe: Probe) -> ProbeResult:
+    binary = shutil.which(probe.bin)
+    if binary is None:
+        return ProbeResult(probe, "MISSING", "-", "-", "not on PATH")
+    timeout = DEFAULT_TIMEOUT
+    try:
+        completed = subprocess.run(
+            [binary, *probe.argv],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return ProbeResult(probe, "TIMEOUT", "-", binary, f">{timeout:.0f}s")
+    text = "\n".join(part for part in (completed.stdout, completed.stderr) if part)
+    got = extract_version(text, probe.pattern)
+    if got is None:
+        snippet = " ".join(text.split())[:80] or f"exit {completed.returncode}"
+        return ProbeResult(probe, "UNPARSED", "-", binary, snippet)
+    if got == probe.expected:
+        return ProbeResult(probe, "OK", got, binary)
+    return ProbeResult(probe, "DRIFT", got, binary)
+
+
+def render_standard(stack: dict[str, Any], probes: list[Probe]) -> str:
+    rows = collect_version_rows(stack)
+    lines = [
+        "# Stack standard",
+        "",
+        "Generated from `build/stack-pin.json`. Do not edit by hand.",
+        "Refresh with `python3 scripts/check_stack.py --write`.",
+        "",
+        f"- verified_on: `{stack.get('verified_on')}`",
+        f"- schema_version: `{stack.get('schema_version')}`",
+        f"- package_manager: `{stack.get('package_manager')}`",
+        f"- locales: `{', '.join(stack.get('locales', []))}`",
+        "",
+        "## Versioned pins",
+        "",
+        "| Path | Version | Package |",
+        "| --- | --- | --- |",
+    ]
+    for path, version, package in rows:
+        package_cell = f"`{package}`" if package else ""
+        lines.append(f"| `{path}` | `{version}` | {package_cell} |")
+
+    environments = stack.get("environments")
+    if isinstance(environments, dict):
+        lines.extend(["", "## Environments", "", "| Env | redis-py | Notes |", "| --- | --- | --- |"])
+        for name, block in environments.items():
+            if not isinstance(block, dict):
+                continue
+            redis_py = block.get("redis_py", "")
+            notes = block.get("reason") or block.get("shares") or block.get("isolates") or ""
+            if isinstance(notes, list):
+                notes = ", ".join(str(item) for item in notes)
+            lines.append(f"| `{name}` | `{redis_py}` | {notes} |")
+
+    lines.extend(["", "## Host probes", "", "| Class | Id | Bin | Pin path | Want |", "| --- | --- | --- | --- | --- |"])
+    for probe in probes:
+        lines.append(
+            f"| {probe.kind} | `{probe.probe_id}` | `{probe.bin}` | `{probe.path}` | `{probe.expected}` |"
+        )
+
+    banned = stack.get("do_not_use")
+    if isinstance(banned, list) and banned:
+        lines.extend(["", "## Do not use", ""])
+        lines.extend(f"- {item}" for item in banned)
+
+    conflicts = stack.get("conflicts")
+    if isinstance(conflicts, list) and conflicts:
+        lines.extend(["", "## Conflicts", "", "| Id | Decision |", "| --- | --- |"])
+        for item in conflicts:
+            if isinstance(item, dict):
+                lines.append(f"| `{item.get('id', '')}` | {item.get('decision', '')} |")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+def print_table(headers: list[str], rows: list[list[str]]) -> None:
+    widths = [len(header) for header in headers]
+    for row in rows:
+        for index, cell in enumerate(row):
+            widths[index] = max(widths[index], len(cell))
+    fmt = "  ".join(f"{{:{width}}}" for width in widths)
+    print(fmt.format(*headers))
+    print(fmt.format(*("-" * width for width in widths)))
+    for row in rows:
+        print(fmt.format(*row))
+
+
+def cmd_list(stack: dict[str, Any], probes: list[Probe]) -> int:
+    sys.stdout.write(render_standard(stack, probes))
+    return 0
+
+
+def cmd_write(stack: dict[str, Any], probes: list[Probe]) -> int:
+    STANDARD_PATH.write_text(render_standard(stack, probes), encoding="utf-8")
+    print(f"wrote {STANDARD_PATH.relative_to(ROOT)}")
+    return 0
+
+
+def check_standard_fresh(stack: dict[str, Any], probes: list[Probe]) -> None:
+    expected = render_standard(stack, probes)
+    if not STANDARD_PATH.is_file():
+        raise CheckError("build/stack-standard.md missing; run python3 scripts/check_stack.py --write")
+    actual = STANDARD_PATH.read_text(encoding="utf-8")
+    if actual != expected:
+        raise CheckError("build/stack-standard.md is stale; run python3 scripts/check_stack.py --write")
+
+
+def cmd_doctor(probes: list[Probe], *, strict: bool) -> int:
+    results = [run_probe(probe) for probe in probes]
+    rows = [
+        [
+            result.probe.kind,
+            result.probe.probe_id,
+            result.probe.expected,
+            result.got,
+            result.status,
+            result.binary if result.binary != "-" else result.detail,
+        ]
+        for result in results
+    ]
+    print_table(["class", "id", "want", "got", "status", "bin"], rows)
+    failed = [result for result in results if result.probe.kind == "required" and result.status != "OK"]
+    declared_bad = [
+        result
+        for result in results
+        if result.probe.kind == "declared" and result.status not in {"OK", "MISSING"}
+    ]
+    missing_declared = [
+        result for result in results if result.probe.kind == "declared" and result.status == "MISSING"
+    ]
+    if declared_bad:
+        print(f"declared drift/unparsed: {', '.join(item.probe.probe_id for item in declared_bad)}")
+    if missing_declared:
+        print(f"declared missing (ok until installer exists): {', '.join(item.probe.probe_id for item in missing_declared)}")
+    if failed:
+        print(f"FAIL required: {', '.join(item.probe.probe_id + '=' + item.status for item in failed)}")
+        return 1
+    if strict and (declared_bad or missing_declared):
+        print("FAIL --strict: declared host tools must match the pin")
+        return 1
+    print("PASS required host tools match the pin")
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="List and verify the frozen stack pin")
+    parser.add_argument("--list", action="store_true", help="print the generated standard")
+    parser.add_argument("--write", action="store_true", help="write build/stack-standard.md")
+    parser.add_argument("--strict", action="store_true", help="fail on declared MISSING/DRIFT")
+    args = parser.parse_args(argv)
+    prepend_pin_path()
+    stack = load_json(STACK_PIN_PATH)
+    codex = load_json(CODEX_PIN_PATH)
+    probes = load_probes(stack, codex)
+    required_ids = tuple(probe.probe_id for probe in probes if probe.kind == "required")
+    if required_ids != REQUIRED_PROBE_IDS:
+        raise CheckError(f"verify.required ids must be {REQUIRED_PROBE_IDS}, got {required_ids}")
+    if args.write:
+        return cmd_write(stack, probes)
+    if args.list:
+        return cmd_list(stack, probes)
+    check_standard_fresh(stack, probes)
+    return cmd_doctor(probes, strict=args.strict)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except CheckError as exc:
+        print(f"FAIL {exc}", file=sys.stderr)
+        sys.exit(1)
