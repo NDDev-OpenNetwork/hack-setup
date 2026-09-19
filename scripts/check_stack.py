@@ -20,6 +20,16 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _json_atom(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is None:
+        return "null"
+    return str(value)
+
+
 STACK_PIN_PATH = ROOT / "build" / "stack-pin.json"
 CODEX_PIN_PATH = ROOT / "build" / "codex-pin.json"
 STANDARD_PATH = ROOT / "build" / "stack-standard.md"
@@ -36,6 +46,7 @@ SKIP_WALK = {
     "reverify_on_hackathon",
     "package_manager",
     "codex_pin",
+    "control",
 }
 SECTION_ORDER = (
     "runtimes",
@@ -220,12 +231,37 @@ def render_standard(stack: dict[str, Any], probes: list[Probe]) -> str:
         f"- schema_version: `{stack.get('schema_version')}`",
         f"- package_manager: `{stack.get('package_manager')}`",
         f"- locales: `{', '.join(stack.get('locales', []))}`",
-        "",
-        "## Versioned pins",
-        "",
-        "| Path | Version | Package |",
-        "| --- | --- | --- |",
     ]
+    control = stack.get("control")
+    if isinstance(control, dict):
+        law = control.get("law")
+        if isinstance(law, list):
+            law_txt = ", ".join(f"`{item}`" for item in law)
+        else:
+            law_txt = f"`{law}`"
+        lines.extend(
+            [
+                "",
+                "## Control",
+                "",
+                f"- law: {law_txt}",
+                f"- runtime: `{control.get('runtime')}`",
+                f"- generated: `{control.get('generated')}`",
+                f"- router: `{control.get('router')}`",
+                f"- rules: `{control.get('rules')}`",
+                f"- proof: `{control.get('proof')}`",
+                f"- gate: `{control.get('gate')}`",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "## Versioned pins",
+            "",
+            "| Path | Version | Package |",
+            "| --- | --- | --- |",
+        ]
+    )
     for path, version, package in rows:
         package_cell = f"`{package}`" if package else ""
         lines.append(f"| `{path}` | `{version}` | {package_cell} |")
@@ -249,6 +285,53 @@ def render_standard(stack: dict[str, Any], probes: list[Probe]) -> str:
         )
 
     banned = stack.get("do_not_use")
+    models = stack.get("models")
+    if isinstance(models, dict):
+        lines.extend(
+            [
+                "",
+                "## Codex models",
+                "",
+                f"- primary: `{models.get('primary')}`",
+                f"- secondary: `{models.get('secondary')}` (`--profile {models.get('secondary_profile')}`)",
+                f"- review_model: `{models.get('review_model')}`",
+                f"- reasoning_effort: `{models.get('reasoning_effort')}`",
+                f"- requested window / compact: `{models.get('requested_context_window')}` / `{models.get('requested_auto_compact')}`",
+                f"- API window / max input: `{models.get('api_context_window')}` / `{models.get('api_max_input')}`",
+                f"- Codex catalog max / effective: `{models.get('catalog_max_context_window')}` / `{models.get('effective_context_window')}`",
+                f"- usable /status: `{models.get('usable_context_window')}`",
+                f"- 90% compact cap: `{models.get('catalog_auto_compact_cap')}`",
+                f"- effective auto-compact: `{models.get('effective_auto_compact')}`",
+            ]
+        )
+
+    registered = stack.get("registered")
+    if isinstance(registered, dict):
+        if registered.get("agents_enabled") is False:
+            if isinstance(stack.get("models"), dict):
+                # models section already exists; session block added below
+                pass
+        session = registered.get("session")
+        if isinstance(session, dict):
+            lines.extend(
+                [
+                    "",
+                    "## Codex session",
+                    "",
+                    f"- approval_policy: `{session.get('approval_policy')}`",
+                    f"- sandbox_mode: `{session.get('sandbox_mode')}`",
+                    f"- allow_login_shell: `{_json_atom(session.get('allow_login_shell'))}`",
+                    f"- web_search: `{session.get('web_search')}`",
+                    f"- permission_system: `{session.get('permission_system')}`",
+                    f"- CLI: `{session.get('cli_equivalent')}` (`{session.get('cli_alias')}`)",
+                    f"- not YOLO: `{session.get('not_yolo')}`",
+                    f"- project agents: `{_json_atom(registered.get('agents_enabled'))}`",
+                    f"- project execpolicy `.rules`: `{_json_atom(session.get('project_execpolicy_rules'))}`",
+                    f"- ignore-rules config key: `{_json_atom(session.get('ignore_rules_is_config_key'))}`",
+                    f"- ignore-rules CLI: `{session.get('ignore_rules_cli')}`",
+                ]
+            )
+
     if isinstance(banned, list) and banned:
         lines.extend(["", "## Do not use", ""])
         lines.extend(f"- {item}" for item in banned)
