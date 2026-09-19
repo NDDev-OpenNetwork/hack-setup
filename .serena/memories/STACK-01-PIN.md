@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 16c5389 docs(serena): record hierarchical bootstrap catalog
+Last commit: 28de672 docs(serena): sync stack pin and bootstrap memories
 Scope: build/stack-pin.json, build/stack-standard.md, docs/adr/0003-stack-pin.md, docs/adr/0004-product-stack.md, scripts/check_stack.py
 Area: STACK
 -->

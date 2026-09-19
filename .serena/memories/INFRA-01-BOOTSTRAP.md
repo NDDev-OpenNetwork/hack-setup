@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 16c5389 docs(serena): record hierarchical bootstrap catalog
+Last commit: 28de672 docs(serena): sync stack pin and bootstrap memories
 Scope: setup, install/, Makefile, docs/adr/0002-hierarchical-bootstrap.md
 Area: INFRA
 -->

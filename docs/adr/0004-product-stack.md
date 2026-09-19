@@ -49,4 +49,4 @@ their installer modules exist. `--strict` fails on declared drift.
 
 - `python3 scripts/check_codex_setup.py`
 - `python3 scripts/check_stack.py`
-- `python3 scripts/reverify_stack_pin.py`
+- Hackathon-day only: `python3 scripts/reverify_stack_pin.py`

@@ -1,6 +1,6 @@
 <!-- Memory Metadata
-Last updated: 2026-09-19
-Last commit: b0d6d67 docs: document one-command clone-and-setup flow
+Last updated: 2026-09-20
+Last commit: 28de672 docs(serena): sync stack pin and bootstrap memories
 Scope: .agents/, .codex/, plugins/saint-tibo/, AGENTS.md
 Area: CODEX
 -->
@@ -47,3 +47,4 @@ Repo skills are the workflow source of truth and load without plugin install. Th
 ## Verification
 
 - `python3 scripts/check_codex_setup.py`
+- `python3 scripts/check_stack.py` after pin or installer edits

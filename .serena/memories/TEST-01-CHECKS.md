@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 16c5389 docs(serena): record hierarchical bootstrap catalog
+Last commit: 28de672 docs(serena): sync stack pin and bootstrap memories
 Scope: scripts/check_codex_setup.py, scripts/check_stack.py, tests/
 Area: TEST
 -->

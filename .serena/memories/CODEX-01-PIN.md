@@ -1,6 +1,6 @@
 <!-- Memory Metadata
-Last updated: 2026-09-19
-Last commit: b0d6d67 docs: document one-command clone-and-setup flow
+Last updated: 2026-09-20
+Last commit: 28de672 docs(serena): sync stack pin and bootstrap memories
 Scope: build/codex-pin.json, docs/adr/0001-codex-cli-155-pin.md, install/modules/20-codex-cli/module.sh
 Area: CODEX
 -->
@@ -31,7 +31,6 @@ Record the verified Codex CLI pin for this repository.
 ## Invariants
 
 - `codex --version` must print `codex-cli 0.155.1` before setup work is treated as verified.
-- Do not treat NDDev `nddev-codex-app` `0.146.0` checkers as the contract for new artifacts.
 - Do not use the unpinned `chatgpt.com/codex/install.sh` as the catalog installer.
 
 ## Verification
