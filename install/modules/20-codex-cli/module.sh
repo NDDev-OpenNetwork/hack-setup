@@ -19,7 +19,7 @@ cli_version() {
 binary_version() {
   path="$1"
   [ -x "$path" ] || return 1
-  "$path" --version 2>/dev/null | awk '{print $NF; exit}'
+  "$path" --version 2>/dev/null | awk '{ if (NF >= 2) print $2; else print $1; exit }'
 }
 
 already_pinned() {

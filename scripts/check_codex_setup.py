@@ -216,8 +216,7 @@ def check_stack_pin() -> None:
     if not isinstance(banned, list) or "Next.js" not in banned or "pnpm" not in banned:
         raise CheckError("stack-pin.do_not_use must include Next.js and pnpm")
     check_verify_block(pin)
-    if not (ROOT / "build" / "stack-standard.md").is_file():
-        raise CheckError("missing build/stack-standard.md; run python3 scripts/check_stack.py --write")
+    check_generated_standard()
 
 
 def check_verify_block(pin: dict[str, object]) -> None:
@@ -277,6 +276,20 @@ def require_probe_entry(entry: object, label: str, pin: dict[str, object]) -> st
     if not isinstance(current, str) or not current.strip():
         raise CheckError(f"{label}.path {path} must resolve to a version string")
     return probe_id
+
+
+def check_generated_standard() -> None:
+    scripts_dir = Path(__file__).resolve().parent
+    if str(scripts_dir) not in sys.path:
+        sys.path.insert(0, str(scripts_dir))
+    import check_stack
+
+    stack = check_stack.load_json(check_stack.STACK_PIN_PATH)
+    codex = check_stack.load_json(check_stack.CODEX_PIN_PATH)
+    try:
+        check_stack.check_standard_fresh(stack, check_stack.load_probes(stack, codex))
+    except check_stack.CheckError as exc:
+        raise CheckError(str(exc)) from exc
 
 
 def check_bootstrap() -> None:
