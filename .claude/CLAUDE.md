@@ -3,13 +3,21 @@
 This repository is Codex harness setup, not an application. The product is
 the tracked Codex project surfaces.
 
+Law is `build/codex-pin.json` + `build/stack-pin.json`. Runtime is
+`.codex/config.toml`. Proof is `just check`. Rules are on-demand.
+
 ## Pin
 
 Codex CLI must be `0.155.1`. See `build/codex-pin.json` and
 `docs/adr/0001-codex-cli-155-pin.md`. The product stack is
 `build/stack-pin.json` schema 2 and `docs/adr/0004-product-stack.md`.
-Do not add Next.js or pnpm. Host doctor: `python3 scripts/check_stack.py`.
-On hackathon day run `python3 scripts/reverify_stack_pin.py`.
+Do not add Next.js, pnpm, `typescript@6` in web, `@hey-api/openapi-ts`
+next to TypeScript `7.0.2`, or a Makefile. Codex session is YOLO
+(`registered.session`, ADR 0006): never ask, no OS sandbox. Models
+are `gpt-6-astra` / `gpt-5.6-sol` at `xhigh`, window `872000` /
+compact `700000`, no Codex subagents (ADR 0007). Commands:
+`just gate` / `just check`. Host doctor: `python3 scripts/check_stack.py`.
+Hackathon-day: `just reverify`. `docs/research/` is archive, not law.
 
 ## Do not treat this as a Claude skill tree
 
@@ -22,10 +30,8 @@ root `CLAUDE.md`.
 ```bash
 ./setup
 . install/env.sh
-./setup --status
-python3 scripts/check_codex_setup.py
-python3 scripts/check_stack.py
-codex --version
+just gate
+just test
 ```
 
 Do not add a root file named `install`. The entry is `./setup`.
