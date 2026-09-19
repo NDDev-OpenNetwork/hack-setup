@@ -1,7 +1,7 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 2d182e1 docs(plugin): list apply-stack-rule among repo skill names
-Scope: AGENTS.md, build/, .agents/, .codex/, plugins/saint-tibo/, install/, justfile, docs/rules/, docs/adr/
+Last commit: 53d8d31 docs: accept ADR 0008 and retarget routers to the plugin
+Scope: AGENTS.md, build/, .agents/, .codex/, plugins/saint-tibo/, plugins/hack-agent-standards/, install/, justfile, docs/adr/
 Area: CORE
 -->
 
@@ -13,12 +13,12 @@ Index durable knowledge for the Codex 0.155.1 team setup repository. No applicat
 
 ## Source Of Truth
 
-- Control loop: pin (`build/codex-pin.json` + `build/stack-pin.json`) → runtime (`.codex/config.toml`) → proof (`just check` / `just gate`) → on-demand rules (`docs/rules/INDEX.md`). `AGENTS.md` is the router.
-- `AGENTS.md`: Codex project instructions. Router to `docs/rules/INDEX.md`.
-- `docs/rules/INDEX.md`: on-demand technology/format rules. Pin numbers win.
-- `docs/adr/0001`–`0007`: accepted decisions. Session law is ADR 0006. Models/context/no-subagents is ADR 0007.
+- Control loop: pin (`build/codex-pin.json` + `build/stack-pin.json`) → runtime (`.codex/config.toml`) → proof (`just check` / `just gate`) → on-demand frames (`plugins/hack-agent-standards/standards/INDEX.md`). `AGENTS.md` is the router.
+- `AGENTS.md`: Codex project instructions. Router to the standards plugin INDEX.
+- `plugins/hack-agent-standards/standards/`: on-demand frames. Pin numbers win. Owner turn beats a frame. ADR 0008.
+- `docs/adr/0001`–`0008`: accepted decisions. Session law is ADR 0006. Models/context/no-subagents is ADR 0007. Frames plugin is ADR 0008.
 - `build/codex-pin.json`: CLI pin plus official installer/package sha256.
-- `build/stack-pin.json`: product stack schema 2.
+- `build/stack-pin.json`: product stack schema 2. `control.rules` is the plugin INDEX.
 - `build/stack-standard.md`: generated from the pin via `python3 scripts/check_stack.py --write`.
 - `justfile`: project command runner (`just` `1.58.0`). No Makefile.
 - Codex surfaces: `mem:CODEX-01-PIN`, `mem:CODEX-02-SURFACES`.
@@ -26,7 +26,7 @@ Index durable knowledge for the Codex 0.155.1 team setup repository. No applicat
 - Bootstrap: `mem:INFRA-01-BOOTSTRAP`.
 - Checks: `mem:TEST-01-CHECKS`.
 
-`docs/research/` is an archive. It is not runtime law.
+`docs/research/` is an archive. It is not runtime law. `docs/rules/` and `docs/agent-standards/` must not exist.
 
 ## Entry Points
 
@@ -37,14 +37,15 @@ Index durable knowledge for the Codex 0.155.1 team setup repository. No applicat
 
 ## Current Behavior
 
-Author remote is `NDDev-OpenNetwork/hack-setup`. Later working remote is `BAITC-Hacks/hack-a58598e0-saint-tibo` and is not pushed unless the owner asks. `./setup` installs only Codex plus Node/bun/uv/Python. Isolated Serena and `hooks.json` are not installed by `./setup`. Web typescript is only `7.0.2`. Codex session models are `gpt-6-astra` / `gpt-5.6-sol` at `xhigh`, window `872000` / compact `700000`. Codex subagents are off.
+Author remote is `NDDev-OpenNetwork/hack-setup`. Later working remote is `BAITC-Hacks/hack-a58598e0-saint-tibo` and is not pushed unless the owner asks. `./setup` installs only Codex plus Node/bun/uv/Python. Isolated Serena and `hooks.json` are not installed by `./setup`. Web typescript is only `7.0.2`. Codex session models are `gpt-6-astra` / `gpt-5.6-sol` at `xhigh`, window `872000` / compact `700000`. Codex subagents are off. Setup owner stream is Danil. This public repo may land setup commits on `main` when Danil asked.
 
 ## Invariants
 
 - Codex CLI pin is `0.155.1` / `rust-v0.155.1`.
 - Root entry is `./setup`, not a file named `install`.
 - Project commands are `just`. Do not add a Makefile.
-- Repo skill names do not collide with plugin skill names.
+- Repo skill names do not collide with either plugin skill set.
+- Marketplace lists `saint-tibo` then `hack-agent-standards`.
 - No secrets in the public tree.
 - Do not add pnpm, Next.js, R3F, a second JS lockfile, typescript@6 in web, `@hey-api/openapi-ts@next`, `bun add shadcn`, or unconstrained `docling` / `opencv-python`.
 

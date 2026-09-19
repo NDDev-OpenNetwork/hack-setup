@@ -1,7 +1,7 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 2d182e1 docs(plugin): list apply-stack-rule among repo skill names
-Scope: build/stack-pin.json, build/stack-standard.md, docs/adr/0003-stack-pin.md, docs/adr/0004-product-stack.md, justfile, scripts/check_stack.py
+Last commit: 53d8d31 docs: accept ADR 0008 and retarget routers to the plugin
+Scope: build/stack-pin.json, build/stack-standard.md, docs/adr/0003-stack-pin.md, docs/adr/0004-product-stack.md, docs/adr/0008-agent-standards-plugin.md, justfile, scripts/check_stack.py
 Area: STACK
 -->
 
@@ -15,7 +15,8 @@ Frozen product + toolchain standard and host doctor.
 
 - `build/stack-pin.json` schema 2, `verified_on` 2026-09-20. `control` names the pin → config → `just check` loop.
 - `build/stack-standard.md`: generated; refresh with `python3 scripts/check_stack.py --write`.
-- `docs/adr/0003-stack-pin.md`, `docs/adr/0004-product-stack.md`, `docs/adr/0006-codex-yolo-session.md`, and `docs/adr/0007-codex-models-context.md`.
+- `docs/adr/0003-stack-pin.md`, `docs/adr/0004-product-stack.md`, `docs/adr/0006-codex-yolo-session.md`, `docs/adr/0007-codex-models-context.md`, and `docs/adr/0008-agent-standards-plugin.md`.
+- `control.rules` is `plugins/hack-agent-standards/standards/INDEX.md`. Generated standard lists both plugins.
 - Codex session: `registered.session` (`never` + `danger-full-access` + `web_search=live`).
 - Codex models: `models.primary=gpt-6-astra`, `models.secondary=gpt-5.6-sol`, `reasoning_effort=xhigh`. Window/compact `872000`/`700000`; usable `828400`; 90% compact cap `784800`.
 - `justfile` / `quality.just` `1.58.0`.
