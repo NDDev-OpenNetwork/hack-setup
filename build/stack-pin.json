@@ -4,6 +4,15 @@
   "reverify_on_hackathon": true,
   "policy": "latest-compatible-stable; freeze after prep; hackathon bumps are explicit",
   "codex_pin": "build/codex-pin.json",
+  "control": {
+    "law": ["build/codex-pin.json", "build/stack-pin.json"],
+    "runtime": ".codex/config.toml",
+    "generated": "build/stack-standard.md",
+    "router": "AGENTS.md",
+    "rules": "docs/rules/INDEX.md",
+    "proof": "just check",
+    "gate": "just gate"
+  },
   "package_manager": "bun",
   "locales": ["ru", "kk", "en"],
   "do_not_use": [
@@ -14,7 +23,7 @@
     "React Three Fiber / @react-three/drei",
     "LangChain / LlamaIndex as required orchestration",
     "Elasticsearch / pgvector",
-    "pasync as a PostgreSQL driver",
+    "asyncpg as a PostgreSQL driver",
     "independent Dart upgrades outside Flutter",
     "Tauri 3 alpha",
     "Node.js 26 Current",
@@ -22,9 +31,21 @@
     "LiteLLM proxy-runtime extra in the API env",
     "opencv-python together with opencv-python-headless",
     "second JS lockfile",
+    "typescript@6 or @typescript/typescript6 in the web workspace",
+    "typescript-eslint in the web workspace",
+    "@hey-api/openapi-ts@next",
+    "bun add shadcn (nests zod 3); use bunx shadcn@4.21.0",
+    "@types/node 26.x until Node 26 is LTS",
+    "unconstrained rapidocr / opencv-python; pin is opencv-python-headless 5.0.0.93",
+    "httpx 1.x; FastAPI extras require httpx<1",
+    "GNU make / Makefile as the project command runner",
     "0.156.0-alpha",
     "Codex.app",
-    "gpt-6-astra until Codex CLI pin changes"
+    "gpt-5.6-luna",
+    "gpt-5.6-terra",
+    "gpt-5.6 as a Codex session slug (not a catalog slug; use gpt-5.6-sol)",
+    "Codex subagents / features.multi_agent / features.multi_agent_v2",
+    "model_reasoning_effort extra-high or x-high (wire value is xhigh)"
   ],
   "environments": {
     "api_workers": {
@@ -35,7 +56,7 @@
     "telegram": {
       "python": "3.14.7",
       "redis_py": "7.4.1",
-      "reason": "aiogram[redis] requires redis<8; isolate from taskiq-redis >=8"
+      "reason": "aiogram[redis] 3.31.0 requires redis[hiredis]<8,>=6.2.0; taskiq-redis 1.2.3 requires redis>=8,<9"
     },
     "gpu_ml": {
       "isolates": ["faster-whisper", "CTranslate2", "PyTorch", "ONNX Runtime", "FastEmbed"]
@@ -59,23 +80,65 @@
       "cli": "codex plugin add saint-tibo@saint-tibo",
       "status": "enabled in project config after trust; plugin add not run by ./setup"
     },
-    "agents": ["mapper", "reviewer", "implementer"],
-    "repo_skills": ["repo-orientation", "quality-gate", "one-repo-workflow"],
+    "agents": [],
+    "agents_enabled": false,
+    "repo_skills": [
+      "repo-orientation",
+      "quality-gate",
+      "one-repo-workflow",
+      "apply-stack-rule"
+    ],
     "plugin_skills": ["saint-tibo"],
     "features": {
-      "multi_agent": true,
+      "multi_agent": false,
+      "multi_agent_v2": false,
       "hooks": true,
       "memories": false,
-      "web_search": "cached"
+      "web_search": "live"
+    },
+    "session": {
+      "approval_policy": "never",
+      "sandbox_mode": "danger-full-access",
+      "allow_login_shell": true,
+      "web_search": "live",
+      "permission_system": "sandbox_mode",
+      "cli_equivalent": "--dangerously-bypass-approvals-and-sandbox",
+      "cli_alias": "--yolo",
+      "not_yolo": "--full-auto",
+      "project_execpolicy_rules": false,
+      "ignore_rules_is_config_key": false,
+      "ignore_rules_cli": "codex exec --ignore-rules"
     }
   },
   "models": {
-    "default": "gpt-5.6",
-    "alias_of": "gpt-5.6-sol",
-    "mapper": "gpt-5.6-luna",
-    "reviewer": "gpt-5.6-terra",
-    "implementer": "gpt-5.6",
-    "source": "https://developers.openai.com/api/docs/models"
+    "primary": "gpt-6-astra",
+    "secondary": "gpt-5.6-sol",
+    "secondary_profile": "sol",
+    "review_model": "gpt-5.6-sol",
+    "reasoning_effort": "xhigh",
+    "reject": [
+      "gpt-5.6-luna",
+      "gpt-5.6-terra",
+      "gpt-5.6",
+      "gpt-6",
+      "extra-high",
+      "x-high",
+      "extra_high"
+    ],
+    "source_primary": "https://developers.openai.com/api/docs/models/gpt-6-astra",
+    "source_secondary": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+    "api_context_window": 1050000,
+    "api_max_input": 922000,
+    "api_max_output": 128000,
+    "requested_context_window": 872000,
+    "requested_auto_compact": 700000,
+    "tibo_recipe": "https://x.com/thsottiaux/status/2089082893804896524",
+    "catalog_default_context_window": 272000,
+    "catalog_max_context_window": 872000,
+    "catalog_auto_compact_cap": 784800,
+    "effective_context_window": 872000,
+    "usable_context_window": 828400,
+    "effective_auto_compact": 700000
   },
   "runtimes": {
     "node": {
@@ -161,8 +224,7 @@
     },
     "typescript": {
       "version": "7.0.2",
-      "role": "primary compiler; native Go port, not tsgo preview",
-      "compat_package": "@typescript/typescript6"
+      "role": "only web/desktop typechecker; native Go tsc; no JS compiler API in this package"
     },
     "rust": {
       "version": "1.98.1",
@@ -188,7 +250,13 @@
     "router": { "package": "@tanstack/react-router", "version": "1.170.38" },
     "query": { "package": "@tanstack/react-query", "version": "5.103.1" },
     "tailwindcss": { "package": "tailwindcss", "version": "4.3.3", "plugin": "@tailwindcss/postcss@4.3.3" },
-    "shadcn": { "package": "shadcn", "version": "4.21.0", "primitives": "@base-ui/react@1.8.0", "cli": "bunx shadcn@4.21.0" },
+    "shadcn": {
+      "package": "shadcn",
+      "version": "4.21.0",
+      "primitives": "@base-ui/react@1.8.0",
+      "cli": "bunx shadcn@4.21.0",
+      "install": "cli-only; do not bun add shadcn"
+    },
     "forms": {
       "react_hook_form": { "package": "react-hook-form", "version": "7.88.0" },
       "resolvers": { "package": "@hookform/resolvers", "version": "5.9.1" }
@@ -214,20 +282,35 @@
       "package": "@hey-api/openapi-ts",
       "version": "0.99.0",
       "engines": "node >=22.18",
-      "contract": "FastAPI OpenAPI is the only API source; clients are generated"
+      "contract": "FastAPI OpenAPI is the only API source; clients are generated",
+      "workspace": "not-web",
+      "reason": "0.99.0 crashes if it resolves typescript@7.0.2; do not install it next to the web compiler; do not add typescript@6 to web; do not take @next"
     },
     "types_react": { "package": "@types/react", "version": "19.3.0" },
-    "types_node": { "package": "@types/node", "version": "24.13.6" }
+    "types_node": {
+      "package": "@types/node",
+      "version": "24.13.6",
+      "reject": "26.x until Node 26 is LTS"
+    }
   },
   "backend": {
     "fastapi": { "package": "fastapi", "version": "0.141.1" },
     "uvicorn": { "package": "uvicorn", "version": "0.53.0" },
-    "pydantic": { "package": "pydantic", "version": "2.13.5" },
+    "pydantic": { "package": "pydantic", "version": "2.13.5", "reject": "2.14 beta" },
     "pydantic_settings": { "package": "pydantic-settings", "version": "2.15.0" },
-    "sqlalchemy": { "package": "SQLAlchemy", "version": "2.0.54", "style": "async primary" },
+    "sqlalchemy": {
+      "package": "SQLAlchemy",
+      "version": "2.0.54",
+      "style": "async primary",
+      "reject": "2.1.0 rc"
+    },
     "psycopg": { "package": "psycopg", "version": "3.3.6" },
     "alembic": { "package": "alembic", "version": "1.20.0" },
-    "httpx": { "package": "httpx", "version": "0.28.1" },
+    "httpx": {
+      "package": "httpx",
+      "version": "0.28.1",
+      "cap": "FastAPI extras require httpx<1.0.0,>=0.23.0"
+    },
     "taskiq": { "package": "taskiq", "version": "0.12.6" },
     "taskiq_redis": { "package": "taskiq-redis", "version": "1.2.3", "broker": "RedisStreamBroker" },
     "pyo3": { "package": "pyo3", "version": "0.29.2", "via": "crates.io" },
@@ -270,6 +353,7 @@
       "line": "2",
       "cli": { "package": "@tauri-apps/cli", "version": "2.11.4" },
       "api": { "package": "@tauri-apps/api", "version": "2.11.1" },
+      "crate": { "package": "tauri", "version": "2.11.5" },
       "shell": "reuse React/Vite web UI",
       "reject": "3.0.0-alpha"
     },
@@ -292,11 +376,15 @@
     "payments_test": "Stripe Python SDK + Checkout + Stripe CLI sandbox"
   },
   "ai": {
-    "cliproxyapi": { "version": "7.3.8" },
+    "cliproxyapi": {
+      "version": "7.3.9",
+      "source": "https://github.com/router-for-me/CLIProxyAPI",
+      "not_pypi": true
+    },
     "litellm": { "package": "litellm", "version": "1.101.0", "mode": "SDK/Router in API; no proxy-runtime extra" },
     "openai": {
       "package": "openai",
-      "version": "2.9.0",
+      "version": "2.54.0",
       "reverify": "pinned-compatible",
       "reason": "litellm 1.101.0 requires openai>=2.20,<3"
     },
@@ -304,7 +392,12 @@
     "accuracy": "schema validity, subject correctness, and source citation are separate checks"
   },
   "media": {
-    "docling": { "package": "docling", "version": "2.129.0" },
+    "docling": {
+      "package": "docling",
+      "version": "2.129.0",
+      "install": "constrained; default extra standard pulls rapidocr, opencv-python, and torch",
+      "pdf": "pypdfium2 via docling extra; pypdf is a separate non-docling path"
+    },
     "pypdf": { "package": "pypdf", "version": "6.19.0" },
     "ocr": { "engine": "Tesseract", "langs": ["rus", "kaz", "eng"] },
     "pillow": { "package": "pillow", "version": "12.3.0" },
@@ -354,7 +447,11 @@
     "ruff": { "package": "ruff", "version": "0.16.8" },
     "ty": { "package": "ty", "version": "0.0.82" },
     "pytest": { "package": "pytest", "version": "9.1.1" },
-    "just": { "role": "monorepo command runner; pin at scaffold" },
+    "just": {
+      "package": "just",
+      "version": "1.58.0",
+      "role": "project command runner; no Makefile"
+    },
     "required_gates": [
       "OpenAPI contract sync",
       "TypeScript 7 check",
@@ -365,15 +462,19 @@
   "conflicts": [
     {
       "id": "ts7-compiler-api",
-      "decision": "TS7 is the typechecker; @typescript/typescript6 only for tools that still need the JS compiler API"
+      "decision": "Web/desktop have exactly one typescript package: 7.0.2. Do not add typescript@6 or @typescript/typescript6 to web. Lint is Biome, not typescript-eslint."
     },
     {
       "id": "openapi-typescript-ts5",
-      "decision": "Hey API @hey-api/openapi-ts 0.99.0; do not force openapi-typescript onto TS7"
+      "decision": "Do not add openapi-typescript. Intended generator remains @hey-api/openapi-ts."
+    },
+    {
+      "id": "hey-api-ts7-runtime",
+      "decision": "@hey-api/openapi-ts 0.99.0 is latest stable but crashes next to typescript@7.0.2. Keep it out of the web workspace. Do not take @next (still a dated nightly as of 2026-09-18). Generated .ts is typechecked by tsc 7. Revisit when a stable release has no TypeScript Compiler API dependency."
     },
     {
       "id": "aiogram-redis-vs-taskiq",
-      "decision": "API/worker redis-py 8.1.0; Telegram env redis-py 7.4.1; one Redis server 8.10.2"
+      "decision": "API/worker redis-py 8.1.0 (taskiq-redis >=8,<9); Telegram env redis-py 7.4.1 (aiogram[redis] requires redis[hiredis]<8,>=6.2.0); one Redis server 8.10.2"
     },
     {
       "id": "litellm-otel",
@@ -381,7 +482,19 @@
     },
     {
       "id": "r3f-react-19-3",
-      "decision": "direct three 0.186.0; no R3F/Drei"
+      "decision": "direct three 0.186.0; @react-three/fiber 9.7 and v10 canary still peer react <19.3 (issue 3915); no R3F/Drei"
+    },
+    {
+      "id": "docling-opencv-cv2",
+      "decision": "opencv-python-headless 5.0.0.93 is the only cv2. Default docling 2.129.0 extra standard pulls rapidocr>=3.9.1 which requires opencv_python. Constrain opencv-python; do not add unconstrained RapidOCR; keep torch from that extra out of the API env. pypdf 6.19.0 is separate from docling pypdfium2."
+    },
+    {
+      "id": "shadcn-cli-not-dep",
+      "decision": "Install UI with bunx shadcn@4.21.0. Do not bun add shadcn; that package nests zod ^3."
+    },
+    {
+      "id": "httpx-fastapi-lt-1",
+      "decision": "httpx 0.28.1 is latest stable. FastAPI extras require httpx<1.0.0,>=0.23.0. Do not take httpx 1.x."
     },
     {
       "id": "flutter-dart",
@@ -389,7 +502,11 @@
     },
     {
       "id": "openai-sdk-major",
-      "decision": "API env openai 2.9.0 because litellm 1.101.0 is openai<3"
+      "decision": "API env openai 2.54.0 because LiteLLM 1.101.0 requires openai>=2.20,<3; do not put openai 3.x in the API env"
+    },
+    {
+      "id": "litellm-python-lt-315",
+      "decision": "LiteLLM 1.101.0 requires Python >=3.10,<3.15; stay on 3.14.7"
     }
   ],
   "verify": {
@@ -487,6 +604,13 @@
         "bin": "pytest",
         "argv": ["--version"],
         "pattern": "pytest\\s+([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "just",
+        "path": "quality.just.version",
+        "bin": "just",
+        "argv": ["--version"],
+        "pattern": "just\\s+([0-9]+(?:\\.[0-9]+)*)"
       }
     ]
   }
