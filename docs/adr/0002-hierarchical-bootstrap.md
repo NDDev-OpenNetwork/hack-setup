@@ -28,8 +28,11 @@ the entrypoint.
 ## Decision Outcome
 
 Chosen option: `./setup` execs `install/bootstrap.sh`. Modules are
-discovered in numeric order. `install/catalog.toml` is the documented
-contract and is enforced by `scripts/check_codex_setup.py`.
+discovered by glob `install/modules/[0-9][0-9]-*` in numeric order.
+A `disabled` file skips a module. `install/catalog.toml` is a snapshot
+of those directories; bootstrap does not read it. `enabled` is
+documentary. `scripts/check_codex_setup.py` requires the snapshot to
+match the numbered dirs exactly.
 
 The Codex module downloads
 `https://github.com/openai/codex/releases/download/rust-v0.155.1/install.sh`,
@@ -47,14 +50,14 @@ order after `. install/env.sh` prefers the pinned binary.
 
 ## Consequences
 
-Current catalog: `10-prereqs`, `20-codex-cli`, `30-runtimes`,
-`40-project-verify`. Future installers add a numbered directory and a
-catalog row. The validator must stay in sync with the catalog. A Darwin
-root file named `install` must never be added.
+Current modules: `10-prereqs`, `20-codex-cli`, `30-runtimes`,
+`40-project-verify`. Future installers add `install/modules/<nn>-<id>/`
+and the matching `catalog.toml` row so the artifact gate still passes.
+A Darwin root file named `install` must never be added.
 
 ## Confirmation
 
-- `./setup --dry-run` exits 0
+- `just dry-run` / `./setup --dry-run` exits 0
 - `./setup` installs or links Codex CLI `0.155.1` and pinned runtimes
-- `python3 scripts/check_codex_setup.py` exits 0
-- `python3 scripts/check_stack.py` exits 0
+- `just check` exits 0
+- Project commands are `justfile`. Do not add a Makefile.
