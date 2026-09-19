@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Compare selected stack-pin versions to live latest. Network required.
 
-Packages marked reverify=pinned-compatible (openai 2.9.0) are not compared
-to npm/PyPI latest.
+openai is not compared to PyPI latest (3.x is forbidden in the API env).
+The pin must still satisfy LiteLLM 1.101.0: openai>=2.20,<3.
 """
 
 from __future__ import annotations
@@ -59,6 +59,18 @@ def pypi_latest(name: str) -> str:
     return str(payload["info"]["version"])
 
 
+def parse_ver(text: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in text.split(".")[:3])
+
+
+def check_openai_range(pin: dict[str, object]) -> str:
+    version = lookup(pin, "ai.openai")
+    parsed = parse_ver(version)
+    if not (parse_ver("2.20.0") <= parsed < parse_ver("3.0.0")):
+        raise SystemExit(f"ai.openai {version} does not satisfy LiteLLM openai>=2.20,<3")
+    return version
+
+
 def node_lts() -> str:
     with urllib.request.urlopen("https://nodejs.org/dist/index.json", timeout=20) as response:
         rows = json.load(response)
@@ -92,11 +104,13 @@ def main() -> int:
     if mark == "DRIFT":
         drift += 1
     print(f"{mark:5} {'runtimes.node':28} pin={pinned_node:12} latest={latest_node} (newest LTS row)")
+    openai_pin = check_openai_range(pin)
+    print(f"OK    {'ai.openai':28} pin={openai_pin:12} range=openai>=2.20,<3")
     if drift:
         print(f"DRIFT {drift} entries; update build/stack-pin.json and verified_on")
         return 1
     print("PASS stack pin matches live latest tags for tracked packages")
-    print("NOTE openai 2.9.0 is pinned-compatible for LiteLLM, not latest 3.x")
+    print(f"NOTE openai {openai_pin} is pinned-compatible for LiteLLM (>=2.20,<3), not latest 3.x")
     return 0
 
 
