@@ -1,0 +1,17 @@
+.DS_Store
+.codex-log/
+*.log
+.env
+.env.*
+!.env.example
+.serena/cache/
+.serena/reviews/
+.serena/diagnostics/
+.serena/.flow_*
+.serena/.serena_sync_state.json
+.serena/.auto_sync_head
+.serena/.dirty_stop_ack
+.serena/.sync_marker
+__pycache__/
+*.pyc
+.pytest_cache/
