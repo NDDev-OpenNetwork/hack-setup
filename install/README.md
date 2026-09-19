@@ -16,8 +16,8 @@ cd hack-setup
 ```text
 setup                         # execs install/bootstrap.sh
 install/
-  catalog.toml                # documented module contract
-  bootstrap.sh                # discovers modules/<nn>-*/module.sh
+  catalog.toml                # snapshot of numbered dirs; not read at runtime
+  bootstrap.sh                # globs modules/<nn>-*/module.sh
   env.sh                      # prepends .local/bin then ~/.local/bin
   lib/                        # POSIX helpers
   modules/
@@ -27,7 +27,7 @@ install/
     40-project-verify/        # artifact gate + pinned versions
 ```
 
-Add a future installer as `install/modules/<nn>-<id>/module.sh` (`install` / `status` / `dry-run`). Disable with a `disabled` file in that directory. Keep `catalog.toml` in sync.
+Add a future installer as `install/modules/<nn>-<id>/module.sh` (`install` / `status` / `dry-run`) and the matching `catalog.toml` row. Disable with a `disabled` file in that directory. Bootstrap does not read `enabled`.
 
 ## Pins
 
@@ -48,10 +48,11 @@ The binary is installed to `~/.local/bin/codex` (not a clone-absolute PATH) and 
 
 | Command | Effect |
 | --- | --- |
-| `./setup` | install enabled modules |
+| `./setup` | install numbered modules (skip `disabled`) |
 | `./setup --dry-run` | print planned work |
 | `./setup --status` | check without downloads |
 | `./setup --print-env` | print PATH export |
-| `make test` | pytest |
-| `make check` | artifact validator + host doctor |
-| `make stack` | print generated stack standard |
+| `just test` | pytest |
+| `just check` | artifact validator + host doctor |
+| `just gate` | AGENTS four-command ready gate |
+| `just stack` | print generated stack standard |
