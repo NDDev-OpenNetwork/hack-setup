@@ -88,6 +88,11 @@ def collect_skill_names(root: Path) -> dict[str, Path]:
         return names
     for skill_md in sorted(root.glob("*/SKILL.md")):
         name = skill_name(skill_md)
+        if skill_md.parent.name != name:
+            raise CheckError(
+                f"{skill_md.relative_to(ROOT)} name {name} must match "
+                f"directory {skill_md.parent.name}"
+            )
         if name in names:
             raise CheckError(f"duplicate skill name {name}: {names[name]} and {skill_md}")
         names[name] = skill_md
@@ -151,17 +156,136 @@ def check_stack_pin() -> None:
         raise CheckError("stack-pin.verified_on must be YYYY-MM-DD")
     if pin.get("codex_pin") != "build/codex-pin.json":
         raise CheckError("stack-pin.codex_pin must point at build/codex-pin.json")
+    control = pin.get("control")
+    if not isinstance(control, dict):
+        raise CheckError("stack-pin.control must be an object")
+    law = control.get("law")
+    if law != ["build/codex-pin.json", "build/stack-pin.json"]:
+        raise CheckError("stack-pin.control.law must be the two pin files")
+    for key, expected in (
+        ("runtime", ".codex/config.toml"),
+        ("generated", "build/stack-standard.md"),
+        ("router", "AGENTS.md"),
+        ("rules", "docs/rules/INDEX.md"),
+        ("proof", "just check"),
+        ("gate", "just gate"),
+    ):
+        if control.get(key) != expected:
+            raise CheckError(f"stack-pin.control.{key} must be {expected}")
+    for rel in ("build/codex-pin.json", "build/stack-pin.json", ".codex/config.toml",
+                "build/stack-standard.md", "AGENTS.md", "docs/rules/INDEX.md", "justfile"):
+        if not (ROOT / rel).is_file():
+            raise CheckError(f"control path missing: {rel}")
+    justfile = read_text(ROOT / "justfile")
+    if not re.search(r"^check:", justfile, re.M):
+        raise CheckError("justfile must define the proof recipe `check:`")
+    if not re.search(r"^gate:", justfile, re.M):
+        raise CheckError("justfile must define the gate recipe `gate:`")
     registered = pin.get("registered")
     if not isinstance(registered, dict):
         raise CheckError("stack-pin.registered must be an object")
     plugin = registered.get("plugin")
     if not isinstance(plugin, dict) or plugin.get("id") != "saint-tibo@saint-tibo":
         raise CheckError("stack-pin must register plugin id saint-tibo@saint-tibo")
-    if registered.get("agents") != ["mapper", "reviewer", "implementer"]:
-        raise CheckError("stack-pin agents must be mapper, reviewer, implementer")
+    if registered.get("agents_enabled") is not False:
+        raise CheckError("stack-pin.registered.agents_enabled must be false")
+    if registered.get("agents") != []:
+        raise CheckError("stack-pin.registered.agents must be an empty list")
+    session = registered.get("session")
+    if not isinstance(session, dict):
+        raise CheckError("stack-pin.registered.session must be an object")
+    if session.get("approval_policy") != "never":
+        raise CheckError('stack-pin.registered.session.approval_policy must be "never"')
+    if session.get("sandbox_mode") != "danger-full-access":
+        raise CheckError(
+            'stack-pin.registered.session.sandbox_mode must be "danger-full-access"'
+        )
+    if session.get("allow_login_shell") is not True:
+        raise CheckError("stack-pin.registered.session.allow_login_shell must be true")
+    if session.get("web_search") != "live":
+        raise CheckError('stack-pin.registered.session.web_search must be "live"')
+    if session.get("permission_system") != "sandbox_mode":
+        raise CheckError(
+            'stack-pin.registered.session.permission_system must be "sandbox_mode"'
+        )
+    if "agents_inherit_parent_sandbox" in session:
+        raise CheckError(
+            "registered.session.agents_inherit_parent_sandbox is leftover; "
+            "project agents are off"
+        )
+    if session.get("project_execpolicy_rules") is not False:
+        raise CheckError(
+            "stack-pin.registered.session.project_execpolicy_rules must be false"
+        )
+    if session.get("ignore_rules_is_config_key") is not False:
+        raise CheckError(
+            "stack-pin.registered.session.ignore_rules_is_config_key must be false"
+        )
+    features = registered.get("features")
+    if not isinstance(features, dict) or features.get("web_search") != "live":
+        raise CheckError('stack-pin.registered.features.web_search must be "live"')
+    if features.get("multi_agent") is not False:
+        raise CheckError("stack-pin.registered.features.multi_agent must be false")
+    if features.get("multi_agent_v2") is not False:
+        raise CheckError("stack-pin.registered.features.multi_agent_v2 must be false")
+    if features.get("hooks") is not True:
+        raise CheckError("stack-pin.registered.features.hooks must be true")
+    if features.get("memories") is not False:
+        raise CheckError("stack-pin.registered.features.memories must be false")
     models = pin.get("models")
-    if not isinstance(models, dict) or models.get("default") != "gpt-5.6":
-        raise CheckError("stack-pin models.default must be gpt-5.6")
+    if not isinstance(models, dict):
+        raise CheckError("stack-pin.models must be an object")
+    if models.get("primary") != "gpt-6-astra":
+        raise CheckError('stack-pin.models.primary must be "gpt-6-astra"')
+    if models.get("secondary") != "gpt-5.6-sol":
+        raise CheckError('stack-pin.models.secondary must be "gpt-5.6-sol"')
+    if models.get("secondary_profile") != "sol":
+        raise CheckError('stack-pin.models.secondary_profile must be "sol"')
+    if models.get("review_model") != "gpt-5.6-sol":
+        raise CheckError('stack-pin.models.review_model must be "gpt-5.6-sol"')
+    if models.get("reasoning_effort") != "xhigh":
+        raise CheckError('stack-pin.models.reasoning_effort must be "xhigh"')
+    if models.get("requested_context_window") != 872_000:
+        raise CheckError("stack-pin.models.requested_context_window must be 872000")
+    if models.get("requested_auto_compact") != 700_000:
+        raise CheckError("stack-pin.models.requested_auto_compact must be 700000")
+    if models.get("catalog_max_context_window") != 872_000:
+        raise CheckError("stack-pin.models.catalog_max_context_window must be 872000")
+    if models.get("catalog_auto_compact_cap") != 784_800:
+        raise CheckError("stack-pin.models.catalog_auto_compact_cap must be 784800")
+    if models.get("effective_context_window") != 872_000:
+        raise CheckError("stack-pin.models.effective_context_window must be 872000")
+    if models.get("usable_context_window") != 828_400:
+        raise CheckError("stack-pin.models.usable_context_window must be 828400")
+    if models.get("effective_auto_compact") != 700_000:
+        raise CheckError("stack-pin.models.effective_auto_compact must be 700000")
+    catalog_max = models.get("catalog_max_context_window")
+    if not isinstance(catalog_max, int):
+        raise CheckError("stack-pin.models.catalog_max_context_window must be an int")
+    if models.get("requested_context_window") != catalog_max:
+        raise CheckError("requested_context_window must equal catalog_max_context_window")
+    if models.get("effective_context_window") != catalog_max:
+        raise CheckError("effective_context_window must equal catalog_max_context_window")
+    if models.get("usable_context_window") != catalog_max * 95 // 100:
+        raise CheckError("usable_context_window must be catalog_max * 95 / 100")
+    if models.get("catalog_auto_compact_cap") != catalog_max * 9 // 10:
+        raise CheckError("catalog_auto_compact_cap must be catalog_max * 90%")
+    compact = models.get("requested_auto_compact")
+    if not isinstance(compact, int):
+        raise CheckError("requested_auto_compact must be an int")
+    if compact > models.get("catalog_auto_compact_cap"):
+        raise CheckError("requested_auto_compact must be <= catalog 90% cap")
+    if compact >= models.get("usable_context_window"):
+        raise CheckError("requested_auto_compact must be below usable /status")
+    if models.get("effective_auto_compact") != compact:
+        raise CheckError("effective_auto_compact must equal requested_auto_compact")
+    reject = models.get("reject")
+    if not isinstance(reject, list) or not {
+        "gpt-5.6-luna",
+        "gpt-5.6-terra",
+        "gpt-5.6",
+    }.issubset(reject):
+        raise CheckError("stack-pin.models.reject must include gpt-5.6-luna, gpt-5.6-terra, gpt-5.6")
     if pin.get("package_manager") != "bun":
         raise CheckError("stack-pin.package_manager must be bun")
     if "pnpm" in pin.get("runtimes", {}):
@@ -171,6 +295,12 @@ def check_stack_pin() -> None:
         raise CheckError("stack-pin.runtimes must be an object")
     for key in ("node", "bun", "uv", "typescript", "rust", "go"):
         require_versioned_package(runtimes.get(key), f"stack-pin.runtimes.{key}")
+    typescript = runtimes.get("typescript")
+    if isinstance(typescript, dict):
+        if typescript.get("version") != "7.0.2":
+            raise CheckError("stack-pin.runtimes.typescript.version must be 7.0.2")
+        if "compat_package" in typescript:
+            raise CheckError("web typescript must not declare compat_package")
     python = runtimes.get("python")
     if not isinstance(python, dict):
         raise CheckError("stack-pin.runtimes.python must be an object")
@@ -187,6 +317,21 @@ def check_stack_pin() -> None:
     expected_pm = f"bun@{runtimes['bun']['version']}"
     if package.get("packageManager") != expected_pm:
         raise CheckError(f"package.json packageManager must be {expected_pm}")
+    mise_path = ROOT / "mise.toml"
+    if mise_path.is_file():
+        mise = load_toml(mise_path)
+        tools = mise.get("tools")
+        if not isinstance(tools, dict):
+            raise CheckError("mise.toml [tools] must be a table")
+        expected_tools = {
+            "node": runtimes["node"]["version"],
+            "python": python["version"],
+            "bun": runtimes["bun"]["version"],
+            "uv": runtimes["uv"]["version"],
+        }
+        for key, version in expected_tools.items():
+            if tools.get(key) != version:
+                raise CheckError(f"mise.toml tools.{key} must be {version}")
     frontend = pin.get("frontend")
     if not isinstance(frontend, dict):
         raise CheckError("stack-pin.frontend must be an object")
@@ -194,6 +339,21 @@ def check_stack_pin() -> None:
         raise CheckError("stack-pin.frontend must not include Next.js")
     for key in ("react", "vite", "tailwindcss", "shadcn", "zod"):
         require_versioned_package(frontend.get(key), f"stack-pin.frontend.{key}")
+    api_client = frontend.get("api_client")
+    if not isinstance(api_client, dict):
+        raise CheckError("stack-pin.frontend.api_client must be an object")
+    if api_client.get("package") != "@hey-api/openapi-ts":
+        raise CheckError("api_client.package must be @hey-api/openapi-ts")
+    if api_client.get("version") != "0.99.0":
+        raise CheckError("api_client.version must be 0.99.0")
+    if api_client.get("workspace") != "not-web":
+        raise CheckError("api_client.workspace must be not-web")
+    shadcn = frontend.get("shadcn")
+    if isinstance(shadcn, dict) and shadcn.get("install") != "cli-only; do not bun add shadcn":
+        raise CheckError("shadcn.install must be cli-only; do not bun add shadcn")
+    types_node = frontend.get("types_node")
+    if isinstance(types_node, dict) and types_node.get("version") != "24.13.6":
+        raise CheckError("types_node.version must be 24.13.6")
     backend = pin.get("backend")
     if not isinstance(backend, dict):
         raise CheckError("stack-pin.backend must be an object")
@@ -210,11 +370,50 @@ def check_stack_pin() -> None:
     quality = pin.get("quality")
     if not isinstance(quality, dict):
         raise CheckError("stack-pin.quality must be an object")
-    for key in ("biome", "vitest", "playwright", "ruff"):
+    for key in ("biome", "vitest", "playwright", "ruff", "just"):
         require_versioned_package(quality.get(key), f"stack-pin.quality.{key}")
+    just = quality.get("just")
+    if isinstance(just, dict) and just.get("version") != "1.58.0":
+        raise CheckError("stack-pin.quality.just.version must be 1.58.0")
     banned = pin.get("do_not_use")
     if not isinstance(banned, list) or "Next.js" not in banned or "pnpm" not in banned:
         raise CheckError("stack-pin.do_not_use must include Next.js and pnpm")
+    if not any(isinstance(item, str) and "asyncpg" in item for item in banned):
+        raise CheckError("stack-pin.do_not_use must include asyncpg")
+    for needed in (
+        "typescript@6 or @typescript/typescript6 in the web workspace",
+        "typescript-eslint in the web workspace",
+        "@hey-api/openapi-ts@next",
+        "bun add shadcn (nests zod 3); use bunx shadcn@4.21.0",
+        "@types/node 26.x until Node 26 is LTS",
+        "unconstrained rapidocr / opencv-python; pin is opencv-python-headless 5.0.0.93",
+        "httpx 1.x; FastAPI extras require httpx<1",
+        "GNU make / Makefile as the project command runner",
+        "gpt-5.6-luna",
+        "gpt-5.6-terra",
+        "Codex subagents / features.multi_agent / features.multi_agent_v2",
+    ):
+        if needed not in banned:
+            raise CheckError(f"stack-pin.do_not_use must include {needed}")
+    if any(isinstance(item, str) and "gpt-6-astra until" in item for item in banned):
+        raise CheckError("do_not_use must not ban gpt-6-astra; it is the primary model")
+    conflicts = pin.get("conflicts")
+    if not isinstance(conflicts, list):
+        raise CheckError("stack-pin.conflicts must be a list")
+    conflict_ids = {
+        item.get("id") for item in conflicts if isinstance(item, dict) and item.get("id")
+    }
+    for needed in (
+        "openai-sdk-major",
+        "hey-api-ts7-runtime",
+        "litellm-python-lt-315",
+        "aiogram-redis-vs-taskiq",
+        "docling-opencv-cv2",
+        "shadcn-cli-not-dep",
+        "httpx-fastapi-lt-1",
+    ):
+        if needed not in conflict_ids:
+            raise CheckError(f"stack-pin.conflicts must include {needed}")
     check_verify_block(pin)
     check_generated_standard()
 
@@ -325,6 +524,31 @@ def check_bootstrap() -> None:
         module_sh = ROOT / "install" / relative / "module.sh"
         if not module_sh.is_file():
             raise CheckError(f"missing {module_sh.relative_to(ROOT)}")
+    modules_root = ROOT / "install" / "modules"
+    found = sorted(
+        path.name
+        for path in modules_root.iterdir()
+        if path.is_dir() and re.fullmatch(r"[0-9]{2}-.+", path.name)
+    )
+    expected = [Path(relative).name for _, relative in CATALOG_MODULES]
+    if found != expected:
+        raise CheckError(
+            "install/modules/<nn>-* must match catalog.toml exactly; "
+            f"found {found}, expected {expected}"
+        )
+    env_sh = read_text(ROOT / "install" / "env.sh")
+    if "BASH_SOURCE" not in env_sh:
+        raise CheckError("install/env.sh must resolve the sourced file via BASH_SOURCE")
+    justfile = ROOT / "justfile"
+    if not justfile.is_file():
+        raise CheckError("missing justfile; just is the project command runner")
+    just_text = read_text(justfile)
+    for recipe in ("gate:", "check:", "setup:", "test:"):
+        if recipe not in just_text:
+            raise CheckError(f"justfile must define recipe {recipe.rstrip(':')}")
+    for name in ("Makefile", "makefile", "GNUmakefile"):
+        if (ROOT / name).exists():
+            raise CheckError(f"{name} must not exist; use justfile")
 
 
 def check_agents_md() -> None:
@@ -336,39 +560,150 @@ def check_agents_md() -> None:
         raise CheckError(f"AGENTS.md is {size} bytes; Codex default cap is 32 KiB")
     if "0.155.1" not in text:
         raise CheckError("AGENTS.md must name the 0.155.1 pin")
+    if "gpt-6-astra" not in text or "gpt-5.6-sol" not in text:
+        raise CheckError("AGENTS.md must name gpt-6-astra and gpt-5.6-sol")
+    if "Do not spawn Codex subagents" not in text:
+        raise CheckError("AGENTS.md must forbid Codex subagents")
+    if "872_000" not in text or "700_000" not in text:
+        raise CheckError("AGENTS.md must name context 872_000 and compact 700_000")
+    if "## Mechanism" not in text or "just check" not in text:
+        raise CheckError("AGENTS.md must describe the pin → config → just check loop")
+    if "docs/rules" in text:
+        index = ROOT / "docs" / "rules" / "INDEX.md"
+        if not index.is_file():
+            raise CheckError("AGENTS.md routes to docs/rules but INDEX.md is missing")
+        for linked in re.findall(r"\]\(([a-z0-9-]+\.md)\)", read_text(index)):
+            if not (index.parent / linked).is_file():
+                raise CheckError(f"docs/rules/INDEX.md links to missing {linked}")
 
 
 def check_config() -> None:
+    pin = load_json(STACK_PIN_PATH)
+    session = {}
+    if isinstance(pin, dict):
+        registered = pin.get("registered")
+        if isinstance(registered, dict) and isinstance(registered.get("session"), dict):
+            session = registered["session"]
     config = load_toml(ROOT / ".codex" / "config.toml")
     if config.get("approval_policy") == "untrusted":
         raise CheckError("approval_policy=untrusted is retired")
-    if "default_permissions" in config and "sandbox_mode" in config:
-        raise CheckError("do not mix default_permissions with sandbox_mode")
+    if config.get("approval_policy") != session.get("approval_policy", "never"):
+        raise CheckError(
+            'approval_policy must match stack-pin.registered.session ("never")'
+        )
+    if config.get("sandbox_mode") != session.get("sandbox_mode", "danger-full-access"):
+        raise CheckError(
+            'sandbox_mode must match stack-pin.registered.session ("danger-full-access")'
+        )
+    if config.get("allow_login_shell") is not True:
+        raise CheckError("allow_login_shell must be true")
+    if config.get("web_search") != session.get("web_search", "live"):
+        raise CheckError('web_search must match stack-pin.registered.session ("live")')
+    models = {}
+    if isinstance(pin, dict) and isinstance(pin.get("models"), dict):
+        models = pin["models"]
+    if config.get("model") != models.get("primary", "gpt-6-astra"):
+        raise CheckError('model must be "gpt-6-astra"')
+    if config.get("review_model") != models.get("review_model", "gpt-5.6-sol"):
+        raise CheckError('review_model must be "gpt-5.6-sol"')
+    if config.get("model_reasoning_effort") != models.get("reasoning_effort", "xhigh"):
+        raise CheckError('model_reasoning_effort must be "xhigh"')
+    if config.get("model_context_window") != models.get("requested_context_window", 872_000):
+        raise CheckError("model_context_window must be 872000")
+    if config.get("model_auto_compact_token_limit") != models.get(
+        "requested_auto_compact", 700_000
+    ):
+        raise CheckError("model_auto_compact_token_limit must be 700000")
+    agents = config.get("agents")
+    if not isinstance(agents, dict) or agents.get("enabled") is not False:
+        raise CheckError("[agents].enabled must be false")
+    if "max_concurrent_threads_per_session" in agents:
+        raise CheckError("do not set max_concurrent_threads_per_session while agents are off")
+    profiles = config.get("profiles")
+    if not isinstance(profiles, dict):
+        raise CheckError("config must define [profiles.sol]")
+    sol = profiles.get("sol")
+    if not isinstance(sol, dict):
+        raise CheckError("config must define [profiles.sol]")
+    if sol.get("model") != models.get("secondary", "gpt-5.6-sol"):
+        raise CheckError('[profiles.sol].model must match models.secondary')
+    if sol.get("model_reasoning_effort") != models.get("reasoning_effort", "xhigh"):
+        raise CheckError("[profiles.sol].model_reasoning_effort must match models.reasoning_effort")
+    if sol.get("review_model") != models.get("review_model", "gpt-5.6-sol"):
+        raise CheckError("[profiles.sol].review_model must match models.review_model")
+    if sol.get("model_context_window") != models.get("requested_context_window", 872_000):
+        raise CheckError("[profiles.sol].model_context_window must match models.requested_context_window")
+    if sol.get("model_auto_compact_token_limit") != models.get(
+        "requested_auto_compact", 700_000
+    ):
+        raise CheckError("[profiles.sol].model_auto_compact_token_limit must match models.requested_auto_compact")
+    if "default_permissions" in config:
+        raise CheckError(
+            "do not set default_permissions; session law is sandbox_mode "
+            "danger-full-access"
+        )
+    if "sandbox_workspace_write" in config:
+        raise CheckError("sandbox_workspace_write is unused under danger-full-access")
+    if "ignore_user_and_project_exec_policy_rules" in config:
+        raise CheckError(
+            "ignore_user_and_project_exec_policy_rules is a CLI loader override, "
+            "not a config.toml key; use codex exec --ignore-rules"
+        )
     features = config.get("features")
-    if isinstance(features, dict):
-        for key in features:
-            if str(key).startswith("web_search"):
-                raise CheckError("use top-level web_search, not features.web_search*")
+    if not isinstance(features, dict):
+        raise CheckError(".codex/config.toml [features] is required")
+    for key in features:
+        if str(key).startswith("web_search"):
+            raise CheckError("use top-level web_search, not features.web_search*")
+    network_proxy = features.get("network_proxy")
+    if network_proxy is True or (
+        isinstance(network_proxy, dict) and network_proxy.get("enabled") is True
+    ):
+        raise CheckError("features.network_proxy restricts YOLO; leave it off")
+    if features.get("multi_agent") is not False:
+        raise CheckError("features.multi_agent must be false")
+    if features.get("multi_agent_v2") is not False:
+        raise CheckError("features.multi_agent_v2 must be false")
+    pin_features = {}
+    if isinstance(pin, dict):
+        registered = pin.get("registered")
+        if isinstance(registered, dict) and isinstance(registered.get("features"), dict):
+            pin_features = registered["features"]
+    if features.get("hooks") is not pin_features.get("hooks", True):
+        raise CheckError("features.hooks must match stack-pin.registered.features.hooks")
+    if features.get("memories") is not pin_features.get("memories", False):
+        raise CheckError("features.memories must match stack-pin.registered.features.memories")
+    if "model_catalog_json" in config:
+        raise CheckError("do not set model_catalog_json; remote catalog stays authoritative")
     plugins = config.get("plugins")
     if not isinstance(plugins, dict) or "saint-tibo@saint-tibo" not in plugins:
         raise CheckError('.codex/config.toml must enable plugins."saint-tibo@saint-tibo"')
+    rules_dir = ROOT / ".codex" / "rules"
+    if rules_dir.is_dir():
+        leftover = sorted(
+            path.name
+            for path in rules_dir.iterdir()
+            if path.is_file() and path.suffix == ".rules"
+        )
+        if leftover:
+            raise CheckError(
+                "project .codex/rules/*.rules is execpolicy, not session law; "
+                f"remove {', '.join(leftover)}"
+            )
 
 
 def check_custom_agents() -> None:
-    required = {"name", "description", "developer_instructions"}
-    expected = {
-        "mapper.toml": "mapper",
-        "reviewer.toml": "reviewer",
-        "implementer.toml": "implementer",
-    }
     agents_dir = ROOT / ".codex" / "agents"
-    for filename, agent_name in expected.items():
-        data = load_toml(agents_dir / filename)
-        missing = required.difference(data)
-        if missing:
-            raise CheckError(f"{filename} missing {sorted(missing)}")
-        if data.get("name") != agent_name:
-            raise CheckError(f"{filename} name must be {agent_name}")
+    if not agents_dir.exists():
+        return
+    leftover = sorted(
+        path.name for path in agents_dir.glob("*.toml") if path.is_file()
+    )
+    if leftover:
+        raise CheckError(
+            "do not add project .codex/agents/*.toml; spawn tools are off; "
+            f"remove {', '.join(leftover)}"
+        )
 
 
 def check_plugin_and_marketplace() -> None:
@@ -420,7 +755,12 @@ def check_plugin_and_marketplace() -> None:
 def check_skills() -> None:
     repo_skills = collect_skill_names(ROOT / ".agents" / "skills")
     plugin_skills = collect_skill_names(ROOT / "plugins" / "saint-tibo" / "skills")
-    expected_repo = {"repo-orientation", "quality-gate", "one-repo-workflow"}
+    expected_repo = {
+        "repo-orientation",
+        "quality-gate",
+        "one-repo-workflow",
+        "apply-stack-rule",
+    }
     if set(repo_skills) != expected_repo:
         raise CheckError(f"repo skills must be {sorted(expected_repo)}, got {sorted(repo_skills)}")
     if set(plugin_skills) != {"saint-tibo"}:
@@ -428,6 +768,17 @@ def check_skills() -> None:
     overlap = set(repo_skills).intersection(plugin_skills)
     if overlap:
         raise CheckError(f"skill name collision between repo and plugin: {sorted(overlap)}")
+    pin = load_json(STACK_PIN_PATH)
+    if not isinstance(pin, dict):
+        raise CheckError("build/stack-pin.json must be an object")
+    registered = pin.get("registered")
+    if not isinstance(registered, dict):
+        raise CheckError("stack-pin.registered must be an object")
+    listed = registered.get("repo_skills")
+    if not isinstance(listed, list) or set(listed) != expected_repo:
+        raise CheckError(
+            "stack-pin.registered.repo_skills must match the repo skill set"
+        )
 
 
 def main() -> int:
