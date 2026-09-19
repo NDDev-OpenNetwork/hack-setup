@@ -47,12 +47,14 @@ order after `. install/env.sh` prefers the pinned binary.
 
 ## Consequences
 
-Future installers add a numbered directory and a catalog row. The
-validator must stay in sync with the catalog. A Darwin root file named
-`install` must never be added.
+Current catalog: `10-prereqs`, `20-codex-cli`, `30-runtimes`,
+`40-project-verify`. Future installers add a numbered directory and a
+catalog row. The validator must stay in sync with the catalog. A Darwin
+root file named `install` must never be added.
 
 ## Confirmation
 
 - `./setup --dry-run` exits 0
-- `./setup` installs or links Codex CLI `0.155.1`
+- `./setup` installs or links Codex CLI `0.155.1` and pinned runtimes
 - `python3 scripts/check_codex_setup.py` exits 0
+- `python3 scripts/check_stack.py` exits 0

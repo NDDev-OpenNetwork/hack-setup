@@ -10,6 +10,14 @@ until the owner says go.
 - Proof: `codex --version` must print `codex-cli 0.155.1`.
 - Pin file: `build/codex-pin.json`.
 - Decision: `docs/adr/0001-codex-cli-155-pin.md`.
+- Stack versions: `build/stack-pin.json` schema 2. Re-verify on
+  hackathon day with `python3 scripts/reverify_stack_pin.py`.
+- Web is React 19.3 + Vite 8.3. Do not add Next.js. JS installer is bun.
+- API contract is FastAPI OpenAPI; clients are generated, not rewritten.
+- Isolated Python envs: API/workers (`redis` 8.1.0), Telegram (`redis` 7.4.1),
+  GPU/ML, optional LiteLLM proxy-runtime. Do not merge those lockfiles.
+- PostgreSQL is SoT. Qdrant is a derived index. RustFS holds objects.
+  DuckDB is analytics only. User code never runs in the API process.
 
 ## Layout
 
@@ -21,7 +29,9 @@ until the owner says go.
 | Plugin | `plugins/saint-tibo/plugin.json` | Portable Agent Plugins 1.0.0. |
 | Project config | `.codex/config.toml` | Loads only after the project is trusted. |
 | Custom agents | `.codex/agents/*.toml` | `mapper`, `reviewer`, `implementer`. |
-| Bootstrap | `./setup` → `install/` | macOS/Linux catalog. Add future installers as `install/modules/<nn>-<id>/`. |
+| Bootstrap | `./setup` → `install/` | macOS/Linux catalog. JS installer is bun. Add future installers as `install/modules/<nn>-<id>/`. |
+| Codex pin | `build/codex-pin.json` | CLI `0.155.1` + official installer hashes. |
+| Stack pin | `build/stack-pin.json` | Schema 2. Generated table: `build/stack-standard.md`. |
 
 Do not add team skills under `$CODEX_HOME/skills` (deprecated). Do not add
 root `plugin.json` fields other than the portable schema. Do not mix
@@ -53,7 +63,11 @@ sha256 from `build/codex-pin.json`, and runs the numbered modules under
 ```bash
 ./setup --status
 python3 scripts/check_codex_setup.py
+python3 scripts/check_stack.py
 codex --version
 ```
 
-All three must succeed before the setup is treated as ready.
+All four must succeed before the setup is treated as ready. Host doctor
+fails if Codex/Node/bun/Python/uv drift. `python3 scripts/check_stack.py
+--list` prints the frozen standard. `--strict` also requires declared
+host tools (Rust/Go/Docker/...).

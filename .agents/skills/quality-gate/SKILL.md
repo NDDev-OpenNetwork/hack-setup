@@ -8,6 +8,8 @@ Run these commands and quote their output:
 ```bash
 ./setup --status
 python3 scripts/check_codex_setup.py
+python3 scripts/check_stack.py
+python3 scripts/reverify_stack_pin.py
 codex --version
 ```
 

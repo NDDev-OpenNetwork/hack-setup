@@ -3,7 +3,8 @@ name: repo-orientation
 description: Map the Saint Tibo Codex 0.155.1 setup. Use when starting work, asking where files live, which CLI pin to use, or how skills, plugins, and agents are laid out.
 ---
 
-Read `AGENTS.md`, `build/codex-pin.json`, and `install/catalog.toml` first.
+Read `AGENTS.md`, `build/codex-pin.json`, `build/stack-pin.json`,
+`build/stack-standard.md`, and `install/catalog.toml` first.
 
 Report:
 
@@ -14,4 +15,7 @@ Report:
 5. Project config and custom agents: `.codex/config.toml`, `.codex/agents/{mapper,reviewer,implementer}.toml`.
 6. Later working repo: `BAITC-Hacks/hack-a58598e0-saint-tibo`. Do not push it unless the owner asked.
 
-Do not invent a product stack. This repository is Codex setup only.
+App/runtime versions live in `build/stack-pin.json` schema 2. Web is
+React + Vite, not Next.js. JS installer is bun. Host doctor:
+`python3 scripts/check_stack.py`. Do not invent unpinned libraries.
+This repository still has no application code.

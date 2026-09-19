@@ -23,14 +23,17 @@ install/
   modules/
     10-prereqs/               # python3 3.11+, tar, curl|wget, sha256
     20-codex-cli/             # official rust-v0.155.1 install.sh + digest
-    30-project-verify/        # scripts/check_codex_setup.py + codex --version
+    30-runtimes/              # Node LTS, bun, uv, CPython 3.14
+    40-project-verify/        # artifact gate + pinned versions
 ```
 
 Add a future installer as `install/modules/<nn>-<id>/module.sh` (`install` / `status` / `dry-run`). Disable with a `disabled` file in that directory. Keep `catalog.toml` in sync.
 
 ## Pins
 
-`build/codex-pin.json` is the source of truth for Codex CLI `0.155.1`, the official `install.sh` URL/sha256, and per-platform package hashes. The Codex module downloads that script, verifies the digest, then runs:
+`build/codex-pin.json` is the Codex CLI pin. `build/stack-pin.json` is the
+product stack pin; module `30-runtimes` installs Node/bun/uv/Python from it.
+The Codex module downloads official `install.sh`, verifies the digest, then runs:
 
 ```sh
 CODEX_RELEASE=0.155.1
@@ -50,3 +53,5 @@ The binary is installed to `~/.local/bin/codex` (not a clone-absolute PATH) and 
 | `./setup --status` | check without downloads |
 | `./setup --print-env` | print PATH export |
 | `make test` | pytest |
+| `make check` | artifact validator + host doctor |
+| `make stack` | print generated stack standard |

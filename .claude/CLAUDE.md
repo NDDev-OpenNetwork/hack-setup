@@ -6,8 +6,10 @@ the tracked Codex project surfaces.
 ## Pin
 
 Codex CLI must be `0.155.1`. See `build/codex-pin.json` and
-`docs/adr/0001-codex-cli-155-pin.md`. Do not retarget alphas or the retired
-`Codex.app` desktop bundle.
+`docs/adr/0001-codex-cli-155-pin.md`. The product stack is
+`build/stack-pin.json` schema 2 and `docs/adr/0004-product-stack.md`.
+Do not add Next.js or pnpm. Host doctor: `python3 scripts/check_stack.py`.
+On hackathon day run `python3 scripts/reverify_stack_pin.py`.
 
 ## Do not treat this as a Claude skill tree
 
@@ -22,6 +24,7 @@ root `CLAUDE.md`.
 . install/env.sh
 ./setup --status
 python3 scripts/check_codex_setup.py
+python3 scripts/check_stack.py
 codex --version
 ```
 

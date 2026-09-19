@@ -1,6 +1,9 @@
 # Review rules
 
 - Confirm `build/codex-pin.json` still says `0.155.1` and `codex --version` matches.
+- Confirm app versions come from `build/stack-pin.json` schema 2, not ad-hoc latest.
+- Confirm `python3 scripts/check_stack.py` reports required host tools OK.
+- Reject Next.js, pnpm, and a second JS lockfile.
 - Confirm `./setup` is the entry and `install/catalog.toml` matches `install/modules/`.
 - Reject a root file named `install` (conflicts with `install/` on macOS).
 - Reject `approval_policy = "untrusted"` and `features.web_search*`.
