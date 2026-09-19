@@ -1,0 +1,20 @@
+{
+  "name": "saint-tibo",
+  "interface": {
+    "displayName": "Saint Tibo"
+  },
+  "plugins": [
+    {
+      "name": "saint-tibo",
+      "source": {
+        "source": "local",
+        "path": "./plugins/saint-tibo"
+      },
+      "policy": {
+        "installation": "INSTALLED_BY_DEFAULT",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

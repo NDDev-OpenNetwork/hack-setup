@@ -1,0 +1,15 @@
+model = "gpt-5.6"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "cached"
+
+[agents]
+max_concurrent_threads_per_session = 6
+
+[plugins."saint-tibo@saint-tibo"]
+enabled = true
+
+[features]
+multi_agent = true
+hooks = true
+memories = false

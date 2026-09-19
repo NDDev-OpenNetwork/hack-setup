@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "saint-tibo",
+  "version": "0.1.0",
+  "description": "Hackathon team Codex plugin for Saint Tibo. Repo skills stay in .agents/skills.",
+  "author": {
+    "name": "Saint Tibo"
+  },
+  "license": "MIT",
+  "keywords": ["codex", "hackathon", "saint-tibo"]
+}

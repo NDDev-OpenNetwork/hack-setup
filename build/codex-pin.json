@@ -1,0 +1,9 @@
+{
+  "codex_cli": "0.155.1",
+  "release_tag": "rust-v0.155.1",
+  "npm_package": "@openai/codex",
+  "plugin_schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "mcp_schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "verified_on": "2026-09-19",
+  "do_not_use": ["0.156.0-alpha", "Codex.app"]
+}
