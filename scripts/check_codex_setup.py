@@ -11,7 +11,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN_PATH = ROOT / "build" / "codex-pin.json"
+CATALOG_PATH = ROOT / "install" / "catalog.toml"
 PLUGIN_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+PINNED_PLATFORMS = (
+    "darwin-arm64",
+    "darwin-x86_64",
+    "linux-arm64",
+    "linux-x86_64",
+)
+CATALOG_MODULES = (
+    ("prereqs", "modules/10-prereqs"),
+    ("codex-cli", "modules/20-codex-cli"),
+    ("project-verify", "modules/30-project-verify"),
+)
 ROOT_PLUGIN_KEYS = {
     "$schema",
     "name",
@@ -79,6 +92,11 @@ def collect_skill_names(root: Path) -> dict[str, Path]:
     return names
 
 
+def require_sha256(label: str, value: object) -> None:
+    if not isinstance(value, str) or SHA256_RE.fullmatch(value) is None:
+        raise CheckError(f"{label} must be a 64-char lowercase sha256")
+
+
 def check_pin() -> str:
     pin = load_json(PIN_PATH)
     if not isinstance(pin, dict):
@@ -88,7 +106,63 @@ def check_pin() -> str:
         raise CheckError(f"codex_cli pin must be 0.155.1, got {version!r}")
     if pin.get("release_tag") != "rust-v0.155.1":
         raise CheckError("release_tag must be rust-v0.155.1")
+    installer = pin.get("installer")
+    if not isinstance(installer, dict):
+        raise CheckError("pin installer must be an object")
+    url = installer.get("url")
+    if not isinstance(url, str) or "rust-v0.155.1/install.sh" not in url:
+        raise CheckError("pin installer.url must be the rust-v0.155.1 install.sh")
+    require_sha256("pin installer.sha256", installer.get("sha256"))
+    packages = pin.get("packages")
+    if not isinstance(packages, dict):
+        raise CheckError("pin packages must be an object")
+    missing = [name for name in PINNED_PLATFORMS if name not in packages]
+    if missing:
+        raise CheckError(f"pin packages missing {missing}")
+    for name in PINNED_PLATFORMS:
+        package = packages[name]
+        if not isinstance(package, dict):
+            raise CheckError(f"pin packages.{name} must be an object")
+        for key in ("name", "triple", "url", "sha256"):
+            if key not in package:
+                raise CheckError(f"pin packages.{name} missing {key}")
+        require_sha256(f"pin packages.{name}.sha256", package["sha256"])
     return version
+
+
+def check_bootstrap() -> None:
+    if (ROOT / "install").is_file():
+        raise CheckError("root file named install cannot coexist with install/")
+    setup = ROOT / "setup"
+    if not setup.is_file():
+        raise CheckError("missing ./setup entry")
+    if "install/bootstrap.sh" not in read_text(setup):
+        raise CheckError("./setup must exec install/bootstrap.sh")
+    if not (ROOT / "install" / "bootstrap.sh").is_file():
+        raise CheckError("missing install/bootstrap.sh")
+    if not (ROOT / "install" / "env.sh").is_file():
+        raise CheckError("missing install/env.sh")
+    catalog = load_toml(CATALOG_PATH)
+    if catalog.get("schema_version") != 1:
+        raise CheckError("install/catalog.toml schema_version must be 1")
+    if catalog.get("entry") != "./setup":
+        raise CheckError("install/catalog.toml entry must be ./setup")
+    modules = catalog.get("modules")
+    if not isinstance(modules, list) or len(modules) != len(CATALOG_MODULES):
+        raise CheckError("install/catalog.toml must list the three bootstrap modules")
+    for expected, raw in zip(CATALOG_MODULES, modules, strict=True):
+        if not isinstance(raw, dict):
+            raise CheckError("catalog module must be a table")
+        module_id, relative = expected
+        if raw.get("id") != module_id:
+            raise CheckError(f"catalog module id must be {module_id}")
+        if raw.get("dir") != relative:
+            raise CheckError(f"catalog {module_id} dir must be {relative}")
+        if raw.get("enabled") is not True:
+            raise CheckError(f"catalog {module_id} must be enabled")
+        module_sh = ROOT / "install" / relative / "module.sh"
+        if not module_sh.is_file():
+            raise CheckError(f"missing {module_sh.relative_to(ROOT)}")
 
 
 def check_agents_md() -> None:
@@ -197,6 +271,7 @@ def check_skills() -> None:
 def main() -> int:
     checks = (
         check_pin,
+        check_bootstrap,
         check_agents_md,
         check_config,
         check_custom_agents,

@@ -15,3 +15,16 @@ def test_check_codex_setup_passes() -> None:
     )
     assert result.returncode == 0, result.stderr
     assert "PASS Codex 0.155.1 project artifacts" in result.stdout
+
+
+def test_setup_dry_run_passes() -> None:
+    result = subprocess.run(
+        [str(REPO / "setup"), "--dry-run"],
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "dry-run; no downloads" in result.stdout
+    assert "would run official installer" in result.stdout
