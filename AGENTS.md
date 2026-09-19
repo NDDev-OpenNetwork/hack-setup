@@ -21,10 +21,12 @@ until the owner says go.
 | Plugin | `plugins/saint-tibo/plugin.json` | Portable Agent Plugins 1.0.0. |
 | Project config | `.codex/config.toml` | Loads only after the project is trusted. |
 | Custom agents | `.codex/agents/*.toml` | `mapper`, `reviewer`, `implementer`. |
+| Bootstrap | `./setup` → `install/` | macOS/Linux catalog. Add future installers as `install/modules/<nn>-<id>/`. |
 
 Do not add team skills under `$CODEX_HOME/skills` (deprecated). Do not add
 root `plugin.json` fields other than the portable schema. Do not mix
-`default_permissions` with `sandbox_mode`.
+`default_permissions` with `sandbox_mode`. Do not add a root file named
+`install` (it cannot coexist with `install/` on macOS).
 
 ## Team rules
 
@@ -33,11 +35,25 @@ root `plugin.json` fields other than the portable schema. Do not mix
 - No secrets, tokens, cookies, or private hackathon strategy in this public repo.
 - Do not claim a check passed unless you ran it.
 
+## Bootstrap
+
+```bash
+git clone git@github.com:NDDev-OpenNetwork/hack-setup.git
+cd hack-setup
+./setup
+. install/env.sh
+```
+
+`./setup` downloads the pinned official Codex `install.sh`, verifies its
+sha256 from `build/codex-pin.json`, and runs the numbered modules under
+`install/modules/`. Windows is fail-closed.
+
 ## Quality gate
 
 ```bash
+./setup --status
 python3 scripts/check_codex_setup.py
 codex --version
 ```
 
-Both must succeed before the setup is treated as ready.
+All three must succeed before the setup is treated as ready.

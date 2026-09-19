@@ -5,6 +5,7 @@ description: Coordinate three people in one Codex repo. Use when claiming files,
 
 Rules:
 
+- After clone, run `./setup` then `. install/env.sh` on macOS/Linux.
 - Author in this repo now. The later single working remote is `BAITC-Hacks/hack-a58598e0-saint-tibo`.
 - Do not push that remote unless the owner explicitly asked.
 - This staging repo is public. Keep secrets and private hackathon strategy out.

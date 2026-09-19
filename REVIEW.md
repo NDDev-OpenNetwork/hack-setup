@@ -1,6 +1,8 @@
 # Review rules
 
 - Confirm `build/codex-pin.json` still says `0.155.1` and `codex --version` matches.
+- Confirm `./setup` is the entry and `install/catalog.toml` matches `install/modules/`.
+- Reject a root file named `install` (conflicts with `install/` on macOS).
 - Reject `approval_policy = "untrusted"` and `features.web_search*`.
 - Reject mixing `default_permissions` with `sandbox_mode` in `.codex/config.toml`.
 - Portable `plugins/saint-tibo/plugin.json` must keep `$schema` and `name` only from the Agent Plugins 1.0.0 root set. Skills belong in `skills/`, not a root `skills` field.

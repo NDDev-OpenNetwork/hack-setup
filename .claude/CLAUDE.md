@@ -18,9 +18,14 @@ root `CLAUDE.md`.
 ## Commands
 
 ```bash
+./setup
+. install/env.sh
+./setup --status
 python3 scripts/check_codex_setup.py
 codex --version
 ```
+
+Do not add a root file named `install`. The entry is `./setup`.
 
 ## Diagnostics
 
