@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-19
-Last commit: 67b0862 chore: add license, ignore rules, and Serena languages
+Last commit: b0d6d67 docs: document one-command clone-and-setup flow
 Scope: .agents/, .codex/, plugins/saint-tibo/, AGENTS.md
 Area: CODEX
 -->
