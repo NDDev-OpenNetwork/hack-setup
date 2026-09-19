@@ -4,7 +4,8 @@ This repository is Codex harness setup, not an application. The product is
 the tracked Codex project surfaces.
 
 Law is `build/codex-pin.json` + `build/stack-pin.json`. Runtime is
-`.codex/config.toml`. Proof is `just check`. Rules are on-demand.
+`.codex/config.toml`. Proof is `just check`. Frames are on-demand in
+`plugins/hack-agent-standards/standards/` (ADR 0008).
 
 ## Pin
 

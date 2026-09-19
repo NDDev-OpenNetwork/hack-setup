@@ -20,8 +20,14 @@
   window `872000` / compact `700000`,
   `agents.enabled = false`, `features.multi_agent` and
   `features.multi_agent_v2` false. Reject luna/terra and bare `gpt-5.6`.
-- Portable `plugins/saint-tibo/plugin.json` must keep `$schema` and `name` only from the Agent Plugins 1.0.0 root set. Skills belong in `skills/`, not a root `skills` field.
-- Repo skill names in `.agents/skills/` must not collide with plugin skill names.
+- Portable `plugins/saint-tibo/plugin.json` and
+  `plugins/hack-agent-standards/plugin.json` must keep `$schema` and
+  `name` only from the Agent Plugins 1.0.0 root set. Skills belong in
+  `skills/`, not a root `skills` field.
+- Repo skill names in `.agents/skills/` must not collide with either
+  plugin skill set.
+- Frames live in `plugins/hack-agent-standards/standards/`. Reject
+  leftover `docs/rules/` or `docs/agent-standards/`.
 - Marketplace `source.path` values start with `./` and resolve from the repo root.
 - No secrets, tokens, or hackathon-private strategy in this public tree.
 - Do not push `BAITC-Hacks/hack-a58598e0-saint-tibo` from review comments.

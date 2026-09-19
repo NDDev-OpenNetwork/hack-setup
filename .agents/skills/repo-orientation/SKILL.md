@@ -12,8 +12,11 @@ Report:
 
 1. CLI pin: `0.155.1` / `rust-v0.155.1`. Reject alphas and `Codex.app`.
 2. Bootstrap: `./setup` → `install/modules/<nn>-*`. Do not create a root file named `install`.
-3. Repo skills: `.agents/skills/`. Plugin skill name `saint-tibo` is the only plugin skill and must stay unique.
-4. Marketplace: `.agents/plugins/marketplace.json` → `./plugins/saint-tibo`.
+3. Repo skills: `.agents/skills/`. Team plugin skill is `saint-tibo`.
+   Standards plugin skill is `apply-agent-standard`. Names stay unique
+   across `.agents/skills` and both plugins.
+4. Marketplace: `.agents/plugins/marketplace.json` →
+   `./plugins/saint-tibo` then `./plugins/hack-agent-standards`.
 5. Project config: `.codex/config.toml`. Session law is `registered.session` / ADR 0006: `approval_policy = "never"`, `sandbox_mode = "danger-full-access"`. Models: `gpt-6-astra` + `gpt-5.6-sol` / `xhigh`, window `872000` / compact `700000` (ADR 0007). `agents.enabled = false`. Do not add `.codex/agents/*.toml`.
 6. Later working repo: `BAITC-Hacks/hack-a58598e0-saint-tibo`. Do not push it unless the owner asked.
 

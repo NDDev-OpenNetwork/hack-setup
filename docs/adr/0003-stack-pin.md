@@ -28,7 +28,8 @@ re-checked on hackathon day.
 
 Chosen option: `build/stack-pin.json` is the stack SoT. `control`
 names the loop: pin files are law, `.codex/config.toml` is the runtime
-projection, `just check` is proof, `docs/rules/` is on-demand detail.
+projection, `just check` is proof,
+`plugins/hack-agent-standards/standards/` is on-demand detail.
 
 - Node `24.21.0` Active LTS. Reject Node 26 Current until 2026-10-28.
 - Python `3.14.7` via `uv python install`. Bootstrap scripts still

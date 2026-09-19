@@ -1,6 +1,6 @@
 # ARCHIVE — not this repository’s runtime law
 
-Live SoT is `AGENTS.md`, `docs/rules/`, `build/stack-pin.json`, ADRs 0001–0005.
+Live SoT is `AGENTS.md`, `plugins/hack-agent-standards/standards/`, `build/stack-pin.json`, ADRs 0001–0008.
 Do not copy this pack into the live tree. See `docs/research/README.md`.
 
 # HackAlemAI: Codex + Serena-first engineering standard

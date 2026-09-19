@@ -40,9 +40,9 @@ brew/npm shims.
 | `.codex/config.toml` | Runtime projection of session + models + features |
 | `build/stack-standard.md` | Generated; refresh with `--write` |
 | `just check` | Proof that pin == config == AGENTS == generated |
-| `docs/adr/0001`–`0007` | Decisions |
+| `docs/adr/0001`–`0008` | Decisions |
 | `justfile` | Project commands (`just gate`, `just check`) |
-| `docs/rules/` | On-demand tech rules. `docs/research/` is archive |
+| `plugins/hack-agent-standards/standards/` | On-demand frames. `docs/research/` is archive |
 
 ```bash
 codex --version     # expected: codex-cli 0.155.1
@@ -63,6 +63,7 @@ the discontinued `codex-app` cask.
 3. Use repo skills from `.agents/skills/`.
 4. Models: `gpt-6-astra` primary, `gpt-5.6-sol` via `--profile sol`,
    both `xhigh`. Context `872000` / compact `700000`. No Codex
-   subagents. ADR 0007.
+   subagents. ADR 0007. Frames: `hack-agent-standards@saint-tibo`,
+   ADR 0008.
 
 See `AGENTS.md` and `install/README.md` for layout.

@@ -6,10 +6,10 @@ the artifact gate.
 Live sources of truth:
 
 - `AGENTS.md`
-- `docs/rules/`
+- `plugins/hack-agent-standards/standards/`
 - `build/stack-pin.json` / generated `build/stack-standard.md`
-- `docs/adr/0001`–`0007`
+- `docs/adr/0001`–`0008`
 
 `hackalemai-codex-serena/` is a 2026-09-19 reviewed pack. It describes a
 Serena-first / `docs/agent-standards/` layout that this repository did not
-adopt.
+adopt. Live frames are the Codex plugin, not that pack.
