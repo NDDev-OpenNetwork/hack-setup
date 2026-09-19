@@ -1,7 +1,7 @@
 <!-- Memory Metadata
-Last updated: 2026-09-19
-Last commit: b0d6d67 docs: document one-command clone-and-setup flow
-Scope: scripts/check_codex_setup.py, tests/test_check_codex_setup.py
+Last updated: 2026-09-20
+Last commit: 16c5389 docs(serena): record hierarchical bootstrap catalog
+Scope: scripts/check_codex_setup.py, scripts/check_stack.py, tests/
 Area: TEST
 -->
 
@@ -9,31 +9,35 @@ Area: TEST
 
 ## Purpose
 
-Record the checks that prove Codex setup artifacts and the bootstrap catalog are valid.
+Prove Codex artifacts, the installer catalog, and required host versions.
 
 ## Source Of Truth
 
-- `scripts/check_codex_setup.py`: dependency-free Python 3.11 validator.
-- `tests/test_check_codex_setup.py`: subprocess wrappers for the validator and `./setup --dry-run`.
+- `scripts/check_codex_setup.py`: dependency-free Python 3.11 artifact validator.
+- `scripts/check_stack.py`: host doctor + generated `build/stack-standard.md`.
+- `tests/test_check_codex_setup.py`: validator plus `./setup --dry-run`.
+- `tests/test_check_stack.py`: version extract, standard contents, required doctor.
 
 ## Entry Points
 
-- `python3 scripts/check_codex_setup.py`: pin, installer sha256, catalog modules, AGENTS.md size, config bans, custom agents, portable plugin, marketplace path, skill names.
-- `pytest -q tests/test_check_codex_setup.py`: validator plus dry-run.
-- `ruff check scripts/check_codex_setup.py tests/test_check_codex_setup.py`: lint for the validator.
-- `./setup --status`: module status including `codex --version`.
+- `python3 scripts/check_codex_setup.py`
+- `python3 scripts/check_stack.py`
+- `pytest -q`
+- `ruff check scripts tests`
+- `./setup --status`
 
 ## Current Behavior
 
-The validator requires `install/catalog.toml` to list `prereqs`, `codex-cli`, and `project-verify`, rejects a root file named `install`, and requires 64-char lowercase sha256 for the official installer and four platform packages.
+The artifact validator requires catalog ids `prereqs`, `codex-cli`, `runtimes`, `project-verify`, stack-pin schema 2 (React/Vite, no Next.js), verify probes for required host tools, and `build/stack-standard.md`. The doctor fails only when required host tools drift; declared Homebrew/global tools may DRIFT without failing.
 
 ## Invariants
 
-- Do not claim the setup is ready unless the validator and `codex --version` were actually run.
+- Do not claim the setup is ready unless the validator, doctor, and `codex --version` were actually run.
 
 ## Verification
 
 - `./setup --dry-run`
 - `python3 scripts/check_codex_setup.py`
-- `pytest -q tests/test_check_codex_setup.py`
+- `python3 scripts/check_stack.py`
+- `pytest -q`
 - `codex --version`

@@ -1,7 +1,7 @@
 <!-- Memory Metadata
-Last updated: 2026-09-19
-Last commit: b0d6d67 docs: document one-command clone-and-setup flow
-Scope: AGENTS.md, build/codex-pin.json, .agents/, .codex/, plugins/saint-tibo/, install/, scripts/check_codex_setup.py
+Last updated: 2026-09-20
+Last commit: 16c5389 docs(serena): record hierarchical bootstrap catalog
+Scope: AGENTS.md, build/, .agents/, .codex/, plugins/saint-tibo/, install/, scripts/
 Area: CORE
 -->
 
@@ -15,9 +15,11 @@ Index durable project knowledge for the Codex 0.155.1 team setup repository.
 
 - `AGENTS.md`: Codex project instructions.
 - `build/codex-pin.json`: CLI pin plus official installer/package sha256.
-- `docs/adr/0001-codex-cli-155-pin.md`: pin decision.
-- `docs/adr/0002-hierarchical-bootstrap.md`: clone-and-setup decision.
+- `build/stack-pin.json`: product stack schema 2.
+- `build/stack-standard.md`: generated stack table.
+- `docs/adr/0001-codex-cli-155-pin.md` through `docs/adr/0004-product-stack.md`.
 - Codex surfaces: `mem:CODEX-01-PIN`, `mem:CODEX-02-SURFACES`.
+- Stack: `mem:STACK-01-PIN`.
 - Bootstrap: `mem:INFRA-01-BOOTSTRAP`.
 - Checks: `mem:TEST-01-CHECKS`.
 
@@ -25,11 +27,13 @@ Index durable project knowledge for the Codex 0.155.1 team setup repository.
 
 - `./setup`: macOS/Linux catalog install after clone.
 - `python3 scripts/check_codex_setup.py`: static artifact gate.
+- `python3 scripts/check_stack.py`: required host doctor + generated standard freshness.
+- `python3 scripts/reverify_stack_pin.py`: live version drift check.
 - `codex --version`: runtime CLI pin proof.
 
 ## Current Behavior
 
-The repository contains Codex project surfaces and a hierarchical installer catalog. There is no application stack. Later working remote is `BAITC-Hacks/hack-a58598e0-saint-tibo` and is not pushed unless the owner asks.
+The repository contains Codex project surfaces, a hierarchical installer catalog, and a frozen product stack. There is no application code. Later working remote is `BAITC-Hacks/hack-a58598e0-saint-tibo` and is not pushed unless the owner asks.
 
 ## Invariants
 
@@ -42,5 +46,6 @@ The repository contains Codex project surfaces and a hierarchical installer cata
 
 - `./setup --status`
 - `python3 scripts/check_codex_setup.py`
-- `pytest -q tests/test_check_codex_setup.py`
+- `python3 scripts/check_stack.py`
+- `pytest -q`
 - `codex --version`

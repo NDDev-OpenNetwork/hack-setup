@@ -1,6 +1,6 @@
 <!-- Memory Metadata
-Last updated: 2026-09-19
-Last commit: b0d6d67 docs: document one-command clone-and-setup flow
+Last updated: 2026-09-20
+Last commit: 16c5389 docs(serena): record hierarchical bootstrap catalog
 Scope: setup, install/, Makefile, docs/adr/0002-hierarchical-bootstrap.md
 Area: INFRA
 -->
@@ -9,14 +9,14 @@ Area: INFRA
 
 ## Purpose
 
-One-command macOS/Linux install after clone, with a numbered module catalog for future installers.
+One-command macOS/Linux install after clone, with a numbered module catalog.
 
 ## Source Of Truth
 
 - `./setup`: root entry; execs `install/bootstrap.sh`.
 - `install/catalog.toml`: documented module contract (`schema_version=1`, `entry="./setup"`).
 - `install/modules/<nn>-<id>/module.sh`: discovered in numeric order.
-- `docs/adr/0002-hierarchical-bootstrap.md`: accepted 2026-09-19.
+- `docs/adr/0002-hierarchical-bootstrap.md`.
 
 ## Entry Points
 
@@ -25,35 +25,28 @@ One-command macOS/Linux install after clone, with a numbered module catalog for 
 - `./setup --status`: check without installing.
 - `./setup --print-env`: print PATH export.
 - `. install/env.sh`: prepend `$REPO/.local/bin` then `$HOME/.local/bin`.
-- `make setup` / `make dry-run` / `make status`.
+- `make setup` / `make dry-run` / `make status` / `make check`.
 
 ## Current Behavior
 
-Bootstrap sources `install/lib/{common,os,download}.sh`, rejects non-Darwin/Linux hosts, and runs `10-prereqs`, `20-codex-cli`, `30-project-verify`. Codex module downloads official `rust-v0.155.1/install.sh`, verifies `build/codex-pin.json` `installer.sha256`, runs it with `CODEX_RELEASE=0.155.1`, `CODEX_NON_INTERACTIVE=1`, `CODEX_INSTALLER_USE_RELEASES_OPENAI_COM=false`, `CODEX_INSTALL_DIR=$HOME/.local/bin`, then symlinks into `$REPO/.local/bin`. A `disabled` file in a module directory skips that module.
+Bootstrap sources `install/lib/{common,os,download}.sh`, rejects non-Darwin/Linux hosts, and runs `10-prereqs`, `20-codex-cli`, `30-runtimes`, `40-project-verify`. Codex module installs official `rust-v0.155.1` into `~/.local/bin` and symlinks `$REPO/.local/bin`. Runtimes module installs pinned Node, bun, uv, and CPython 3.14 from `build/stack-pin.json`. Verify module runs `scripts/check_codex_setup.py` and `scripts/check_stack.py`.
 
 ## Contracts And Data
 
 - Module actions: `install`, `status`, `dry-run`.
-- Pin installer URL must contain `rust-v0.155.1/install.sh`.
-- Packages keyed `darwin-arm64`, `darwin-x86_64`, `linux-arm64`, `linux-x86_64`.
+- Catalog ids: `prereqs`, `codex-cli`, `runtimes`, `project-verify`.
 - Add a future installer as `install/modules/<nn>-<id>/module.sh` and a `catalog.toml` row.
 
 ## Invariants
 
-- Do not add a root file named `install`; it cannot coexist with `install/` on macOS.
-- Do not vendor the official 800-line installer; pin URL + sha256.
-- Do not write a clone-absolute PATH into shell profiles; official binary lives in `~/.local/bin`.
+- Do not add a root file named `install`.
+- Do not vendor the official Codex installer; pin URL + sha256.
 - Windows is fail-closed.
-- bun/npm/brew copies are not uninstalled; `install/env.sh` wins PATH order.
-
-## Change Rules
-
-- Keep `catalog.toml` in sync with `install/modules/`; `scripts/check_codex_setup.py` enforces that.
-- Disable a module with a `disabled` file rather than deleting the directory unless the catalog row is removed too.
+- Homebrew copies are not uninstalled; `install/env.sh` wins PATH order.
 
 ## Verification
 
 - `./setup --dry-run`
 - `./setup --status`
 - `python3 scripts/check_codex_setup.py`
-- `codex --version`
+- `python3 scripts/check_stack.py`
