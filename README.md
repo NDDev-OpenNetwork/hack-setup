@@ -20,12 +20,12 @@ cd hack-setup
 
 `./setup` is the only root entry. Modules: prereqs → official Codex CLI →
 Node/bun/uv/Python 3.14 → project verify. JS installer is bun. Web is
-React + Vite, not Next.js. Windows is fail-closed.
+React + Vite + TypeScript 7.0.2 only, not Next.js. Windows is fail-closed.
 
 ```bash
 ./setup --dry-run   # planned work, no downloads
 ./setup --status    # check without installing
-make check          # artifact validator + host doctor
+just check          # artifact validator + host doctor
 ```
 
 `install/env.sh` puts `$REPO/.local/bin` and `~/.local/bin` ahead of
@@ -36,15 +36,19 @@ brew/npm shims.
 | File | Role |
 | --- | --- |
 | `build/codex-pin.json` | Codex CLI `0.155.1` + official installer hashes |
-| `build/stack-pin.json` | Product stack schema 2 |
-| `build/stack-standard.md` | Generated version table; refresh with `--write` |
-| `docs/adr/0001`–`0004` | Decisions |
+| `build/stack-pin.json` | Product stack schema 2. `control` names the loop |
+| `.codex/config.toml` | Runtime projection of session + models + features |
+| `build/stack-standard.md` | Generated; refresh with `--write` |
+| `just check` | Proof that pin == config == AGENTS == generated |
+| `docs/adr/0001`–`0007` | Decisions |
+| `justfile` | Project commands (`just gate`, `just check`) |
+| `docs/rules/` | On-demand tech rules. `docs/research/` is archive |
 
 ```bash
-codex --version                      # expected: codex-cli 0.155.1
-python3 scripts/check_stack.py       # required host tools must match
-python3 scripts/check_stack.py --list
-python3 scripts/reverify_stack_pin.py
+codex --version     # expected: codex-cli 0.155.1
+just check          # artifact validator + host doctor
+just stack          # print generated standard
+just reverify       # hackathon-day network drift
 ```
 
 Desktop is the ChatGPT app (`brew install --cask chatgpt`). Do not install
@@ -52,9 +56,13 @@ the discontinued `codex-app` cask.
 
 ## After clone
 
-1. Run `./setup` (or `make setup`).
-2. Trust this project in Codex so `.codex/config.toml` loads.
+1. Run `./setup` (or `just setup`).
+2. Trust this project in Codex so `.codex/config.toml` loads. Session
+   law is YOLO (`approval_policy = "never"`,
+   `sandbox_mode = "danger-full-access"`). See ADR 0006.
 3. Use repo skills from `.agents/skills/`.
-4. Custom agents: `mapper`, `reviewer`, `implementer`.
+4. Models: `gpt-6-astra` primary, `gpt-5.6-sol` via `--profile sol`,
+   both `xhigh`. Context `872000` / compact `700000`. No Codex
+   subagents. ADR 0007.
 
 See `AGENTS.md` and `install/README.md` for layout.
