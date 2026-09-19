@@ -1,15 +1,28 @@
-model = "gpt-5.6"
-approval_policy = "on-request"
-sandbox_mode = "workspace-write"
-web_search = "cached"
+model = "gpt-6-astra"
+model_reasoning_effort = "xhigh"
+review_model = "gpt-5.6-sol"
+model_context_window = 872_000
+model_auto_compact_token_limit = 700_000
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+allow_login_shell = true
+web_search = "live"
+
+[profiles.sol]
+model = "gpt-5.6-sol"
+model_reasoning_effort = "xhigh"
+review_model = "gpt-5.6-sol"
+model_context_window = 872_000
+model_auto_compact_token_limit = 700_000
 
 [agents]
-max_concurrent_threads_per_session = 6
+enabled = false
 
 [plugins."saint-tibo@saint-tibo"]
 enabled = true
 
 [features]
-multi_agent = true
+multi_agent = false
+multi_agent_v2 = false
 hooks = true
 memories = false
