@@ -33,6 +33,7 @@ project_name: "hack-setup"
 # Note that when using the JetBrains backend, language servers are not used and this list is correspondingly ignored.
 languages:
   - python
+  - bash
   - markdown
   - json
   - yaml

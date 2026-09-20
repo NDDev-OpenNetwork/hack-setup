@@ -64,7 +64,7 @@ Setup owner stream: Danil.
 - `c8ceb4b` forms switched to `@tanstack/react-form` + Standard Schema;
   `reverify` watches the new package; stale RHF refs removed
 - Checker fails on `standards/*.md` orphans not linked in INDEX
-- Host: all declared tools match the pin (`--strict` 14/14); Devin stale
+- Host: all declared tools match the pin (`--strict` 15/15); Devin stale
   locks, research zip, merged branch cleaned
 - Host codex: project trusted, `marketplace add .` done — config and all
   four plugins are live on this host
@@ -87,6 +87,10 @@ Setup owner stream: Danil.
   strict-declared / bundled / toolchain-required rows honestly
 - `057e173` + `5947536` JS LSP installs use `bun i -g` into `~/.bun/bin`
   (npm banned by `do_not_use`); pin formatting restored
+- Deep audit wave: `lsp.dart` now resolves `clients.flutter.dart`
+  (3.13.4, the actual server version); `lsp.markdown` package filled;
+  CI artifacts job bootstraps the pinned uv instead of pip; checker
+  rejects npm/pip/pnpm in `lsp.*.install`; REVIEW covers all 4 plugins
 
 ## Next (blocked on user)
 
