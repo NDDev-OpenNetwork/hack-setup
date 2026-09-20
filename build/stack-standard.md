@@ -147,6 +147,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | declared | `ruff` | `ruff` | `quality.ruff.version` | `0.16.8` |
 | declared | `pytest` | `pytest` | `quality.pytest.version` | `9.1.1` |
 | declared | `just` | `just` | `quality.just.version` | `1.58.0` |
+| declared | `ty` | `ty` | `quality.ty.version` | `0.0.82` |
 
 ## Codex models
 

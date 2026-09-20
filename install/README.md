@@ -45,7 +45,7 @@ CODEX_INSTALLER_USE_RELEASES_OPENAI_COM=false
 CODEX_INSTALL_DIR=$HOME/.local/bin
 ```
 
-The binary is installed to `~/.local/bin/codex` (not a clone-absolute PATH) and symlinked to `$REPO/.local/bin/codex`. Windows is fail-closed.
+The binary is installed to `~/.local/bin/codex` (not a clone-absolute PATH) and symlinked to `$REPO/.local/bin/codex`. The module also writes the managed `~/.codex/sol.config.toml` profile overlay and strips a legacy `[profiles.sol]` table from the user config (Codex 0.155.1 ignores project-local `profiles`; since 0.134 `--profile` reads `<name>.config.toml`). Windows is fail-closed.
 
 ## Commands
 

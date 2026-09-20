@@ -28,6 +28,7 @@ NPM = [
 ]
 PYPI = [
     ("backend.fastapi", "fastapi"),
+    ("quality.ty", "ty"),
     ("quality.ruff", "ruff"),
     ("quality.pytest", "pytest"),
     ("quality.pytest_asyncio", "pytest-asyncio"),

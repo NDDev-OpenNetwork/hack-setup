@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 9732012 feat(standards): ship the area catalogue, layer skills, and nested templates
+Last commit: bc3c4c3 fix(docs+check): document plugin install steps; scope legacy-profile ban to sol
 Scope: build/stack-pin.json, build/stack-standard.md, docs/adr/0003-stack-pin.md, docs/adr/0004-product-stack.md, docs/adr/0008-agent-standards-plugin.md, justfile, scripts/check_stack.py
 Area: STACK
 -->
@@ -31,13 +31,13 @@ Frozen product + toolchain standard and host doctor.
 
 ## Current Behavior
 
-Web is React 19.3 + Vite 8.3 + TypeScript 7.0.2 only. No `typescript@6` / `@typescript/typescript6` / typescript-eslint in web. `@hey-api/openapi-ts` `0.99.0` is not a web workspace dep; do not take `@next`. shadcn via `bunx shadcn@4.21.0` only. `@types/node` is `24.13.6`. JS installer is bun.
+Web is React 19.3 + Vite 8.3 + TypeScript 7.0.2 only. No `typescript@6` / `@typescript/typescript6` / typescript-eslint in web. `@hey-api/openapi-ts` `0.99.0` is not a web workspace dep; do not take `@next`. shadcn via `bunx shadcn@4.21.0` only. `@types/node` is `24.13.6`. JS installer is bun. Forms are `@tanstack/react-form` `1.33.5` + Standard Schema (zod direct to `validators`, no adapter); no react-hook-form / `@hookform/resolvers` / `@tanstack/zod-form-adapter`.
 
 API: FastAPI, `httpx` `0.28.1` (`<1`). Isolated Python envs: API/workers redis-py 8.1.0, Telegram redis-py 7.4.1. openai `2.54.0` (LiteLLM `1.101.0` `openai>=2.20,<3`). cliproxyapi `7.3.9` is a GitHub release. Docling default extra `standard` is not API-safe; only `cv2` is opencv-python-headless `5.0.0.93`.
 
 Flutter 3.47.5 + bundled Dart 3.13.4. Tauri 2 npm `2.11.4`/`2.11.1`, crate `2.11.5`.
 
-`./setup` installs Codex plus Node/bun/uv/Python. Required probes: `codex`, `node`, `bun`, `python`, `uv`. Declared probes (including `just`) report OK/MISSING/DRIFT and do not fail the default doctor.
+`./setup` installs Codex plus Node/bun/uv/Python. Required probes: `codex`, `node`, `bun`, `python`, `uv`. Declared probes (rustc, go, docker, compose, psql, redis-server, ruff, pytest, just, `ty` `0.0.82`) report OK/MISSING/DRIFT and do not fail the default doctor; `--strict` fails them.
 
 ## Contracts And Data
 

@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 9732012 feat(standards): ship the area catalogue, layer skills, and nested templates
+Last commit: bc3c4c3 fix(docs+check): document plugin install steps; scope legacy-profile ban to sol
 Scope: .agents/, .codex/, plugins/saint-tibo/, plugins/hack-agent-standards/, AGENTS.md, docs/adr/0005-codex-rule-catalogue.md, docs/adr/0008-agent-standards-plugin.md, build/stack-pin.json registered.standards_plugin_skills
 Area: CODEX
 -->

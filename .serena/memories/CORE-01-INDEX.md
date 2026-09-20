@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 9732012 feat(standards): ship the area catalogue, layer skills, and nested templates
+Last commit: bc3c4c3 fix(docs+check): document plugin install steps; scope legacy-profile ban to sol
 Scope: AGENTS.md, build/, .agents/, .codex/, plugins/saint-tibo/, plugins/hack-agent-standards/, install/, justfile, docs/adr/
 Area: CORE
 -->
