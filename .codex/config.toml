@@ -17,6 +17,9 @@ enabled = true
 [plugins."hack-agent-standards@saint-tibo"]
 enabled = true
 
+[plugins."hack-agent-workflow@saint-tibo"]
+enabled = true
+
 [features]
 multi_agent = false
 multi_agent_v2 = false

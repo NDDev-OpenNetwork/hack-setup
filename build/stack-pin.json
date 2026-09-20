@@ -90,6 +90,13 @@
       "enabled_in": ".codex/config.toml",
       "status": "first setup component; frames live in the plugin"
     },
+    "workflow_plugin": {
+      "id": "hack-agent-workflow@saint-tibo",
+      "path": "plugins/hack-agent-workflow/plugin.json",
+      "policy": "INSTALLED_BY_DEFAULT",
+      "enabled_in": ".codex/config.toml",
+      "status": "workflow format: serena-first, github-first, agent-first"
+    },
     "agents": [],
     "agents_enabled": false,
     "repo_skills": [
@@ -99,6 +106,11 @@
       "apply-stack-rule"
     ],
     "plugin_skills": ["saint-tibo"],
+    "workflow_plugin_skills": [
+      "session-boot",
+      "github-flow",
+      "agent-handoff"
+    ],
     "standards_plugin_skills": [
       "apply-agent-standard",
       "core-motion",

@@ -18,7 +18,7 @@ One loop. Do not fork numbers outside the pin.
    → CORE, QUALITY when proving, one area file. Plugin skills are
    `$hack-agent-standards:<skill>` (see Motion). Bare `$name` does
    not match a plugin skill. Pin numbers win.
-5. Why: ADRs 0001–0008.
+5. Why: ADRs 0001–0009.
 
 ## Pin
 
@@ -75,6 +75,12 @@ Layer skills (plugin `hack-agent-standards`): `apply-agent-standard`
 `ai-models`, `identity-auth`, `text-formats`, `file-documents`,
 `education-lessons`, `runtime-infra`.
 
+Workflow skills (plugin `hack-agent-workflow`, invoke
+`$hack-agent-workflow:<name>`): `session-boot` (serena-first open:
+memories + NEXT-SESSION + issues), `github-flow` (github-first loop:
+named issue → work branch → personal named branch → dev → main),
+`agent-handoff` (agent-first close: memories + plan + quoted proof).
+
 ## Technology rules
 
 Codex 0.155.1 has no glob / `.mdc` / `alwaysApply` loader. Do not dump the
@@ -105,6 +111,7 @@ change that creates the tree. Do not create empty product trees.
 | Repo skills | `.agents/skills/<name>/SKILL.md` | Source of truth. Do not copy these names into the plugin. |
 | Marketplace | `.agents/plugins/marketplace.json` | Paths are relative to the repo root. |
 | Plugin | `plugins/saint-tibo/plugin.json` | Portable Agent Plugins 1.0.0. |
+| Workflow plugin | `plugins/hack-agent-workflow/plugin.json` | serena-first / github-first / agent-first. ADR 0009. |
 | Project config | `.codex/config.toml` | YOLO after trust. Matches `registered.session` + `models`. Loads only after the project is trusted. |
 | Bootstrap | `./setup` → `install/` | macOS/Linux modules. Discovery: `install/modules/<nn>-*`. |
 | Codex pin | `build/codex-pin.json` | CLI `0.155.1` + official installer hashes. |

@@ -15,7 +15,7 @@ One loop. `build/stack-pin.json` `control` names it.
    `$hack-agent-standards:<layer-skill>`. Router
    `$hack-agent-standards:apply-agent-standard`. Repo alias
    `$apply-stack-rule`. Pin numbers win. Owner turn beats a frame.
-5. Why: ADRs 0001–0008
+5. Why: ADRs 0001–0009
 
 Do not fork numbers into frames, skills, or memories first. Edit pin +
 config together, then `just check`.
@@ -35,7 +35,11 @@ config together, then `just check`.
 - Forms: `@tanstack/react-form` `1.33.5` + Standard Schema (zod direct,
   no adapter). No react-hook-form / @hookform/resolvers / zod-form-adapter
 - Frames plugin: `hack-agent-standards@saint-tibo` (ADR 0008)
-- Plugin skill set: `registered.standards_plugin_skills` (15 names)
+- Workflow plugin: `hack-agent-workflow@saint-tibo` (ADR 0009) —
+  serena-first `session-boot`, github-first `github-flow`,
+  agent-first `agent-handoff`; invoke `$hack-agent-workflow:<name>`
+- Plugin skill sets: `registered.standards_plugin_skills` (15) +
+  `registered.workflow_plugin_skills` (3)
 
 Tibo 1M/900k is documented, not runtime. Catalog max is 872000.
 

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "hack-agent-workflow",
+  "version": "0.1.0",
+  "description": "Saint Tibo agent workflow format: serena-first session boot, GitHub-first issue loop, agent-first handoff.",
+  "author": {
+    "name": "Saint Tibo"
+  },
+  "license": "MIT",
+  "keywords": ["codex", "workflow", "saint-tibo", "serena", "github"]
+}

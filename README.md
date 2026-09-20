@@ -40,7 +40,7 @@ brew/npm shims.
 | `.codex/config.toml` | Runtime projection of session + models + features |
 | `build/stack-standard.md` | Generated; refresh with `--write` |
 | `just check` | Proof that pin == config == AGENTS == generated |
-| `docs/adr/0001`–`0008` | Decisions |
+| `docs/adr/0001`–`0009` | Decisions |
 | `justfile` | Project commands (`just gate`, `just check`) |
 | `plugins/hack-agent-standards/standards/` | On-demand frames. `docs/research/` is archive |
 
@@ -66,6 +66,7 @@ the discontinued `codex-app` cask.
    codex plugin marketplace add .
    codex plugin add saint-tibo@saint-tibo
    codex plugin add hack-agent-standards@saint-tibo
+   codex plugin add hack-agent-workflow@saint-tibo
    ```
 
    Installed plugins are a copy under `~/.codex/plugins/cache/`. After
