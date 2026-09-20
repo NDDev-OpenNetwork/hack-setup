@@ -1,0 +1,26 @@
+name: check
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Codex project artifacts
+        run: python3 scripts/check_codex_setup.py
+      - name: Unit tests
+        run: |
+          python3 -m pip install --quiet pytest
+          python3 -m pytest -q
+      - name: Shell syntax
+        run: |
+          sh -n setup
+          for f in install/setup install/lib/*.sh install/modules/*/module.sh; do sh -n "$f"; done
