@@ -1,6 +1,9 @@
+import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+import pytest
 
 REPO = Path(__file__).resolve().parents[1]
 SCRIPTS = REPO / "scripts"
@@ -92,6 +95,10 @@ def test_standard_lists_core_pins() -> None:
     assert "isolate the generator" not in text
 
 
+@pytest.mark.skipif(
+    shutil.which("codex") is None,
+    reason="host doctor requires a provisioned host (codex/node/bun/uv on PATH)",
+)
 def test_check_stack_doctor_passes() -> None:
     result = subprocess.run(
         [sys.executable, str(SCRIPTS / "check_stack.py")],
