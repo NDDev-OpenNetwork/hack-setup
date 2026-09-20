@@ -15,16 +15,25 @@ rights on the product org.
 
 ## Decision
 
-**Spawn:** the Codex App injects a `codex_app.*` dynamic tool namespace
-(`create_thread`, `send_message_to_thread`, `list_threads`,
-`read_thread`, `fork_thread`, title/pin/archive setters) into sessions
-running inside the app. The orchestrator uses these — they are
-top-level user-visible threads, not subagents, so `agents.enabled =
-false` and `features.multi_agent = false` stay law. `codex queue
---thread <id>` is the CLI fallback for messaging a thread.
+**Spawn:** the Codex App injects a dynamic task namespace into sessions
+running inside the app (`codex_app.*`; the same tools are `codex_tui.*`
+in TUI). Verified against pinned `be2951ea` source
+(`tui/src/dynamic_tools.rs`): `list_threads`, `list_archived_threads`,
+`read_thread`, `wait_threads` (≤8 targets, ≤120 s), `send_message_to_thread`,
+`create_thread`, `fork_thread`, `set_thread_title`, `set_thread_archived`.
+No `handoff_thread`/`set_thread_pinned` in this pin. Two schema
+constraints drive the design: `create_thread` takes only
+`{prompt, title?, model?}` — the child **inherits the caller's cwd** —
+and `prompt` is capped at **1,000 bytes**, so the full brief is written
+to `.agent/briefs/<name>.md` and the prompt carries a pointer plus a
+worktree instruction. These are top-level user-visible threads, not
+subagents, so `agents.enabled = false` and `features.multi_agent =
+false` stay law. `codex queue --thread <id>` is the CLI fallback for
+messaging a thread.
 
-**Isolation:** every worker thread gets its own `git worktree` cut from
-`dev`. Two agents never share a working tree.
+**Isolation:** every worker thread cuts its own `git worktree` from
+`dev` as its first action (the brief mandates it). Two agents never
+share a working tree.
 
 **Lanes:** `feat/<issue>-<slug>` → `<user>` (personal branch) → `dev` →
 `main`. Workers merge only into their own `<user>` lane. The

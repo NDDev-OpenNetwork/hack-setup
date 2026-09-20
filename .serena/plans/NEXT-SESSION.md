@@ -139,22 +139,37 @@ Setup owner stream: Danil.
   systemd units + provision-server.sh) — no GitHub admin needed.
   UserPromptSubmit hook now emits a STATUS line per prompt (repo,
   branch, dirty count, last commit, @me issues via 60 s cache at
-  `~/.codex/hack-setup-issues.json` refreshed by a detached
+  `~/.codex/hack-issues-<repo>.json` refreshed by a detached
   `_refresh-issues` subprocess — daemon threads die with the process).
   Law: `registered.deploy` + `registered.hooks`.
 - Product skeleton: `NDDev-OpenNetwork/vibestrap` — private mirror of
   `R3flector/vibestrap` (public, no upstream license file), admin
-  access, `main` + `dev` branches. Agent-surface projection
-  (AGENTS/.codex/hooks/skills) still to be adapted there. BAITC repo
-  untouched until hackathon day.
+  access, `main` + `dev` branches. Agent surface projected
+  (`9f8eae7` on dev=main): `.codex/config.toml` + hooks + AGENTS
+  hackathon section + `.agent/briefs/` gitignored. Local clone at
+  `~/Developer/NDDev-OpenNetwork/vibestrap`. BAITC repo untouched
+  until hackathon day.
+- codex_app schema verified against pinned `be2951ea` source
+  (`tui/src/dynamic_tools.rs`): 9 tools — list_threads,
+  list_archived_threads, read_thread, wait_threads (≤8 targets, ≤120 s,
+  0=snapshot), send_message_to_thread, create_thread, fork_thread,
+  set_thread_title, set_thread_archived. NO handoff_thread /
+  set_thread_pinned. create_thread = {prompt≤1000B, title?, model?}
+  only — child inherits cwd (worktree isolation goes in the prompt);
+  full briefs live in `.agent/briefs/*.md`. hook hack_mode.py is now
+  repo-portable: STATE/GH_CACHE named per ROOT.name, SKILL falls back
+  to `~/.codex/plugins/cache/*/hack-agent-workflow/*/` when the repo
+  has no plugins/ tree.
 
 ## Next
 
-- Adapt vibestrap fork to the hackathon setup: project AGENTS +
-  `.codex/config.toml` + hooks + workflow onto the product tree;
-  compose/health endpoints for the deploy watcher.
 - Servers: two doctl droplets day-before; only SSH keys needed from
-  the user; `install/deploy/provision-server.sh <host> <branch>` each.
+  the user; `install/deploy/provision-server.sh <host> <branch>` each
+  (dev→dev, prod→main). vibestrap compose already healthchecks
+  postgres/backend/frontend — set HACK_DEPLOY_HEALTH to
+  `http://localhost:8000/health/ready` or `:3000`.
+- Hackathon day: import the adapted vibestrap into the BAITC repo
+  (owner word only).
 - Product trees (`web/`, `api/`, …) and nested `AGENTS.md` copies only
   when that code is authored. Copy from `nested/` in the same change.
 

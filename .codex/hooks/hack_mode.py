@@ -17,8 +17,30 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SKILL = ROOT / "plugins" / "hack-agent-workflow" / "skills" / "hack-mode" / "SKILL.md"
-STATE = Path.home() / ".codex" / "hack-setup-mode.json"
+STATE = Path.home() / ".codex" / f"hack-mode-{ROOT.name}.json"
+
+
+def _skill_path() -> Path:
+    # Repo checkout first; a projected product repo resolves the same
+    # skill from the installed plugin cache instead.
+    local = (
+        ROOT / "plugins" / "hack-agent-workflow"
+        / "skills" / "hack-mode" / "SKILL.md"
+    )
+    if local.is_file():
+        return local
+    cache = Path.home() / ".codex" / "plugins" / "cache"
+    try:
+        for hit in sorted(
+            cache.glob("*/hack-agent-workflow/*/skills/hack-mode/SKILL.md")
+        ):
+            return hit
+    except Exception:
+        pass
+    return local
+
+
+SKILL = _skill_path()
 
 REMINDER = (
     "HACK-MODE ACTIVE: laziest working solution (YAGNI ladder), "
@@ -30,7 +52,7 @@ OFF_COMMANDS = {"normal mode", "stop hack mode", "stop hack-mode", "hack off"}
 ON_COMMANDS = {"hack mode", "hack-mode", "hack on", "hack full"}
 ULTRA_COMMANDS = {"hack ultra", "hack-mode ultra"}
 
-GH_CACHE = Path.home() / ".codex" / "hack-setup-issues.json"
+GH_CACHE = Path.home() / ".codex" / f"hack-issues-{ROOT.name}.json"
 GH_TTL = 60
 
 
