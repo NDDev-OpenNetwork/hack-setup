@@ -15,7 +15,7 @@ Already present on a compliant host (no action):
 - `biome lsp-proxy` — per-project `bunx @biomejs/biome`
 - `tsserver` — ships inside the pinned `typescript` dependency; VS
   Code/Cursor attach it built-in. Editors needing stdio:
-  `npm i -g typescript typescript-language-server@6.0.0`
+  `bun i -g typescript-language-server@6.0.0`
 
 Needs a matching toolchain on the host first:
 
@@ -31,16 +31,17 @@ Per-language extras:
 go install golang.org/x/tools/gopls@v0.23.0          # Go
 cargo install taplo-cli --locked --version 0.10.0    # TOML
 brew install marksman                                # Markdown, macOS
-npm i -g vscode-langservers-extracted@4.10.0         # JSON/HTML/CSS
-npm i -g yaml-language-server@1.24.0                 # YAML
-npm i -g bash-language-server@5.8.1                  # Shell
-npm i -g dockerfile-language-server-nodejs@0.15.0    # Dockerfile
+bun i -g vscode-langservers-extracted@4.10.0         # JSON/HTML/CSS
+bun i -g yaml-language-server@1.24.0                 # YAML
+bun i -g bash-language-server@5.8.1                  # Shell
+bun i -g dockerfile-language-server-nodejs@0.15.0    # Dockerfile
 ```
 
 Notes:
 
-- `npm i -g` targets the pinned node; its global bin dir is on PATH
-  after `. install/env.sh`. Verify with `which <server>`.
+- `bun i -g` is the JS installer (npm/pnpm banned by
+  `do_not_use`); its global bins land in `~/.bun/bin`, on PATH after
+  `. install/env.sh`. Verify with `which <server>`.
 - `marksman` on Linux: no brew — fetch the `marksman-linux-x64` asset
   from GitHub release `2026-02-08`, chmod +x, drop into
   `~/.local/bin`.
