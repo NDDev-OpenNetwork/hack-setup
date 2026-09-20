@@ -31,8 +31,8 @@ Do not create `web/` only to hold this file.
    next to the web TypeScript compiler.
 4. First user-facing string → keys in `ru` / `kk` / `en` in the
    same change. First visual → tokens, not a one-off palette.
-5. Server data → TanStack Query. Interaction → local state or RHF.
-   No required global store.
+5. Server data → TanStack Query. Interaction → local state or
+   TanStack Form. No required global store.
 6. Proof: Biome + the project `tsc` (transpile is not types).
    Changed interaction, layout, auth, or streaming → a real
    browser path (Playwright on that path) **when `web/` exists**.
@@ -96,10 +96,14 @@ mutations. Clear that cache on logout / account change.
 
 ### Forms
 
-Form UX is a local Zod schema. Wire types are the generated client.
+Form UX is a local Zod schema passed straight to TanStack Form —
+v1 speaks Standard Schema, no resolver adapter. Wire types are the
+generated client.
 
-- `useForm<z.input<typeof schema>, unknown, z.output<typeof schema>>`
-  + `zodResolver`.
+- `useForm({ defaultValues, validators: { onChange: schema } })`;
+  the editable shape is `z.input`, submit `value` is `z.output`.
+- `<form.Field>` render props: `field.state.value` /
+  `handleChange` / `handleBlur`. No `register` / `Controller`.
 - `formToDto(output)` is assignable to the generated request type.
   No `as Dto`. Inverse `dtoToForm` for edit `defaultValues`.
 - Empty inputs are `""`. JSON DTOs follow the API (`null` / omit),
@@ -108,11 +112,13 @@ Form UX is a local Zod schema. Wire types are the generated client.
   messages are not UI copy (and have no `kk` locale).
 - Optional generated Zod lives **outside** web and validates the
   DTO after the adapter (SDK `validator` / `zBody.parse`). Do not
-  pass generated schemas to `zodResolver`.
+  pass generated schemas to form validators.
 
-Query mutation takes the **DTO**. `isPending` disables submit.
-`setError` maps API field errors. Form mounts after edit data
-exists (or async `defaultValues`).
+Query mutation takes the **DTO**. `form.Subscribe` on
+`isSubmitting` / `canSubmit` disables submit. API field errors map
+through `setErrorMap` `onServer` keyed by field name, not per-field
+state. Form mounts after edit data exists (or async
+`defaultValues`).
 
 ### UI
 

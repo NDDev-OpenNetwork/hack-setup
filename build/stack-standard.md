@@ -36,8 +36,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `frontend.query` | `5.103.1` | `@tanstack/react-query` |
 | `frontend.tailwindcss` | `4.3.3` | `tailwindcss` |
 | `frontend.shadcn` | `4.21.0` | `shadcn` |
-| `frontend.forms.react_hook_form` | `7.88.0` | `react-hook-form` |
-| `frontend.forms.resolvers` | `5.9.1` | `@hookform/resolvers` |
+| `frontend.forms.tanstack_form` | `1.33.5` | `@tanstack/react-form` |
 | `frontend.zod` | `4.6.5` | `zod` |
 | `frontend.i18n.i18next` | `26.4.2` | `i18next` |
 | `frontend.i18n.react_i18next` | `17.0.14` | `react-i18next` |
@@ -202,6 +201,8 @@ Refresh with `python3 scripts/check_stack.py --write`.
 - second JS lockfile
 - typescript@6 or @typescript/typescript6 in the web workspace
 - typescript-eslint in the web workspace
+- react-hook-form and @hookform/resolvers (forms are @tanstack/react-form + Standard Schema)
+- @tanstack/zod-form-adapter (v1 speaks Standard Schema natively)
 - @hey-api/openapi-ts@next
 - bun add shadcn (nests zod 3); use bunx shadcn@4.21.0
 - @types/node 26.x until Node 26 is LTS
@@ -228,6 +229,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `r3f-react-19-3` | direct three 0.186.0; @react-three/fiber 9.7 and v10 canary still peer react <19.3 (issue 3915); no R3F/Drei |
 | `docling-opencv-cv2` | opencv-python-headless 5.0.0.93 is the only cv2. Default docling 2.129.0 extra standard pulls rapidocr>=3.9.1 which requires opencv_python. Constrain opencv-python; do not add unconstrained RapidOCR; keep torch from that extra out of the API env. pypdf 6.19.0 is separate from docling pypdfium2. |
 | `shadcn-cli-not-dep` | Install UI with bunx shadcn@4.21.0. Do not bun add shadcn; that package nests zod ^3. |
+| `forms-tanstack-standard-schema` | Web forms use @tanstack/react-form 1.33.5; validation is Standard Schema (zod passed to validators directly). Do not add react-hook-form, @hookform/resolvers, or @tanstack/zod-form-adapter. |
 | `httpx-fastapi-lt-1` | httpx 0.28.1 is latest stable. FastAPI extras require httpx<1.0.0,>=0.23.0. Do not take httpx 1.x. |
 | `flutter-dart` | pin Flutter 3.47.5 and its bundled Dart 3.13.4 |
 | `openai-sdk-major` | API env openai 2.54.0 because LiteLLM 1.101.0 requires openai>=2.20,<3; do not put openai 3.x in the API env |

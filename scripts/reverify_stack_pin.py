@@ -20,6 +20,7 @@ NPM = [
     ("frontend.tailwindcss", "tailwindcss"),
     ("frontend.shadcn", "shadcn"),
     ("frontend.zod", "zod"),
+    ("frontend.forms.tanstack_form", "@tanstack/react-form"),
     ("runtimes.bun", "bun"),
     ("quality.biome", "@biomejs/biome"),
     ("quality.vitest", "vitest"),

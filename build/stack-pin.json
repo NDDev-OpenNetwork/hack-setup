@@ -33,6 +33,8 @@
     "second JS lockfile",
     "typescript@6 or @typescript/typescript6 in the web workspace",
     "typescript-eslint in the web workspace",
+    "react-hook-form and @hookform/resolvers (forms are @tanstack/react-form + Standard Schema)",
+    "@tanstack/zod-form-adapter (v1 speaks Standard Schema natively)",
     "@hey-api/openapi-ts@next",
     "bun add shadcn (nests zod 3); use bunx shadcn@4.21.0",
     "@types/node 26.x until Node 26 is LTS",
@@ -283,8 +285,11 @@
       "install": "cli-only; do not bun add shadcn"
     },
     "forms": {
-      "react_hook_form": { "package": "react-hook-form", "version": "7.88.0" },
-      "resolvers": { "package": "@hookform/resolvers", "version": "5.9.1" }
+      "tanstack_form": {
+        "package": "@tanstack/react-form",
+        "version": "1.33.5",
+        "validation": "Standard Schema: pass the zod schema straight to validators; no adapter package"
+      }
     },
     "zod": { "package": "zod", "version": "4.6.5" },
     "i18n": {
@@ -556,6 +561,10 @@
     {
       "id": "shadcn-cli-not-dep",
       "decision": "Install UI with bunx shadcn@4.21.0. Do not bun add shadcn; that package nests zod ^3."
+    },
+    {
+      "id": "forms-tanstack-standard-schema",
+      "decision": "Web forms use @tanstack/react-form 1.33.5; validation is Standard Schema (zod passed to validators directly). Do not add react-hook-form, @hookform/resolvers, or @tanstack/zod-form-adapter."
     },
     {
       "id": "httpx-fastapi-lt-1",
