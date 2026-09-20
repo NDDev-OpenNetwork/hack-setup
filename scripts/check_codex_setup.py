@@ -1219,6 +1219,16 @@ def check_hooks() -> None:
             "subagent hooks are banned: agents are disabled and lazy-mode "
             "injection biases reviewer subagents (openai/codex-style #502)"
         )
+    repair = pin.get("registered", {}).get("repair")
+    if not isinstance(repair, dict):
+        raise CheckError("stack-pin.registered.repair must be an object")
+    repair_script = ROOT / str(repair.get("script", "scripts/repair_setup.py"))
+    if not repair_script.is_file():
+        raise CheckError(f"repair script missing: {repair.get('script')}")
+    py_compile(str(repair_script))
+    recipe = str(repair.get("justfile_recipe", "repair"))
+    if not re.search(rf"(?m)^{re.escape(recipe)}:\s*$", read_text(ROOT / "justfile")):
+        raise CheckError(f"justfile must carry a `{recipe}:` recipe")
     deploy = pin.get("registered", {}).get("deploy")
     if not isinstance(deploy, dict):
         raise CheckError("stack-pin.registered.deploy must be an object")

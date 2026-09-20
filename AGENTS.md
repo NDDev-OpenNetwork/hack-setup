@@ -126,7 +126,7 @@ keenable (HTTP, keyless by default; keys travel as env-var names only).
 
 ## Hooks and persistent instructions
 
-`.codex/hooks.json` runs `.codex/hooks/hack_mode.py` on five events
+`.codex/hooks.json` runs `.codex/hooks/hack_mode.py` on six events
 (law: `registered.hooks`, ADR 0015):
 
 - `SessionStart` (startup/resume/clear/compact) injects the hack-mode
@@ -135,7 +135,8 @@ keenable (HTTP, keyless by default; keys travel as env-var names only).
   dirty count, last commit, `@me` issues via a 60 s gh cache).
 - `PreToolUse` `Bash` is the lane guard described above.
 - `PostToolUse` `Bash` reminds ship-verify after `git push`.
-- `SessionEnd` appends `.agent/session-log.ndjson`.
+- `SessionEnd` and `Interrupt` append `.agent/session-log.ndjson` —
+  how sessions end and where they were interrupted.
 
 Standalone messages toggle per-project mode
 (`~/.codex/hack-mode-<repo>.json`): `hack ultra`, `normal mode`,
@@ -188,7 +189,7 @@ change that creates the tree.
 | Bootstrap | `./setup` / `.\setup.ps1` → `install/` | macOS/Linux + native Windows modules. Discovery: `install/modules/<nn>-*`. |
 | Codex pin | `build/codex-pin.json` | CLI `0.155.1` + official installer hashes. |
 | Stack pin | `build/stack-pin.json` | Schema 2. Generated table: `build/stack-standard.md`. |
-| Commands | `justfile` | `just gate` / `just check`. |
+| Commands | `justfile` | `just gate` / `just check` / `just repair`. |
 
 Installed plugins are a copy under `~/.codex/plugins/cache/`, not a
 live view of the repo — after editing `plugins/*/`, refresh with
@@ -249,7 +250,12 @@ codex --version
 ```
 
 All four must succeed before the setup is treated as ready. `just gate`
-runs the same four. `just check` is only the two Python scripts. Host
+runs the same four. `just check` is only the two Python scripts.
+`just repair` (`scripts/repair_setup.py`, law `registered.repair`)
+diagnoses the setup, auto-fixes safe drift — plugin cache parity,
+managed notify/sol user-config blocks, `.agent` dirs, stale hook
+bytecode, corrupt hook state files — and ends with the real checkers;
+it reports rather than touches what needs a human or `./setup`. Host
 doctor fails if Codex/Node/bun/Python/uv drift.
 `python3 scripts/check_stack.py --list` prints the frozen standard.
 `--strict` also requires declared host tools (Rust/Go/Docker/...).

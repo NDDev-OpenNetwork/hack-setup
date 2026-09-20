@@ -95,7 +95,7 @@ function Ensure-Notify {
     }
     if (([System.IO.File]::ReadAllText($cfg)) -match 'hack-setup: notify') { return }
     $script = Join-Path $env:HACK_REPO_ROOT 'install\notify.ps1'
-    $block = "`n# hack-setup: notify`nnotify = [`"powershell`", `"-NoProfile`", `"-File`", `"$script`"]  # hack-setup`n"
+    $block = "`n# hack-setup: notify`nnotify = ['powershell', '-NoProfile', '-File', '$script']  # hack-setup`n"
     [System.IO.File]::AppendAllText($cfg, $block)
     Log "wired turn-complete notify -> install/notify.ps1"
 }

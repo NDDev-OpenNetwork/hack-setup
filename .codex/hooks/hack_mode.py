@@ -339,6 +339,10 @@ def main() -> None:
     if event == "sessionend":
         sessionend(payload)
         return
+    if event == "interrupt":
+        payload.setdefault("reason", "interrupt")
+        sessionend(payload)
+        return
     prompt(payload)
 
 

@@ -44,6 +44,15 @@ check:
 
 alias doctor := check
 
+# Diagnose the setup, auto-fix safe drift (plugin cache, notify, state files)
+[unix]
+repair:
+    python3 scripts/repair_setup.py
+
+[windows]
+repair:
+    python scripts/repair_setup.py
+
 # AGENTS four-command ready gate
 [unix]
 gate:

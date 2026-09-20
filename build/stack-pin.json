@@ -147,9 +147,10 @@
         "UserPromptSubmit",
         "PreToolUse",
         "PostToolUse",
-        "SessionEnd"
+        "SessionEnd",
+        "Interrupt"
       ],
-      "note": "project-layer hooks; plugin manifests cannot carry hooks in 0.155.1 (plugin_hooks feature removed, openai/codex#39895). hack_mode.py: SessionStart injects the ruleset (compact matcher re-injects after auto-compact); UserPromptSubmit emits reminder + git/issues STATUS; PreToolUse(Bash) denies protected-branch pushes and gh pr merge unless the checkout carries .agent/orchestrator (lane law activates via tracked .codex/lanes.json); PostToolUse(Bash) reminds ship-verify after git push; SessionEnd appends .agent/session-log.ndjson. additionalContext only works on PreToolUse/PostToolUse/SessionStart/UserPromptSubmit/SubagentStart. Standalone 'normal mode'/'hack ultra'/'hack mode' toggle per-project state under ~/.codex/hack-mode-<repo>.json"
+      "note": "project-layer hooks; plugin manifests cannot carry hooks in 0.155.1 (plugin_hooks feature removed, openai/codex#39895). hack_mode.py: SessionStart injects the ruleset (compact matcher re-injects after auto-compact); UserPromptSubmit emits reminder + git/issues STATUS; PreToolUse(Bash) denies protected-branch pushes and gh pr merge unless the checkout carries .agent/orchestrator (lane law activates via tracked .codex/lanes.json); PostToolUse(Bash) reminds ship-verify after git push; SessionEnd and Interrupt append .agent/session-log.ndjson. additionalContext only works on PreToolUse/PostToolUse/SessionStart/UserPromptSubmit/SubagentStart. Standalone 'normal mode'/'hack ultra'/'hack mode' toggle per-project state under ~/.codex/hack-mode-<repo>.json"
     },
     "deploy": {
       "model": "server-side pull watcher, no GitHub admin rights needed",
@@ -163,6 +164,11 @@
         "install/deploy/README.md"
       ],
       "note": "ADR 0014: orchestrator spawns worker threads via codex_app.* tools in Codex App (not subagents); lanes feat/<issue> -> <user> -> dev -> main"
+    },
+    "repair": {
+      "script": "scripts/repair_setup.py",
+      "justfile_recipe": "repair",
+      "note": "diagnose + auto-fix safe drift (plugin cache, managed notify/sol blocks, .agent dirs, hook bytecode, corrupt hook state); reports the rest; ends with the real checkers as the verify gate"
     },
     "mcp_servers": {
       "rule": "six MCP servers projected into .codex/config.toml [mcp_servers.*]; all keyless by default; keys only via env-var references, never literals",
