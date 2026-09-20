@@ -11,7 +11,7 @@ hack_detect_os() {
       esac
       ;;
     *)
-      die "unsupported OS $(uname -s); supported: macOS, Ubuntu/Linux, and Windows via WSL2 Ubuntu"
+      die "unsupported OS $(uname -s); supported: macOS, Ubuntu/Linux, native Windows via .\\setup.ps1, or WSL2 Ubuntu"
       ;;
   esac
 

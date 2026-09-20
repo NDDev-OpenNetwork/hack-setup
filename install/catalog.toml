@@ -4,6 +4,7 @@
 
 schema_version = 1
 entry = "./setup"
+entry_windows = "./setup.ps1"
 
 [[modules]]
 id = "prereqs"

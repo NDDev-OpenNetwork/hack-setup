@@ -21,6 +21,7 @@ PINNED_PLATFORMS = (
     "darwin-x86_64",
     "linux-arm64",
     "linux-x86_64",
+    "windows-x86_64",
 )
 CATALOG_MODULES = (
     ("prereqs", "modules/10-prereqs"),
@@ -171,6 +172,13 @@ def check_pin() -> str:
     if not isinstance(url, str) or "rust-v0.155.1/install.sh" not in url:
         raise CheckError("pin installer.url must be the rust-v0.155.1 install.sh")
     require_sha256("pin installer.sha256", installer.get("sha256"))
+    installer_ps1 = pin.get("installer_ps1")
+    if not isinstance(installer_ps1, dict):
+        raise CheckError("pin installer_ps1 must be an object")
+    ps1_url = installer_ps1.get("url")
+    if not isinstance(ps1_url, str) or "rust-v0.155.1/install.ps1" not in ps1_url:
+        raise CheckError("pin installer_ps1.url must be the rust-v0.155.1 install.ps1")
+    require_sha256("pin installer_ps1.sha256", installer_ps1.get("sha256"))
     packages = pin.get("packages")
     if not isinstance(packages, dict):
         raise CheckError("pin packages must be an object")
@@ -370,6 +378,27 @@ def check_stack_pin() -> None:
         raise CheckError("stack-pin.runtimes must be an object")
     for key in ("node", "bun", "uv", "typescript", "rust", "go"):
         require_versioned_package(runtimes.get(key), f"stack-pin.runtimes.{key}")
+    for key in ("node", "bun"):
+        packages = runtimes[key].get("packages")
+        if not isinstance(packages, dict):
+            raise CheckError(f"stack-pin.runtimes.{key}.packages must be an object")
+        missing = [name for name in PINNED_PLATFORMS if name not in packages]
+        if missing:
+            raise CheckError(f"stack-pin.runtimes.{key}.packages missing {missing}")
+        for name in PINNED_PLATFORMS:
+            package = packages[name]
+            if not isinstance(package, dict):
+                raise CheckError(f"stack-pin.runtimes.{key}.packages.{name} must be an object")
+            for field in ("name", "url", "sha256"):
+                if field not in package:
+                    raise CheckError(f"stack-pin.runtimes.{key}.packages.{name} missing {field}")
+            require_sha256(f"stack-pin.runtimes.{key}.packages.{name}.sha256", package["sha256"])
+    uv = runtimes["uv"]
+    for installer_key in ("installer", "installer_ps1"):
+        installer = uv.get(installer_key)
+        if not isinstance(installer, dict):
+            raise CheckError(f"stack-pin.runtimes.uv.{installer_key} must be an object")
+        require_sha256(f"stack-pin.runtimes.uv.{installer_key}.sha256", installer.get("sha256"))
     typescript = runtimes.get("typescript")
     if isinstance(typescript, dict):
         if typescript.get("version") != "7.0.2":
@@ -588,15 +617,25 @@ def check_bootstrap() -> None:
         raise CheckError("missing ./setup entry")
     if "install/bootstrap.sh" not in read_text(setup):
         raise CheckError("./setup must exec install/bootstrap.sh")
+    if not (ROOT / "setup.ps1").is_file():
+        raise CheckError("missing ./setup.ps1 entry")
+    if "install/bootstrap.ps1" not in read_text(ROOT / "setup.ps1"):
+        raise CheckError("./setup.ps1 must call install/bootstrap.ps1")
     if not (ROOT / "install" / "bootstrap.sh").is_file():
         raise CheckError("missing install/bootstrap.sh")
+    if not (ROOT / "install" / "bootstrap.ps1").is_file():
+        raise CheckError("missing install/bootstrap.ps1")
     if not (ROOT / "install" / "env.sh").is_file():
         raise CheckError("missing install/env.sh")
+    if not (ROOT / "install" / "env.ps1").is_file():
+        raise CheckError("missing install/env.ps1")
     catalog = load_toml(CATALOG_PATH)
     if catalog.get("schema_version") != 1:
         raise CheckError("install/catalog.toml schema_version must be 1")
     if catalog.get("entry") != "./setup":
         raise CheckError("install/catalog.toml entry must be ./setup")
+    if catalog.get("entry_windows") != "./setup.ps1":
+        raise CheckError("install/catalog.toml entry_windows must be ./setup.ps1")
     modules = catalog.get("modules")
     if not isinstance(modules, list) or len(modules) != len(CATALOG_MODULES):
         raise CheckError("install/catalog.toml must list the four bootstrap modules")
@@ -613,6 +652,9 @@ def check_bootstrap() -> None:
         module_sh = ROOT / "install" / relative / "module.sh"
         if not module_sh.is_file():
             raise CheckError(f"missing {module_sh.relative_to(ROOT)}")
+        module_ps1 = ROOT / "install" / relative / "module.ps1"
+        if not module_ps1.is_file():
+            raise CheckError(f"missing {module_ps1.relative_to(ROOT)}")
     modules_root = ROOT / "install" / "modules"
     found = sorted(
         path.name

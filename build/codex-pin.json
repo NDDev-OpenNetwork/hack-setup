@@ -12,6 +12,11 @@
     "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/install.sh",
     "sha256": "dd4282a1a3c8188f792513f2f16afb852e63ce3b98dbbc67684f716ebcc1e862"
   },
+  "installer_ps1": {
+    "name": "install.ps1",
+    "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/install.ps1",
+    "sha256": "ab832ca3fa3d2f4e0768cdd4253175d765da2df1034dda7f617d994d07e11f58"
+  },
   "checksum_manifest": {
     "name": "codex-package_SHA256SUMS",
     "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/codex-package_SHA256SUMS",
@@ -41,6 +46,12 @@
       "triple": "x86_64-unknown-linux-musl",
       "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/codex-package-x86_64-unknown-linux-musl.tar.gz",
       "sha256": "a65b895c6ac1a73629bbe4b864640c86133e94a43b4d67b3103044e1a306d5a2"
+    },
+    "windows-x86_64": {
+      "name": "codex-package-x86_64-pc-windows-msvc.tar.gz",
+      "triple": "x86_64-pc-windows-msvc",
+      "url": "https://github.com/openai/codex/releases/download/rust-v0.155.1/codex-package-x86_64-pc-windows-msvc.tar.gz",
+      "sha256": "f45c273b7835c192aaa9cef5b93aa9528966ac7301444632de80a565a9bf14e8"
     }
   }
 }

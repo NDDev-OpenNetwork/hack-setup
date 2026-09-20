@@ -219,10 +219,14 @@ def run_probe(probe: Probe) -> ProbeResult:
     binary = shutil.which(probe.bin)
     if binary is None:
         return ProbeResult(probe, "MISSING", "-", "-", "not on PATH")
+    # Windows CreateProcess cannot exec .cmd/.bat shims directly.
+    argv = [binary, *probe.argv]
+    if sys.platform == "win32" and binary.lower().endswith((".cmd", ".bat")):
+        argv = [os.environ.get("COMSPEC", "cmd.exe"), "/c", *argv]
     timeout = DEFAULT_TIMEOUT
     try:
         completed = subprocess.run(
-            [binary, *probe.argv],
+            argv,
             check=False,
             capture_output=True,
             text=True,

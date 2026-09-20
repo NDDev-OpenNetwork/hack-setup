@@ -9,7 +9,7 @@
   `@hey-api/openapi-ts@next`, `bun add shadcn`, `react-hook-form` /
   `@hookform/resolvers` (forms are `@tanstack/react-form` +
   Standard Schema), `@tanstack/zod-form-adapter`, and `opencv-python`.
-- Confirm `./setup` is the entry and `install/catalog.toml` matches `install/modules/`.
+- Confirm `./setup` / `.\setup.ps1` are the entries and `install/catalog.toml` matches `install/modules/`; every module needs both `module.sh` and `module.ps1` twins (ADR 0012).
 - Reject a root file named `install` (conflicts with `install/` on macOS).
 - Reject `approval_policy = "untrusted"` and `features.web_search*`.
 - Require `.codex/config.toml` to match `build/stack-pin.json`

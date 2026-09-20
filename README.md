@@ -10,15 +10,9 @@ says go.
 ## One command after clone
 
 Supported hosts: macOS (arm64/x86_64), Ubuntu/Linux (x86_64/arm64), and
-Windows x86_64 **via WSL2 Ubuntu** — the whole toolchain runs inside WSL.
-Native Windows is fail-closed (ADR 0012). On Windows:
+Windows x86_64 **natively** (ADR 0012; WSL2 also works as a POSIX path).
 
-```powershell
-wsl --install -d Ubuntu
-# restart, open the Ubuntu shell, then clone inside WSL
-```
-
-Then, on any supported host:
+macOS / Linux / WSL:
 
 ```bash
 git clone git@github.com:NDDev-OpenNetwork/hack-setup.git
@@ -27,24 +21,39 @@ cd hack-setup
 . install/env.sh
 ```
 
-`./setup` is the only root entry. Modules: prereqs → official Codex CLI →
-Node/bun/uv/Python 3.14 → project verify. JS installer is bun. Web is
-React + Vite + TypeScript 7.0.2 only, not Next.js.
+Windows (PowerShell):
 
-Host prerequisites: `tar`, `git`, `gh` (GitHub CLI, `gh auth login` —
-the workflow is github-first), `curl` or `wget`, `sha256sum` or
-`shasum`, `python3 >= 3.11`. Strict doctor (`check_stack.py --strict`)
-also expects the declared tools when you work in their area: rustc, go,
-docker + compose, psql, redis-server, ruff, pytest, just, ty.
+```powershell
+git clone https://github.com/NDDev-OpenNetwork/hack-setup.git
+cd hack-setup
+powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
+. .\install\env.ps1
+```
+
+`./setup` (POSIX) and `.\setup.ps1` (Windows) are the only root entries.
+Modules: prereqs → official Codex CLI → Node/bun/uv/Python 3.14 →
+project verify. JS installer is bun. Web is React + Vite +
+TypeScript 7.0.2 only, not Next.js.
+
+Host prerequisites: `git`, `gh` (GitHub CLI, `gh auth login` — the
+workflow is github-first). POSIX also needs `tar`, `curl` or `wget`,
+`sha256sum` or `shasum`, `python3 >= 3.11` (all in-box or one package on
+Ubuntu/macOS). Windows uses in-box `tar.exe`, `Get-FileHash`, and
+`ConvertFrom-Json`, so no host python is required to bootstrap; `gh`
+installs via `winget install GitHub.cli`. Strict doctor
+(`check_stack.py --strict`) also expects the declared tools when you
+work in their area: rustc, go, docker + compose, psql, redis-server,
+ruff, pytest, just, ty.
 
 ```bash
-./setup --dry-run   # planned work, no downloads
+./setup --dry-run   # planned work, no downloads (same flags on setup.ps1)
 ./setup --status    # check without installing
 just check          # artifact validator + host doctor
 ```
 
-`install/env.sh` puts `$REPO/.local/bin`, `~/.local/bin`, and
-`~/.bun/bin` (bun global installs) ahead of brew/npm shims.
+`install/env.sh` / `install\env.ps1` put `$REPO/.local/bin`,
+`~/.local/bin`, and `~/.bun/bin` (bun global installs) ahead of system
+shims; Windows additionally exposes `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin`.
 
 ## Pins
 

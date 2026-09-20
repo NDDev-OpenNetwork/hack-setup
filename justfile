@@ -5,29 +5,58 @@ default:
     @just --list
 
 # Install numbered modules
+[unix]
 setup:
     ./setup
 
+[windows]
+setup:
+    powershell -NoProfile -ExecutionPolicy Bypass -File ./setup.ps1
+
 # Planned work, no downloads
+[unix]
 dry-run:
     ./setup --dry-run
 
+[windows]
+dry-run:
+    powershell -NoProfile -ExecutionPolicy Bypass -File ./setup.ps1 --dry-run
+
 # Check without installing
+[unix]
 status:
     ./setup --status
 
+[windows]
+status:
+    powershell -NoProfile -ExecutionPolicy Bypass -File ./setup.ps1 --status
+
 # Proof: pin == config == AGENTS == generated standard
+[unix]
 check:
     python3 scripts/check_codex_setup.py
     python3 scripts/check_stack.py
 
+[windows]
+check:
+    python scripts/check_codex_setup.py
+    python scripts/check_stack.py
+
 alias doctor := check
 
 # AGENTS four-command ready gate
+[unix]
 gate:
     ./setup --status
     python3 scripts/check_codex_setup.py
     python3 scripts/check_stack.py
+    codex --version
+
+[windows]
+gate:
+    powershell -NoProfile -ExecutionPolicy Bypass -File ./setup.ps1 --status
+    python scripts/check_codex_setup.py
+    python scripts/check_stack.py
     codex --version
 
 # Print generated stack standard

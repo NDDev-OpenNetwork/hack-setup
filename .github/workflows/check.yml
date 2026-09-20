@@ -51,18 +51,20 @@ jobs:
           python3 scripts/check_codex_setup.py
           python3 scripts/check_stack.py
 
-  # Windows support is WSL2 Ubuntu (ADR 0012): prove ./setup inside WSL
-  # on a real Windows host.
-  setup-e2e-windows-wsl:
+  # Windows is native (ADR 0012): prove setup.ps1 on a real Windows host.
+  # WSL2 Ubuntu remains an alternative POSIX path covered by ubuntu-latest.
+  setup-e2e-windows:
     runs-on: windows-latest
     steps:
-      - name: Install WSL Ubuntu
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Full install
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
+      - name: Verify installed toolchain and plugins
+        shell: pwsh
         run: |
-          wsl --install -d Ubuntu --no-launch
-          wsl -l -q
-      - name: Full install inside WSL
-        run: |
-          wsl -d Ubuntu -e bash -lc "apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git curl gh python3 ca-certificates && git clone --depth 1 -b ${{ github.ref_name }} https://github.com/${{ github.repository }}.git hack-setup && cd hack-setup && ./setup"
-      - name: Verify toolchain inside WSL
-        run: |
-          wsl -d Ubuntu -e bash -lc "cd hack-setup && export PATH=\"\$PWD/.local/bin:\$HOME/.local/bin:$PATH\" && codex --version && python3 scripts/check_codex_setup.py && python3 scripts/check_stack.py"
+          . .\install\env.ps1
+          codex --version
+          codex plugin list
+          python scripts/check_codex_setup.py
+          python scripts/check_stack.py

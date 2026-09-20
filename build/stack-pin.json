@@ -218,6 +218,11 @@
           "name": "node-v24.21.0-linux-x64.tar.gz",
           "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-linux-x64.tar.gz",
           "sha256": "6e1db87ef58b8819e5d5402eff1536491b18edd8eb7bee5ef7897876e88dc5ff"
+        },
+        "windows-x86_64": {
+          "name": "node-v24.21.0-win-x64.zip",
+          "url": "https://nodejs.org/dist/v24.21.0/node-v24.21.0-win-x64.zip",
+          "sha256": "158f7685b44de51f6c0df1d153526cbcd3e1bc739a8dfc607721cef75de9e541"
         }
       }
     },
@@ -251,6 +256,11 @@
           "name": "bun-linux-x64.zip",
           "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-linux-x64.zip",
           "sha256": "36368faef7527875d5ffa52e53cd48021741f2a83eb6208a8dd64068d422a913"
+        },
+        "windows-x86_64": {
+          "name": "bun-windows-x64.zip",
+          "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.4.2/bun-windows-x64.zip",
+          "sha256": "ce4c17497b2f29712a99d3d53f028de28cd42e3bacb8589599e7f000e49b6405"
         }
       }
     },
@@ -270,6 +280,11 @@
         "name": "uv-installer.sh",
         "url": "https://github.com/astral-sh/uv/releases/download/0.12.17/uv-installer.sh",
         "sha256": "37b82230b28617c6c24fa52364fa28aa37f2aa40c114809a623f6b064a9730e5"
+      },
+      "installer_ps1": {
+        "name": "uv-installer.ps1",
+        "url": "https://github.com/astral-sh/uv/releases/download/0.12.17/uv-installer.ps1",
+        "sha256": "e08cfe98a992b95c04b5c8e8a3e61a5cf4565ef844c78770659a98bb8a4b1b31"
       }
     },
     "typescript": {

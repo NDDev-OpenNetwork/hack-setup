@@ -119,7 +119,7 @@ change that creates the tree. Do not create empty product trees.
 | Plugin | `plugins/saint-tibo/plugin.json` | Portable Agent Plugins 1.0.0. |
 | Workflow plugin | `plugins/hack-agent-workflow/plugin.json` | serena-first / github-first / agent-first. ADR 0009. |
 | Project config | `.codex/config.toml` | YOLO after trust. Matches `registered.session` + `models`. Loads only after the project is trusted. |
-| Bootstrap | `./setup` → `install/` | macOS/Linux modules. Discovery: `install/modules/<nn>-*`. |
+| Bootstrap | `./setup` / `.\setup.ps1` → `install/` | macOS/Linux + native Windows modules. Discovery: `install/modules/<nn>-*`. |
 | Codex pin | `build/codex-pin.json` | CLI `0.155.1` + official installer hashes. |
 | Stack pin | `build/stack-pin.json` | Schema 2. Generated table: `build/stack-standard.md`. |
 | Commands | `justfile` | `just gate` / `just check`. No Makefile. |
@@ -162,8 +162,11 @@ cd hack-setup
 `./setup` downloads the pinned Codex package tarball, verifies its sha256
 from `build/codex-pin.json` `packages.*` (hashed official `install.sh` is
 the fallback), and runs the numbered modules under `install/modules/`.
-Supported hosts: macOS, Ubuntu/Linux, and Windows via WSL2 Ubuntu;
-native Windows is fail-closed (ADR 0012).
+Supported hosts: macOS, Ubuntu/Linux, and Windows x86_64 natively via
+`.\setup.ps1` → `install/bootstrap.ps1` — a PowerShell twin of the same
+catalog (pinned `install.ps1`, `uv-installer.ps1`, bun/node zips; ADR
+0012). WSL2 Ubuntu also works as a POSIX path; Windows arm64 is
+fail-closed.
 
 ## Quality gate
 

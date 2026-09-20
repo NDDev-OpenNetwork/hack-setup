@@ -15,19 +15,26 @@ cd hack-setup
 
 ```text
 setup                         # execs install/bootstrap.sh
+setup.ps1                     # calls install/bootstrap.ps1 (native Windows)
 install/
   catalog.toml                # snapshot of numbered dirs; not read at runtime
   bootstrap.sh                # globs modules/<nn>-*/module.sh
-  env.sh                      # prepends .local/bin then ~/.local/bin
-  lib/                        # POSIX helpers
+  bootstrap.ps1               # globs modules/<nn>-*/module.ps1
+  env.sh / env.ps1            # session PATH for the user shell
+  lib/                        # POSIX helpers (.sh) + Windows twins (.ps1)
   modules/
-    10-prereqs/               # python3 3.11+, tar, curl|wget, sha256
-    20-codex-cli/             # pinned rust-v0.155.1 package tarball + sha256
+    10-prereqs/               # tar, git, gh; python3 3.11+ on POSIX
+    20-codex-cli/             # pinned rust-v0.155.1 package/installer + sha256
     30-runtimes/              # Node LTS, bun, uv, CPython 3.14
     40-project-verify/        # artifact gate + pinned versions
 ```
 
-Add a future installer as `install/modules/<nn>-<id>/module.sh` (`install` / `status` / `dry-run`) and the matching `catalog.toml` row. Disable with a `disabled` file in that directory. Bootstrap does not read `enabled`.
+Every module dir carries a `module.sh` (POSIX) and a `module.ps1`
+(native Windows) twin — same ids, actions, and pin reads; the checker
+requires both. Add a future installer as `install/modules/<nn>-<id>/`
+with both files (`install` / `status` / `dry-run`) and the matching
+`catalog.toml` row. Disable with a `disabled` file in that directory.
+Bootstrap does not read `enabled`.
 
 ## Pins
 
@@ -45,7 +52,7 @@ CODEX_INSTALLER_USE_RELEASES_OPENAI_COM=false
 CODEX_INSTALL_DIR=$HOME/.local/bin
 ```
 
-The binary is installed to `~/.local/bin/codex` (not a clone-absolute PATH) and symlinked to `$REPO/.local/bin/codex`. The module also writes the managed `~/.codex/sol.config.toml` profile overlay and strips a legacy `[profiles.sol]` table from the user config (Codex 0.155.1 ignores project-local `profiles`; since 0.134 `--profile` reads `<name>.config.toml`). Supported hosts: macOS, Ubuntu/Linux, Windows via WSL2 Ubuntu (native Windows is fail-closed, ADR 0012).
+The binary is installed to `~/.local/bin/codex` (not a clone-absolute PATH) and symlinked to `$REPO/.local/bin/codex`. The module also writes the managed `~/.codex/sol.config.toml` profile overlay and strips a legacy `[profiles.sol]` table from the user config (Codex 0.155.1 ignores project-local `profiles`; since 0.134 `--profile` reads `<name>.config.toml`). Supported hosts: macOS, Ubuntu/Linux, and Windows x86_64 natively — `.\setup.ps1` runs the pinned official `install.ps1`, which manages `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin` and the persistent user PATH (ADR 0012). WSL2 works as a POSIX path; Windows arm64 is fail-closed.
 
 ## Commands
 
