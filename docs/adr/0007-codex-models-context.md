@@ -15,14 +15,26 @@ catalog-honest Codex context budget, and no Codex subagents.
 match.
 
 - Primary: `gpt-6-astra` + `model_reasoning_effort = "xhigh"`.
-- Secondary: `gpt-5.6-sol` + `xhigh` via `--profile sol`.
-- `/review` uses `review_model = "gpt-5.6-sol"`.
+- Secondary: `gpt-5.6-sol` + `xhigh`. `/review` uses project
+  `review_model = "gpt-5.6-sol"`. An explicit sol session in a pinned
+  project is `codex -m gpt-5.6-sol`: project `model` sits above profile
+  overlays in the 0.155.1 precedence chain (CLI > project > profile >
+  user base).
 - Reject `gpt-5.6-luna`, `gpt-5.6-terra`, bare `gpt-5.6` / `gpt-6` as
   session slugs. Wire effort is `xhigh`, not `extra-high`.
 - Write the values 0.155.1 actually honors for both slugs:
   `model_context_window = 872_000`,
   `model_auto_compact_token_limit = 700_000`.
-  Same pair on `[profiles.sol]`.
+- Codex 0.155.1 ignores project-local `[profiles]` (warns "Ignored
+  unsupported project-local config keys"), and since 0.134 `--profile`
+  no longer reads `[profiles.<name>]` from `config.toml` at all — the
+  legacy table makes `--profile sol` fail outright. Profiles are overlay
+  files: `install/modules/20-codex-cli` writes `~/.codex/sol.config.toml`
+  with the same model/effort/window/compact pair and strips any legacy
+  `[profiles.sol]` table from the user `config.toml`. The overlay serves
+  directories without a project `model` pin; inside a pinned project,
+  `model` wins and sol is reached via `review_model` or `-m`. The
+  checker verifies the overlay file once the CLI is installed.
 - Tibo's public recipe is `1000000` / `900000`
   (`@thsottiaux`, 2026-08-16,
   https://x.com/thsottiaux/status/2089082893804896524). Those keys are

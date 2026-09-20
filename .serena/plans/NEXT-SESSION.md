@@ -24,7 +24,10 @@ config together, then `just check`.
 
 - CLI `0.155.1` / `rust-v0.155.1` / `be2951ea…`
 - Session: `never` + `danger-full-access` + `web_search=live` (ADR 0006)
-- Models: `gpt-6-astra` + `--profile sol` (`gpt-5.6-sol`), both `xhigh`
+- Models: `gpt-6-astra` + `gpt-5.6-sol`, both `xhigh`. In-repo sol =
+  `/review` or `codex -m gpt-5.6-sol` (project `model` outranks profile
+  overlays). Module 20 writes `~/.codex/sol.config.toml` for unpinned
+  dirs and strips legacy `[profiles.sol]` from the user config
 - Context `872000` / compact `700000` / usable `828400` (ADR 0007)
 - Subagents off. No `.codex/agents/*.toml`. No `model_catalog_json`
 - Commands: `justfile` only

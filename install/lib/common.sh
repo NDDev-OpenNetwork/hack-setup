@@ -16,3 +16,7 @@ require_cmd() {
 abs_path() {
   CDPATH= cd -- "$1" && pwd
 }
+
+hack_pin_get() {
+  python3 -c 'import json,sys; from functools import reduce; print(reduce(lambda a,b: a[b], sys.argv[2].split("."), json.load(open(sys.argv[1]))))' "$1" "$2"
+}

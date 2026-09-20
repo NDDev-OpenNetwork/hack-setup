@@ -61,8 +61,11 @@ the discontinued `codex-app` cask.
    law is YOLO (`approval_policy = "never"`,
    `sandbox_mode = "danger-full-access"`). See ADR 0006.
 3. Use repo skills from `.agents/skills/`.
-4. Models: `gpt-6-astra` primary, `gpt-5.6-sol` via `--profile sol`,
-   both `xhigh`. Context `872000` / compact `700000`. No Codex
+4. Models: `gpt-6-astra` primary, `gpt-5.6-sol` secondary — `/review`
+   uses it; an explicit sol session here is `codex -m gpt-5.6-sol`
+   (project `model` outranks profile overlays). `./setup` also installs
+   `~/.codex/sol.config.toml` so `--profile sol` works in unpinned dirs.
+   Both `xhigh`. Context `872000` / compact `700000`. No Codex
    subagents. ADR 0007. Frames: `hack-agent-standards@saint-tibo`,
    ADR 0008.
 

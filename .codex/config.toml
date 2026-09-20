@@ -8,13 +8,6 @@ sandbox_mode = "danger-full-access"
 allow_login_shell = true
 web_search = "live"
 
-[profiles.sol]
-model = "gpt-5.6-sol"
-model_reasoning_effort = "xhigh"
-review_model = "gpt-5.6-sol"
-model_context_window = 872_000
-model_auto_compact_token_limit = 700_000
-
 [agents]
 enabled = false
 

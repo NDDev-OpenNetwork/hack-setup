@@ -672,24 +672,37 @@ def check_config() -> None:
         raise CheckError("[agents].enabled must be false")
     if "max_concurrent_threads_per_session" in agents:
         raise CheckError("do not set max_concurrent_threads_per_session while agents are off")
-    profiles = config.get("profiles")
-    if not isinstance(profiles, dict):
-        raise CheckError("config must define [profiles.sol]")
-    sol = profiles.get("sol")
-    if not isinstance(sol, dict):
-        raise CheckError("config must define [profiles.sol]")
-    if sol.get("model") != models.get("secondary", "gpt-5.6-sol"):
-        raise CheckError('[profiles.sol].model must match models.secondary')
-    if sol.get("model_reasoning_effort") != models.get("reasoning_effort", "xhigh"):
-        raise CheckError("[profiles.sol].model_reasoning_effort must match models.reasoning_effort")
-    if sol.get("review_model") != models.get("review_model", "gpt-5.6-sol"):
-        raise CheckError("[profiles.sol].review_model must match models.review_model")
-    if sol.get("model_context_window") != models.get("requested_context_window", 872_000):
-        raise CheckError("[profiles.sol].model_context_window must match models.requested_context_window")
-    if sol.get("model_auto_compact_token_limit") != models.get(
-        "requested_auto_compact", 700_000
-    ):
-        raise CheckError("[profiles.sol].model_auto_compact_token_limit must match models.requested_auto_compact")
+    if "profiles" in config:
+        raise CheckError(
+            "project config must not define [profiles]; Codex 0.155.1 "
+            "ignores project-local profiles. The sol profile is installed "
+            "into the user config by install/modules/20-codex-cli"
+        )
+    codex_bin = Path.home() / ".local" / "bin" / "codex"
+    user_cfg_path = Path.home() / ".codex" / "config.toml"
+    sol_path = Path.home() / ".codex" / "sol.config.toml"
+    if codex_bin.exists():
+        if user_cfg_path.exists() and "profiles" in load_toml(user_cfg_path):
+            raise CheckError(
+                "legacy [profiles.*] in ~/.codex/config.toml blocks --profile; run ./setup"
+            )
+        if not sol_path.exists():
+            raise CheckError(
+                "~/.codex/sol.config.toml missing; run ./setup"
+            )
+        sol = load_toml(sol_path)
+        if sol.get("model") != models.get("secondary", "gpt-5.6-sol"):
+            raise CheckError("sol.config.toml model must match models.secondary")
+        if sol.get("model_reasoning_effort") != models.get("reasoning_effort", "xhigh"):
+            raise CheckError("sol.config.toml model_reasoning_effort must match models.reasoning_effort")
+        if sol.get("review_model") != models.get("review_model", "gpt-5.6-sol"):
+            raise CheckError("sol.config.toml review_model must match models.review_model")
+        if sol.get("model_context_window") != models.get("requested_context_window", 872_000):
+            raise CheckError("sol.config.toml model_context_window must match models.requested_context_window")
+        if sol.get("model_auto_compact_token_limit") != models.get(
+            "requested_auto_compact", 700_000
+        ):
+            raise CheckError("sol.config.toml model_auto_compact_token_limit must match models.requested_auto_compact")
     if "default_permissions" in config:
         raise CheckError(
             "do not set default_permissions; session law is sandbox_mode "

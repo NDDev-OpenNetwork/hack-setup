@@ -41,9 +41,13 @@ One loop. Do not fork numbers outside the pin.
   `approval_policy = "never"`, `sandbox_mode = "danger-full-access"`,
   `allow_login_shell = true`, `web_search = "live"`. `--full-auto` is
   not this. Do not add project `.codex/rules`. ADR 0006.
-- Models: primary `gpt-6-astra`, secondary `gpt-5.6-sol` via
-  `--profile sol`. Both `model_reasoning_effort = "xhigh"`.
-  `/review` is `gpt-5.6-sol`. No luna/terra, no bare `gpt-5.6`.
+- Models: primary `gpt-6-astra`, secondary `gpt-5.6-sol`.
+  `/review` is `gpt-5.6-sol` (project `review_model`). For a sol session
+  in this tree use `codex -m gpt-5.6-sol` — the project `model` key
+  outranks profile overlays. `./setup` also writes
+  `~/.codex/sol.config.toml` so `--profile sol` works in unpinned dirs.
+  Both `model_reasoning_effort = "xhigh"`. No luna/terra, no bare
+  `gpt-5.6`.
   Context `872_000`, compact `700_000`. Catalog max for both slugs
   is `872000` (usable `/status` `828400`). Do not write 1M / 900k;
   0.155.1 clamps those.

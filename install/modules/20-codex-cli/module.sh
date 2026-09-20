@@ -7,6 +7,7 @@ set -eu
 . "$HACK_LIB/download.sh"
 
 PIN_PATH="$HACK_REPO_ROOT/build/codex-pin.json"
+STACK_PIN_PATH="$HACK_REPO_ROOT/build/stack-pin.json"
 
 pin_field() {
   python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["installer"][sys.argv[2]])' "$PIN_PATH" "$1"
@@ -62,8 +63,55 @@ run_status() {
   die "Codex CLI $wanted is not installed; run ./setup"
 }
 
+ensure_sol_profile() {
+  # Codex >=0.134: `--profile sol` overlays ~/.codex/sol.config.toml on top
+  # of the user config. Project-local [profiles] are ignored, and a legacy
+  # [profiles.sol] table in the user config.toml makes `--profile sol` fail.
+  secondary="$(hack_pin_get "$STACK_PIN_PATH" models.secondary)"
+  effort="$(hack_pin_get "$STACK_PIN_PATH" models.reasoning_effort)"
+  ctx="$(hack_pin_get "$STACK_PIN_PATH" models.requested_context_window)"
+  compact="$(hack_pin_get "$STACK_PIN_PATH" models.requested_auto_compact)"
+  mkdir -p "${HOME}/.codex"
+  cat > "${HOME}/.codex/sol.config.toml" <<EOF
+# hack-setup managed: secondary model profile for \`codex --profile sol\`.
+# Values come from build/stack-pin.json models.* — edit the pin, not this file.
+model = "$secondary"
+model_reasoning_effort = "$effort"
+review_model = "$secondary"
+model_context_window = $ctx
+model_auto_compact_token_limit = $compact
+EOF
+  python3 - "${HOME}/.codex/config.toml" <<'PY'
+import pathlib, re, sys
+p = pathlib.Path(sys.argv[1])
+if not p.exists():
+    sys.exit(0)
+src = p.read_text()
+lines = src.splitlines(keepends=True)
+out, i, n = [], 0, len(lines)
+while i < n:
+    line = lines[i]
+    if line.lstrip().startswith("# hack-setup:"):
+        while i < n and lines[i].lstrip().startswith("#"):
+            i += 1
+        continue
+    if re.fullmatch(r"\[profiles\.sol\]", line.strip()):
+        i += 1
+        while i < n and not lines[i].strip().startswith("["):
+            i += 1
+        continue
+    out.append(line)
+    i += 1
+res = "".join(out)
+if res != src:
+    p.write_text(res)
+PY
+  log "installed user profile ~/.codex/sol.config.toml ($secondary)"
+}
+
 run_install() {
   wanted="$(cli_version)"
+  ensure_sol_profile
   if found="$(already_pinned)"; then
     link_repo_bin "$found"
     log "Codex CLI $wanted already present; linked $HACK_LOCAL_BIN/codex"
