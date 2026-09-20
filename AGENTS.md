@@ -87,6 +87,14 @@ Tooling skills (plugin `hack-agent-lsp`, invoke
 language, `lsp.*` in the stack pin), `lsp-setup` (install the pinned
 servers on a host).
 
+MCP skills (plugin `hack-agent-mcp`, invoke `$hack-agent-mcp:<name>`):
+`mcp-usage` (route between the six servers, verify, debug),
+`serena-workflow` (activate_project, memories, symbol edits),
+`research-workflow` (context7 docs, grep code, deepwiki repos,
+keenable web), `component-workflow` (shadcn registry flow). Server
+wiring is law: `registered.mcp_servers` → `.codex/config.toml`
+`[mcp_servers.*]`. Keyless by default; keys via env-var names only.
+
 ## Technology rules
 
 Codex 0.155.1 has no glob / `.mdc` / `alwaysApply` loader. Do not dump the
@@ -118,7 +126,8 @@ change that creates the tree. Do not create empty product trees.
 | Marketplace | `.agents/plugins/marketplace.json` | Paths are relative to the repo root. |
 | Plugin | `plugins/saint-tibo/plugin.json` | Portable Agent Plugins 1.0.0. |
 | Workflow plugin | `plugins/hack-agent-workflow/plugin.json` | serena-first / github-first / agent-first. ADR 0009. |
-| Project config | `.codex/config.toml` | YOLO after trust. Matches `registered.session` + `models`. Loads only after the project is trusted. |
+| MCP plugin | `plugins/hack-agent-mcp/plugin.json` | MCP workflow skills. Wiring: `registered.mcp_servers`. ADR 0013. |
+| Project config | `.codex/config.toml` | YOLO after trust. Matches `registered.session` + `models` + `registered.mcp_servers`. Loads only after the project is trusted. |
 | Bootstrap | `./setup` / `.\setup.ps1` → `install/` | macOS/Linux + native Windows modules. Discovery: `install/modules/<nn>-*`. |
 | Codex pin | `build/codex-pin.json` | CLI `0.155.1` + official installer hashes. |
 | Stack pin | `build/stack-pin.json` | Schema 2. Generated table: `build/stack-standard.md`. |

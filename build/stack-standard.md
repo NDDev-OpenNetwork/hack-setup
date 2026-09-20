@@ -133,6 +133,8 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `lsp.yaml` | `1.24.0` | `yaml-language-server` |
 | `lsp.shell` | `5.8.1` | `bash-language-server` |
 | `lsp.dockerfile` | `0.15.0` | `dockerfile-language-server-nodejs` |
+| `mcp.serena` | `1.7.0` | `serena-agent` |
+| `mcp.shadcn` | `4.21.0 (via frontend.shadcn)` |  |
 
 ## Environments
 

@@ -23,9 +23,12 @@
   `agents.enabled = false`, `features.multi_agent` and
   `features.multi_agent_v2` false. Reject luna/terra and bare `gpt-5.6`.
 - Portable `plugins/*/plugin.json` (saint-tibo, hack-agent-standards,
-  hack-agent-workflow, hack-agent-lsp) must keep `$schema` and `name`
-  only from the Agent Plugins 1.0.0 root set. Skills belong in
-  `skills/`, not a root `skills` field.
+  hack-agent-workflow, hack-agent-lsp, hack-agent-mcp) must keep
+  `$schema` and `name` only from the Agent Plugins 1.0.0 root set.
+  Skills belong in `skills/`, not a root `skills` field. MCP wiring is
+  `registered.mcp_servers` → `.codex/config.toml`, never plugin
+  `mcp.json` or literal credentials — only `*_env_var` references
+  (ADR 0013).
 - Repo skill names in `.agents/skills/` must not collide with any
   plugin skill set. `lsp.*` install commands use bun/go/cargo/rustup —
   never npm or pip.

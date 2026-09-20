@@ -61,6 +61,7 @@ SECTION_ORDER = (
     "deploy",
     "quality",
     "lsp",
+    "mcp",
 )
 REQUIRED_PROBE_IDS = ("codex", "node", "bun", "python", "uv")
 DEFAULT_TIMEOUT = 8.0

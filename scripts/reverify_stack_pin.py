@@ -40,6 +40,7 @@ PYPI = [
     ("quality.pytest", "pytest"),
     ("quality.pytest_asyncio", "pytest-asyncio"),
     ("runtimes.uv", "uv"),
+    ("mcp.serena", "serena-agent"),
 ]
 
 

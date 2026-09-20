@@ -23,6 +23,33 @@ enabled = true
 [plugins."hack-agent-lsp@saint-tibo"]
 enabled = true
 
+[plugins."hack-agent-mcp@saint-tibo"]
+enabled = true
+
+[mcp_servers.serena]
+command = "uvx"
+args = ["--from", "serena-agent==1.7.0", "serena", "start-mcp-server", "--context", "codex", "--open-web-dashboard", "false"]
+startup_timeout_sec = 30
+
+[mcp_servers.shadcn]
+command = "bunx"
+args = ["shadcn@4.21.0", "mcp"]
+startup_timeout_sec = 20
+
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+bearer_token_env_var = "CONTEXT7_API_KEY"
+
+[mcp_servers.grep]
+url = "https://mcp.grep.app"
+
+[mcp_servers.deepwiki]
+url = "https://mcp.deepwiki.com/mcp"
+
+[mcp_servers.keenable]
+url = "https://api.keenable.ai/mcp"
+env_http_headers = { "X-API-Key" = "KEENABLE_API_KEY" }
+
 [features]
 multi_agent = false
 multi_agent_v2 = false

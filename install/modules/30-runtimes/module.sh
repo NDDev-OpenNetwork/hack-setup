@@ -41,27 +41,25 @@ install_uv() {
   wanted="$(pin_get runtimes.uv.version)"
   if [ "$(bin_version "$HACK_LOCAL_BIN/uv" --version || true)" = "$wanted" ]; then
     log "uv $wanted already at $HACK_LOCAL_BIN/uv"
-    return 0
-  fi
-  if [ "$(bin_version "${HOME}/.local/bin/uv" --version || true)" = "$wanted" ]; then
+  elif [ "$(bin_version "${HOME}/.local/bin/uv" --version || true)" = "$wanted" ]; then
     link_bin "${HOME}/.local/bin/uv"
     log "uv $wanted linked from ~/.local/bin"
-    return 0
+  else
+    mkdir -p "$HACK_CACHE"
+    url="$(pin_get runtimes.uv.installer.url)"
+    sha="$(pin_get runtimes.uv.installer.sha256)"
+    installer="$HACK_CACHE/uv-installer.sh"
+    log "downloading official uv $wanted installer"
+    hack_download "$url" "$installer"
+    hack_verify_sha256 "$installer" "$sha"
+    mkdir -p "${HOME}/.local/bin"
+    UV_INSTALL_DIR="${HOME}/.local/bin" UV_NO_MODIFY_PATH=1 sh "$installer"
+    got="$(bin_version "${HOME}/.local/bin/uv" --version || true)"
+    [ "$got" = "$wanted" ] || die "uv reported $got, expected $wanted"
+    link_bin "${HOME}/.local/bin/uv"
+    log "uv $wanted installed"
   fi
-  mkdir -p "$HACK_CACHE"
-  url="$(pin_get runtimes.uv.installer.url)"
-  sha="$(pin_get runtimes.uv.installer.sha256)"
-  installer="$HACK_CACHE/uv-installer.sh"
-  log "downloading official uv $wanted installer"
-  hack_download "$url" "$installer"
-  hack_verify_sha256 "$installer" "$sha"
-  mkdir -p "${HOME}/.local/bin"
-  UV_INSTALL_DIR="${HOME}/.local/bin" UV_NO_MODIFY_PATH=1 sh "$installer"
-  got="$(bin_version "${HOME}/.local/bin/uv" --version || true)"
-  [ "$got" = "$wanted" ] || die "uv reported $got, expected $wanted"
-  link_bin "${HOME}/.local/bin/uv"
   [ -x "${HOME}/.local/bin/uvx" ] && link_bin "${HOME}/.local/bin/uvx"
-  log "uv $wanted installed"
 }
 
 link_python() {
@@ -96,6 +94,7 @@ install_python() {
 install_bun() {
   wanted="$(pin_get runtimes.bun.version)"
   if [ "$(bin_version "$HACK_LOCAL_BIN/bun" --version || true)" = "$wanted" ]; then
+    ln -sfn "$HACK_LOCAL_BIN/bun" "$HACK_LOCAL_BIN/bunx"
     log "bun $wanted already at $HACK_LOCAL_BIN/bun"
     return 0
   fi
@@ -117,7 +116,26 @@ install_bun() {
   got="$("$bun_bin" --version | tr -d 'v')"
   [ "$got" = "$wanted" ] || die "bun reported $got, expected $wanted"
   link_bin "$bun_bin"
+  # bunx is the same binary dispatched on argv[0] basename (official installs
+  # ship a bunx symlink; the bare zip does not).
+  ln -sfn "$bun_bin" "$HACK_LOCAL_BIN/bunx"
   log "bun $wanted installed"
+}
+
+warm_mcp_servers() {
+  serena_v="$(pin_get mcp.serena.version)"
+  shadcn_v="$(pin_get frontend.shadcn.version)"
+  uvx_bin="$HACK_LOCAL_BIN/uvx"
+  [ -x "$uvx_bin" ] || uvx_bin="${HOME}/.local/bin/uvx"
+  [ -x "$uvx_bin" ] || die "uvx is required to warm the serena MCP cache"
+  log "warming serena-agent $serena_v (uvx cache)"
+  "$uvx_bin" --from "serena-agent==$serena_v" serena --version >/dev/null \
+    || die "serena-agent $serena_v failed to resolve via uvx"
+  bunx_bin="$HACK_LOCAL_BIN/bunx"
+  [ -x "$bunx_bin" ] || die "bunx is required to warm the shadcn MCP cache"
+  log "warming shadcn $shadcn_v (bunx cache)"
+  "$bunx_bin" "shadcn@$shadcn_v" --version >/dev/null \
+    || die "shadcn $shadcn_v failed to resolve via bunx"
 }
 
 install_node() {
@@ -152,6 +170,7 @@ run_install() {
   install_python
   install_bun
   install_node
+  warm_mcp_servers
 }
 
 run_status() {
@@ -171,6 +190,7 @@ run_dry_run() {
   log "would uv python install $(pin_get runtimes.python.version)"
   log "would install bun $(pin_get runtimes.bun.version) ($HACK_PLATFORM)"
   log "would install node $(pin_get runtimes.node.version) ($HACK_PLATFORM)"
+  log "would warm MCP caches: serena-agent $(pin_get mcp.serena.version), shadcn $(pin_get frontend.shadcn.version)"
 }
 
 case "${1:-status}" in

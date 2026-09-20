@@ -84,9 +84,10 @@ the discontinued `codex-app` cask.
 2. Trust this project in Codex so `.codex/config.toml` loads. Session
    law is YOLO (`approval_policy = "never"`,
    `sandbox_mode = "danger-full-access"`). See ADR 0006.
-3. `./setup` also registers the marketplace and installs all four
+3. `./setup` also registers the marketplace and installs all five
    plugins (`saint-tibo`, `hack-agent-standards`, `hack-agent-workflow`,
-   `hack-agent-lsp`).
+   `hack-agent-lsp`, `hack-agent-mcp`), and pre-warms the MCP stdio
+   caches (serena-agent via uvx, shadcn via bunx).
    Installed plugins are a copy under `~/.codex/plugins/cache/`. After
    editing `plugins/*/` re-run `codex plugin add <name>@saint-tibo`;
    `just check` fails on drift.
@@ -98,5 +99,12 @@ the discontinued `codex-app` cask.
    Both `xhigh`. Context `872000` / compact `700000`. No Codex
    subagents. ADR 0007. Frames: `hack-agent-standards@saint-tibo`,
    ADR 0008.
+6. MCP servers: six wired via `[mcp_servers.*]` in
+   `.codex/config.toml` (law: `registered.mcp_servers`) — serena
+   (semantic code + memories), shadcn (component registries), context7
+   (versioned docs), grep (real code on GitHub), deepwiki (repo Q&A),
+   keenable (web search). All keyless; optional `CONTEXT7_API_KEY` /
+   `KEENABLE_API_KEY` env vars lift limits. Verify: `codex mcp list`.
+   ADR 0013.
 
 See `AGENTS.md` and `install/README.md` for layout.

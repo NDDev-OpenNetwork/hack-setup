@@ -109,6 +109,22 @@ def load_toml(path: Path) -> dict[str, object]:
         raise CheckError(f"invalid TOML {path.relative_to(ROOT)}: {exc}") from exc
 
 
+def lookup_version(data: object, dotted: str) -> str:
+    cur: object = data
+    for part in dotted.split("."):
+        if not isinstance(cur, dict) or part not in cur:
+            raise CheckError(f"missing {dotted}")
+        cur = cur[part]
+    if isinstance(cur, dict):
+        version = cur.get("version")
+        if isinstance(version, str) and version:
+            return version
+        version_from = cur.get("version_from")
+        if isinstance(version_from, str) and version_from:
+            return lookup_version(data, version_from)
+    raise CheckError(f"{dotted} has no version")
+
+
 def skill_name(path: Path) -> str:
     text = read_text(path)
     if not text.startswith("---"):
@@ -315,6 +331,71 @@ def check_stack_pin() -> None:
         raise CheckError("stack-pin.registered.features.hooks must be true")
     if features.get("memories") is not False:
         raise CheckError("stack-pin.registered.features.memories must be false")
+    mcp_servers = registered.get("mcp_servers")
+    if not isinstance(mcp_servers, dict):
+        raise CheckError("stack-pin.registered.mcp_servers must be an object")
+    required_servers = {"serena", "shadcn", "context7", "grep", "deepwiki", "keenable"}
+    missing_servers = required_servers.difference(mcp_servers)
+    if missing_servers:
+        raise CheckError(
+            f"registered.mcp_servers missing servers: {sorted(missing_servers)}"
+        )
+    for name, spec in mcp_servers.items():
+        if name == "rule":
+            continue
+        if not isinstance(spec, dict):
+            raise CheckError(f"registered.mcp_servers.{name} must be an object")
+        has_stdio = isinstance(spec.get("command"), str)
+        has_remote = isinstance(spec.get("url"), str)
+        if has_stdio == has_remote:
+            raise CheckError(
+                f"registered.mcp_servers.{name} needs exactly one of command/url"
+            )
+        for literal in ("bearer_token", "http_headers", "headers"):
+            if literal in spec:
+                raise CheckError(
+                    f"registered.mcp_servers.{name}.{literal} is a literal secret "
+                    "surface; use *_env_var references only"
+                )
+        token_var = spec.get("bearer_token_env_var")
+        if token_var is not None and not re.fullmatch(r"[A-Z][A-Z0-9_]*", str(token_var)):
+            raise CheckError(
+                f"registered.mcp_servers.{name}.bearer_token_env_var must name an env var"
+            )
+        env_headers = spec.get("env_http_headers")
+        if env_headers is not None and (
+            not isinstance(env_headers, dict)
+            or not all(
+                re.fullmatch(r"[A-Z][A-Z0-9_]*", str(v))
+                for v in env_headers.values()
+            )
+        ):
+            raise CheckError(
+                f"registered.mcp_servers.{name}.env_http_headers values must be env var names"
+            )
+    mcp_block = pin.get("mcp")
+    if not isinstance(mcp_block, dict) or not isinstance(mcp_block.get("serena"), dict):
+        raise CheckError("stack-pin.mcp.serena must be an object")
+    serena_version = mcp_block["serena"].get("version")
+    serena_args = mcp_servers.get("serena", {}).get("args", [])
+    if f"serena-agent=={serena_version}" not in serena_args:
+        raise CheckError(
+            "registered.mcp_servers.serena.args must carry "
+            f"serena-agent=={serena_version} (mcp.serena.version)"
+        )
+    shadcn_version = lookup_version(pin, "frontend.shadcn")
+    shadcn_args = mcp_servers.get("shadcn", {}).get("args", [])
+    if f"shadcn@{shadcn_version}" not in shadcn_args:
+        raise CheckError(
+            f"registered.mcp_servers.shadcn.args must carry shadcn@{shadcn_version}"
+        )
+    remote_urls = mcp_block.get("remote", {})
+    if isinstance(remote_urls, dict):
+        for name, url in remote_urls.items():
+            if mcp_servers.get(name, {}).get("url") != url:
+                raise CheckError(
+                    f"registered.mcp_servers.{name}.url must match mcp.remote.{name}"
+                )
     models = pin.get("models")
     if not isinstance(models, dict):
         raise CheckError("stack-pin.models must be an object")
@@ -848,6 +929,29 @@ def check_config() -> None:
         entry = plugins.get(plugin_id)
         if not isinstance(entry, dict) or entry.get("enabled") is not True:
             raise CheckError(f'.codex/config.toml must enable plugins."{plugin_id}"')
+    mcp_spec: dict[str, object] = {}
+    if isinstance(pin, dict):
+        reg = pin.get("registered")
+        if isinstance(reg, dict) and isinstance(reg.get("mcp_servers"), dict):
+            mcp_spec = reg["mcp_servers"]
+    expected_servers = {k for k in mcp_spec if k != "rule"}
+    servers = config.get("mcp_servers")
+    if not isinstance(servers, dict):
+        raise CheckError(".codex/config.toml [mcp_servers] is required")
+    if set(servers) != expected_servers:
+        raise CheckError(
+            f"mcp_servers must be exactly {sorted(expected_servers)} "
+            f"(registered.mcp_servers), got {sorted(servers)}"
+        )
+    for name in expected_servers:
+        spec = mcp_spec[name]
+        want = {k: v for k, v in spec.items() if k != "note"} if isinstance(spec, dict) else {}
+        got = servers.get(name)
+        if got != want:
+            raise CheckError(
+                f'mcp_servers."{name}" must match registered.mcp_servers.{name} '
+                "(minus the note field)"
+            )
     rules_dir = ROOT / ".codex" / "rules"
     if rules_dir.is_dir():
         leftover = sorted(

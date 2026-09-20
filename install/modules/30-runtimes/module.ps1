@@ -26,32 +26,33 @@ function Install-Uv {
     $wanted = Pin-Get 'runtimes.uv.version'
     $local = Join-Path $env:HACK_LOCAL_BIN 'uv.exe'
     $user = Join-Path $UserBin 'uv.exe'
-    if ((Get-BinVersion $local '--version') -eq $wanted) { Log "uv $wanted already at $local"; return }
-    if ((Get-BinVersion $user '--version') -eq $wanted) {
+    if ((Get-BinVersion $local '--version') -eq $wanted) {
+        Log "uv $wanted already at $local"
+    } elseif ((Get-BinVersion $user '--version') -eq $wanted) {
         Link-Bin $user $env:HACK_LOCAL_BIN | Out-Null
         Log "uv $wanted linked from ~/.local/bin"
-        return
+    } else {
+        New-Item -ItemType Directory -Force -Path $env:HACK_CACHE, $UserBin | Out-Null
+        $installer = Join-Path $env:HACK_CACHE 'uv-installer.ps1'
+        Log "downloading official uv $wanted installer"
+        Save-HackFile (Pin-Get 'runtimes.uv.installer_ps1.url') $installer
+        Assert-HackSha256 $installer (Pin-Get 'runtimes.uv.installer_ps1.sha256')
+        $env:UV_INSTALL_DIR = $UserBin
+        $env:UV_NO_MODIFY_PATH = '1'
+        $env:UV_PYTHON_BIN_DIR = $UserBin
+        $psHost = Get-Command powershell -ErrorAction SilentlyContinue
+        if (-not $psHost) { $psHost = Get-Command pwsh -ErrorAction SilentlyContinue }
+        if (-not $psHost) { Die "powershell/pwsh is required to run uv-installer.ps1" }
+        & $psHost.Source -NoProfile -ExecutionPolicy Bypass -File $installer
+        if ($LASTEXITCODE -ne 0) { Die "uv-installer.ps1 failed (exit $LASTEXITCODE)" }
+        if ((Get-BinVersion $user '--version') -ne $wanted) {
+            Die "uv reported $(Get-BinVersion $user '--version'), expected $wanted"
+        }
+        Link-Bin $user $env:HACK_LOCAL_BIN | Out-Null
+        Log "uv $wanted installed"
     }
-    New-Item -ItemType Directory -Force -Path $env:HACK_CACHE, $UserBin | Out-Null
-    $installer = Join-Path $env:HACK_CACHE 'uv-installer.ps1'
-    Log "downloading official uv $wanted installer"
-    Save-HackFile (Pin-Get 'runtimes.uv.installer_ps1.url') $installer
-    Assert-HackSha256 $installer (Pin-Get 'runtimes.uv.installer_ps1.sha256')
-    $env:UV_INSTALL_DIR = $UserBin
-    $env:UV_NO_MODIFY_PATH = '1'
-    $env:UV_PYTHON_BIN_DIR = $UserBin
-    $psHost = Get-Command powershell -ErrorAction SilentlyContinue
-    if (-not $psHost) { $psHost = Get-Command pwsh -ErrorAction SilentlyContinue }
-    if (-not $psHost) { Die "powershell/pwsh is required to run uv-installer.ps1" }
-    & $psHost.Source -NoProfile -ExecutionPolicy Bypass -File $installer
-    if ($LASTEXITCODE -ne 0) { Die "uv-installer.ps1 failed (exit $LASTEXITCODE)" }
-    if ((Get-BinVersion $user '--version') -ne $wanted) {
-        Die "uv reported $(Get-BinVersion $user '--version'), expected $wanted"
-    }
-    Link-Bin $user $env:HACK_LOCAL_BIN | Out-Null
     $uvx = Join-Path $UserBin 'uvx.exe'
     if (Test-Path $uvx) { Link-Bin $uvx $env:HACK_LOCAL_BIN | Out-Null }
-    Log "uv $wanted installed"
 }
 
 function Install-Python {
@@ -88,7 +89,15 @@ function Install-Python {
 function Install-Bun {
     $wanted = Pin-Get 'runtimes.bun.version'
     $local = Join-Path $env:HACK_LOCAL_BIN 'bun.exe'
-    if ((Get-BinVersion $local '--version') -eq $wanted) { Log "bun $wanted already at $local"; return }
+    $bunx = Join-Path $env:HACK_LOCAL_BIN 'bunx.exe'
+    if ((Get-BinVersion $local '--version') -eq $wanted) {
+        if (-not (Test-Path $bunx)) {
+            try { New-Item -ItemType HardLink -Path $bunx -Target $local | Out-Null }
+            catch { Copy-Item -LiteralPath $local -Destination $bunx -Force }
+        }
+        Log "bun $wanted already at $local"
+        return
+    }
     New-Item -ItemType Directory -Force -Path $env:HACK_CACHE, (Join-Path $RuntimeRoot 'bun') | Out-Null
     $name = Pin-Get "runtimes.bun.packages.$env:HACK_PLATFORM.name"
     $archive = Join-Path $env:HACK_CACHE $name
@@ -147,11 +156,28 @@ function Install-Node {
     Log "node $wanted installed"
 }
 
+function Invoke-McpWarm {
+    $serenaV = Pin-Get 'mcp.serena.version'
+    $shadcnV = Pin-Get 'frontend.shadcn.version'
+    $uvx = Join-Path $env:HACK_LOCAL_BIN 'uvx.exe'
+    if (-not (Test-Path $uvx)) { $uvx = Join-Path $UserBin 'uvx.exe' }
+    if (-not (Test-Path $uvx)) { Die "uvx is required to warm the serena MCP cache" }
+    Log "warming serena-agent $serenaV (uvx cache)"
+    & $uvx --from "serena-agent==$serenaV" serena --version | Out-Null
+    if ($LASTEXITCODE -ne 0) { Die "serena-agent $serenaV failed to resolve via uvx" }
+    $bunx = Join-Path $env:HACK_LOCAL_BIN 'bunx.exe'
+    if (-not (Test-Path $bunx)) { Die "bunx is required to warm the shadcn MCP cache" }
+    Log "warming shadcn $shadcnV (bunx cache)"
+    & $bunx "shadcn@$shadcnV" --version | Out-Null
+    if ($LASTEXITCODE -ne 0) { Die "shadcn $shadcnV failed to resolve via bunx" }
+}
+
 function Run-Install {
     Install-Uv
     Install-Python
     Install-Bun
     Install-Node
+    Invoke-McpWarm
 }
 
 function Run-Status {
@@ -173,6 +199,7 @@ function Run-DryRun {
     Log "would uv python install $(Pin-Get 'runtimes.python.version') --default"
     Log "would install bun $(Pin-Get 'runtimes.bun.version') ($env:HACK_PLATFORM)"
     Log "would install node $(Pin-Get 'runtimes.node.version') ($env:HACK_PLATFORM)"
+    Log "would warm MCP caches: serena-agent $(Pin-Get 'mcp.serena.version'), shadcn $(Pin-Get 'frontend.shadcn.version')"
 }
 
 $Action = if ($args.Count -gt 0) { $args[0] } else { 'status' }

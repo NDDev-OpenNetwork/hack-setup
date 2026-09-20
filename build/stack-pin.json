@@ -122,6 +122,52 @@
       "lsp-map",
       "lsp-setup"
     ],
+    "mcp_plugin": {
+      "id": "hack-agent-mcp@saint-tibo",
+      "path": "plugins/hack-agent-mcp/plugin.json",
+      "policy": "INSTALLED_BY_DEFAULT",
+      "enabled_in": ".codex/config.toml",
+      "status": "MCP workflow skills; server wiring lives in registered.mcp_servers -> .codex/config.toml"
+    },
+    "mcp_plugin_skills": [
+      "mcp-usage",
+      "serena-workflow",
+      "research-workflow",
+      "component-workflow"
+    ],
+    "mcp_servers": {
+      "rule": "six MCP servers projected into .codex/config.toml [mcp_servers.*]; all keyless by default; keys only via env-var references, never literals",
+      "serena": {
+        "command": "uvx",
+        "args": ["--from", "serena-agent==1.7.0", "serena", "start-mcp-server", "--context", "codex", "--open-web-dashboard", "false"],
+        "startup_timeout_sec": 30,
+        "note": "serena 1.7.0 has no --project-from-cwd (post-release flag); sessions call activate_project; .serena/ stays SoT"
+      },
+      "shadcn": {
+        "command": "bunx",
+        "args": ["shadcn@4.21.0", "mcp"],
+        "startup_timeout_sec": 20,
+        "note": "reads components.json from the session cwd; useful only inside the product repo"
+      },
+      "context7": {
+        "url": "https://mcp.context7.com/mcp",
+        "bearer_token_env_var": "CONTEXT7_API_KEY",
+        "note": "keyless free tier; export CONTEXT7_API_KEY for higher limits"
+      },
+      "grep": {
+        "url": "https://mcp.grep.app",
+        "note": "vercel grep.app; literal/regex code search over public GitHub"
+      },
+      "deepwiki": {
+        "url": "https://mcp.deepwiki.com/mcp",
+        "note": "cognition deepwiki; AI wiki + ask_question over public repos; private via mcp.devin.ai"
+      },
+      "keenable": {
+        "url": "https://api.keenable.ai/mcp",
+        "env_http_headers": {"X-API-Key": "KEENABLE_API_KEY"},
+        "note": "keyless 1000 req/h; export KEENABLE_API_KEY to lift the cap"
+      }
+    },
     "standards_plugin_skills": [
       "apply-agent-standard",
       "core-motion",
@@ -620,6 +666,23 @@
       "package": "dockerfile-language-server-nodejs",
       "version": "0.15.0",
       "install": "bun i -g dockerfile-language-server-nodejs@0.15.0"
+    }
+  },
+  "mcp": {
+    "rule": "MCP wiring is registered.mcp_servers -> .codex/config.toml; this section pins the packaged server versions used inside it; remote endpoints are keyless by default",
+    "serena": {
+      "package": "serena-agent",
+      "version": "1.7.0",
+      "pypi": true,
+      "launch": "uvx --from serena-agent==1.7.0 serena start-mcp-server --context codex --open-web-dashboard false",
+      "context": "codex (built-in context in 1.7.0)"
+    },
+    "shadcn": { "version_from": "frontend.shadcn", "launch": "bunx shadcn@4.21.0 mcp" },
+    "remote": {
+      "context7": "https://mcp.context7.com/mcp",
+      "grep": "https://mcp.grep.app",
+      "deepwiki": "https://mcp.deepwiki.com/mcp",
+      "keenable": "https://api.keenable.ai/mcp"
     }
   },
   "quality": {

@@ -104,6 +104,18 @@ Setup owner stream: Danil.
   checkers PASS, all 5 required probes OK on a real Windows host. WSL2
   remains an optional POSIX path; Windows arm64 fail-closed.
   Strict-mode `.Count` scalar bug fixed via `@(...)` wrap.
+- ADR 0013: six MCP servers are law in `registered.mcp_servers` and
+  projected into `.codex/config.toml` — serena (stdio
+  `uvx serena-agent==1.7.0`, codex context, `activate_project` per
+  session; 1.7.0 predates `--project-from-cwd`), shadcn (stdio
+  `bunx shadcn@4.21.0 mcp`), context7/grep/deepwiki/keenable remote
+  keyless (`CONTEXT7_API_KEY`/`KEENABLE_API_KEY` env-var refs only).
+  Plugin `mcp.json` was rejected: pinned codex forces stdio cwd into
+  the plugin root and strips client-owned headers. Plugin
+  `hack-agent-mcp` ships four skills (mcp-usage, serena-workflow,
+  research-workflow, component-workflow). Module 30 now guarantees
+  `bunx`/`uvx` links on all paths and pre-warms both stdio caches.
+  reverify tracks `mcp.serena` (PyPI serena-agent).
 
 ## Next (blocked on user)
 

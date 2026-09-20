@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "hack-agent-mcp",
+  "version": "0.1.0",
+  "description": "Saint Tibo MCP workflow skills: serena semantic tools, research surfaces (context7, grep, deepwiki, keenable), shadcn registry flow.",
+  "author": {
+    "name": "Saint Tibo"
+  },
+  "license": "MIT",
+  "keywords": ["codex", "mcp", "serena", "research", "shadcn", "saint-tibo"]
+}
