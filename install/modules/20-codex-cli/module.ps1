@@ -17,7 +17,7 @@ function Get-BinaryVersion([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
     $line = (& $Path --version 2>$null | Select-Object -First 1)
     if (-not $line) { return $null }
-    $parts = "$line" -split '\s+'
+    $parts = @("$line" -split '\s+')
     if ($parts.Count -ge 2) { return $parts[1] }
     return $parts[0]
 }

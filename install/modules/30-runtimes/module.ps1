@@ -13,7 +13,7 @@ function Get-BinVersion([string]$Path, [string[]]$Argv) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $null }
     $line = (& $Path @Argv 2>$null | Select-Object -First 1)
     if (-not $line) { return $null }
-    $parts = "$line" -split '\s+' | Where-Object { $_ -ne '' }
+    $parts = @("$line" -split '\s+' | Where-Object { $_ -ne '' })
     $tok = if ($parts.Count -ge 2) { $parts[1] } else { $parts[0] }
     return $tok.TrimStart('v').Trim(',')
 }
