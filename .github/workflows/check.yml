@@ -24,3 +24,25 @@ jobs:
         run: |
           sh -n setup install/bootstrap.sh install/env.sh
           for f in install/lib/*.sh install/modules/*/module.sh; do sh -n "$f"; done
+
+  setup-e2e:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Full install
+        run: |
+          export PATH="$PWD/.local/bin:$HOME/.local/bin:$PATH"
+          ./setup
+      - name: Verify installed toolchain and plugins
+        run: |
+          export PATH="$PWD/.local/bin:$HOME/.local/bin:$PATH"
+          codex --version
+          codex plugin marketplace add .
+          codex plugin add saint-tibo@saint-tibo
+          codex plugin add hack-agent-standards@saint-tibo
+          codex plugin add hack-agent-workflow@saint-tibo
+          python3 scripts/check_codex_setup.py
+          python3 scripts/check_stack.py
