@@ -27,4 +27,5 @@ def test_setup_dry_run_passes() -> None:
     )
     assert result.returncode == 0, result.stderr
     assert "dry-run; no downloads" in result.stdout
-    assert "would run official installer" in result.stdout
+    assert "would verify https://github.com/openai/codex/releases/" in result.stdout
+    assert "would require sha256" in result.stdout

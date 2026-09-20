@@ -29,8 +29,10 @@ GitHub release as of 2026-09-18; later `0.156.0-alpha.*` tags stay out.
 
 Author repo skills in `.agents/skills/`. Ship a portable
 `plugins/saint-tibo/plugin.json` with one uniquely named plugin skill.
-Install via the official GitHub `install.sh` into `~/.local/bin`, then
-symlink `$REPO/.local/bin/codex`.
+Install the pinned `codex-package-<triple>.tar.gz` after sha256 check
+into `~/.local/bin`, then symlink `$REPO/.local/bin/codex`. The hashed
+official `install.sh` is the fallback for a platform without a pinned
+package entry.
 
 Do not use `$CODEX_HOME/skills`, `approval_policy = "untrusted"`,
 `features.web_search*`, the discontinued `Codex.app` cask, or an unpinned
@@ -47,6 +49,7 @@ move plugin or skill surfaces before the hackathon window.
 - `codex --version` prints `codex-cli 0.155.1`
 - `python3 scripts/check_codex_setup.py` exits 0
 - `build/codex-pin.json` matches the release tag
+- Module `20-codex-cli` verifies `packages.<platform>.sha256` before install
 
 ## More Information
 

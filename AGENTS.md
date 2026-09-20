@@ -138,9 +138,10 @@ cd hack-setup
 . install/env.sh
 ```
 
-`./setup` downloads the pinned official Codex `install.sh`, verifies its
-sha256 from `build/codex-pin.json`, and runs the numbered modules under
-`install/modules/`. Windows is fail-closed.
+`./setup` downloads the pinned Codex package tarball, verifies its sha256
+from `build/codex-pin.json` `packages.*` (hashed official `install.sh` is
+the fallback), and runs the numbered modules under `install/modules/`.
+Windows is fail-closed.
 
 ## Quality gate
 

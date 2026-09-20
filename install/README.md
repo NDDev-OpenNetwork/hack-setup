@@ -22,7 +22,7 @@ install/
   lib/                        # POSIX helpers
   modules/
     10-prereqs/               # python3 3.11+, tar, curl|wget, sha256
-    20-codex-cli/             # official rust-v0.155.1 install.sh + digest
+    20-codex-cli/             # pinned rust-v0.155.1 package tarball + sha256
     30-runtimes/              # Node LTS, bun, uv, CPython 3.14
     40-project-verify/        # artifact gate + pinned versions
 ```
@@ -33,7 +33,10 @@ Add a future installer as `install/modules/<nn>-<id>/module.sh` (`install` / `st
 
 `build/codex-pin.json` is the Codex CLI pin. `build/stack-pin.json` is the
 product stack pin; module `30-runtimes` installs Node/bun/uv/Python from it.
-The Codex module downloads official `install.sh`, verifies the digest, then runs:
+The Codex module downloads the pinned `codex-package-<triple>.tar.gz`,
+verifies `packages.<platform>.sha256`, and extracts the binary. When the
+pin has no package for the platform, it falls back to the hashed official
+`install.sh` with:
 
 ```sh
 CODEX_RELEASE=0.155.1
