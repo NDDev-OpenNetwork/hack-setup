@@ -64,7 +64,7 @@ shims; Windows additionally exposes `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin`.
 | `.codex/config.toml` | Runtime projection of session + models + features |
 | `build/stack-standard.md` | Generated; refresh with `--write` |
 | `just check` | Proof that pin == config == AGENTS == generated |
-| `docs/adr/0001`–`0015` | Decisions |
+| `docs/adr/0001`–`0016` | Decisions |
 | `justfile` | Project commands (`just gate`, `just check`, `just repair`) |
 | `plugins/hack-agent-standards/standards/` | On-demand frames. `docs/research/` is archive |
 

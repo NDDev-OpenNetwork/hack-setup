@@ -130,10 +130,22 @@ EOF
   log "wired turn-complete notify -> install/notify.sh"
 }
 
+ensure_hook_trust() {
+  # Non-managed hooks run only when a trusted_hash recorded in the USER
+  # config layer matches the hook definition hash; project layers cannot
+  # self-trust (codex-rs config_rules.rs). repair_setup.py writes the
+  # managed [hooks.state.*] block — refresh it at install so hooks are
+  # live from the first session without a manual `/hooks` review.
+  command -v python3 >/dev/null 2>&1 || return 0
+  python3 "${HACK_REPO_ROOT}/scripts/repair_setup.py" --only hook-trust \
+    >/dev/null 2>&1 || true
+}
+
 run_install() {
   wanted="$(cli_version)"
   ensure_sol_profile
   ensure_notify
+  ensure_hook_trust
   if found="$(already_pinned)"; then
     link_repo_bin "$found"
     log "Codex CLI $wanted already present; linked $HACK_LOCAL_BIN/codex"

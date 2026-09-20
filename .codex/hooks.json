@@ -57,7 +57,7 @@
           {
             "type": "command",
             "command": "python3 .codex/hooks/hack_mode.py interrupt",
-            "timeout": 5
+            "timeout": 3
           }
         ]
       }
@@ -68,7 +68,7 @@
           {
             "type": "command",
             "command": "python3 .codex/hooks/hack_mode.py sessionend",
-            "timeout": 5
+            "timeout": 3
           }
         ]
       }

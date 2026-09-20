@@ -19,7 +19,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+def _arg_value(flag: str) -> str | None:
+    if flag in sys.argv:
+        i = sys.argv.index(flag)
+        if i + 1 < len(sys.argv):
+            return sys.argv[i + 1]
+    return None
+
+
+ROOT = Path(_arg_value("--root") or Path(__file__).resolve().parent.parent).resolve()
 PIN_PATH = ROOT / "build" / "codex-pin.json"
 STACK_PIN_PATH = ROOT / "build" / "stack-pin.json"
 DRY_RUN = "--dry-run" in sys.argv
@@ -188,6 +196,100 @@ def fix_hook_bytecode() -> None:
     report("FIX", "hook-bytecode", "removed stale __pycache__")
 
 
+HOOK_EVENT_LABELS = {
+    "PreToolUse": "pre_tool_use",
+    "PermissionRequest": "permission_request",
+    "PostToolUse": "post_tool_use",
+    "PreCompact": "pre_compact",
+    "PostCompact": "post_compact",
+    "SessionStart": "session_start",
+    "SessionEnd": "session_end",
+    "UserPromptSubmit": "user_prompt_submit",
+    "SubagentStart": "subagent_start",
+    "SubagentStop": "subagent_stop",
+    "Stop": "stop",
+    "Interrupt": "interrupt",
+}
+
+
+def _hook_hash(event_label: str, matcher: str | None, handler: dict) -> str:
+    """Port of codex-rs hooks::engine::discovery::hook_hash +
+    config::fingerprint::version_for_toml (0.155.1, be2951ea):
+    sha256 over the canonical JSON of the normalized TOML identity."""
+    h: dict = {"type": handler.get("type", "command"), "async": bool(handler.get("async", False))}
+    for key in ("command", "commandWindows"):
+        if handler.get(key):
+            h[key] = handler[key]
+    if handler.get("timeout") is not None:
+        h["timeout"] = int(handler["timeout"])
+    if handler.get("statusMessage"):
+        h["statusMessage"] = handler["statusMessage"]
+    if handler.get("additionalContextLimit") is not None:
+        h["additionalContextLimit"] = int(handler["additionalContextLimit"])
+    ident: dict = {"event_name": event_label, "hooks": [h]}
+    if matcher:
+        ident["matcher"] = matcher
+    blob = json.dumps(ident, sort_keys=True, separators=(",", ":")).encode()
+    return "sha256:" + hashlib.sha256(blob).hexdigest()
+
+
+def fix_hook_trust() -> None:
+    """Non-managed hooks only run when their trusted_hash matches the
+    current definition; trust state is honored only from the USER config
+    layer (codex-rs config_rules.rs). Write a managed
+    [hooks.state."<key>"] block into ~/.codex/config.toml so our pinned
+    hooks stay trusted across edits and fresh installs.
+    Missing hooks.json (product repos without the file yet) is OK."""
+    hooks_path = (ROOT / ".codex" / "hooks.json").resolve()
+    if not hooks_path.is_file():
+        report("OK", "hook-trust", "no hooks.json — nothing to trust")
+        return
+    doc = load_json(hooks_path)
+    events = doc.get("hooks") or {}
+    entries: list[tuple[str, str]] = []
+    for event, groups in events.items():
+        label = HOOK_EVENT_LABELS.get(event)
+        if not label:
+            continue
+        for gi, group in enumerate(groups or []):
+            for hi, handler in enumerate((group or {}).get("hooks") or []):
+                key = f"{hooks_path}:{label}:{gi}:{hi}"
+                entries.append((key, _hook_hash(label, group.get("matcher"), handler)))
+    if not entries:
+        report("WARN", "hook-trust", "no hook handlers parsed")
+        return
+    cfg = Path.home() / ".codex" / "config.toml"
+    cfg.parent.mkdir(parents=True, exist_ok=True)
+    src = cfg.read_text(encoding="utf-8") if cfg.is_file() else ""
+    prefix = str(hooks_path)
+    # Drop stale managed state tables for THIS hooks.json only.
+    out: list[str] = []
+    skip = False
+    for line in src.splitlines():
+        m = re.match(r'\[hooks\.state\."((?:[^"\\]|\\.)*)"\]', line.strip())
+        if m:
+            key = m.group(1).encode().decode("unicode_escape")
+            skip = key.startswith(prefix)
+        elif line.strip().startswith("[") and not line.strip().startswith("[["):
+            skip = False
+        if skip:
+            continue
+        out.append(line)
+    src = "\n".join(out).rstrip() + "\n"
+    block_lines = ["", "# hack-setup: hook trust"]
+    for key, digest in entries:
+        esc_key = key.replace("\\", "\\\\").replace('"', '\\"')
+        block_lines.append(f'[hooks.state."{esc_key}"]  # hack-setup')
+        block_lines.append(f'trusted_hash = "{digest}"  # hack-setup')
+    new_src = src + "\n".join(block_lines) + "\n"
+    if new_src == (cfg.read_text(encoding="utf-8") if cfg.is_file() else ""):
+        report("OK", "hook-trust", f"{len(entries)} handlers trusted")
+        return
+    if not DRY_RUN:
+        cfg.write_text(new_src, encoding="utf-8")
+    report("FIX", "hook-trust", f"{'would write' if DRY_RUN else 'wrote'} {len(entries)} trusted_hash entries to {cfg}")
+
+
 def fix_state_files() -> None:
     """Corrupt per-repo hook state (~/.codex/hack-mode-*.json,
     hack-issues-*.json) self-heals on next hook run — drop broken files."""
@@ -309,13 +411,30 @@ def verify_gate() -> None:
         report("OK", "verify-gate", "check_codex_setup + check_stack PASS")
 
 
+ONLY = None
+for i, arg in enumerate(sys.argv):
+    if arg == "--only" and i + 1 < len(sys.argv):
+        ONLY = sys.argv[i + 1].split(",")
+
+
 def main() -> int:
     print(f"repair {ROOT.name}" + (" (dry-run)" if DRY_RUN else ""))
+    if ONLY:
+        for name in ONLY:
+            fn = globals().get(f"fix_{name.replace('-', '_')}") or globals().get(
+                f"check_{name.replace('-', '_')}"
+            )
+            if fn:
+                fn()
+            else:
+                report("FAIL", name, "unknown repair item")
+        return 1 if any(s == "FAIL" for s, _, _ in RESULTS) else 0
     fix_plugin_cache()
     fix_notify_block()
     fix_sol_profile()
     fix_agent_dirs()
     fix_hook_bytecode()
+    fix_hook_trust()
     fix_state_files()
     check_codex_version()
     check_python3()

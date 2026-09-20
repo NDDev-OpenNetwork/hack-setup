@@ -25,7 +25,7 @@ One loop: pin → projection → proof.
    → CORE, QUALITY when proving, one area file. Plugin skills are
    `$hack-agent-standards:<skill>` — bare `$name` does not match a
    plugin skill. Pin numbers win.
-5. Why: ADRs 0001–0015 under `docs/adr/`.
+5. Why: ADRs 0001–0016 under `docs/adr/`.
 
 ## The operating model
 
@@ -136,7 +136,21 @@ keenable (HTTP, keyless by default; keys travel as env-var names only).
 - `PreToolUse` `Bash` is the lane guard described above.
 - `PostToolUse` `Bash` reminds ship-verify after `git push`.
 - `SessionEnd` and `Interrupt` append `.agent/session-log.ndjson` —
-  how sessions end and where they were interrupted.
+  how sessions end and where they were interrupted (timeout is capped
+  at 3 s by Codex for these two events).
+
+Codex runs a non-managed hook only while its `trusted_hash` matches the
+hook definition — editing `hooks.json` silently skips hooks until
+re-trusted. `just repair` (and module 20 at install) writes the managed
+`[hooks.state.*]` entries into `~/.codex/config.toml` itself, so after
+pulling hook changes run `just repair` once — no manual `/hooks` review
+(ADR 0016).
+
+Upstream caveats that shape this design (ADR 0016): `compact_prompt` is
+ignored on the remote-compaction path (openai/codex#34428) — the
+`SessionStart` `compact` matcher is the real re-injection channel; Codex
+App threads can shadow project `developer_instructions` (#33238/#11004),
+so this `AGENTS.md` remains the authoritative instruction channel.
 
 Standalone messages toggle per-project mode
 (`~/.codex/hack-mode-<repo>.json`): `hack ultra`, `normal mode`,

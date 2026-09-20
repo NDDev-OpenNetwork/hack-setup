@@ -180,6 +180,17 @@ Setup owner stream: Danil.
   lines). No custom slash commands in 0.155.1 — `/worktree` `/fork`
   `/app` are the manual paths.
 - `Interrupt` is the 6th hook event — same ndjson log as SessionEnd.
+  SessionEnd/Interrupt timeout caps at 3 s (clamped otherwise).
+- ADR 0016: hooks are trust-by-hash — non-managed hooks run only when
+  `hooks.state.<key>.trusted_hash` in the USER config layer matches
+  sha256 of the canonical normalized identity. `repair_setup.py
+  --only hook-trust` ports `hook_hash`/`version_for_toml` to Python and
+  writes the managed block (module 20 calls it at install). Verified in
+  a real `codex exec` — hooks Completed. Upstream: compact_prompt is
+  ignored under remote compaction (#34428) — SessionStart compact
+  matcher is the real re-injection; App threads shadow
+  developer_instructions (#33238/#11004) — AGENTS.md is the reliable
+  channel.
 - `just repair` = `scripts/repair_setup.py` (law `registered.repair`):
   auto-fixes plugin-cache drift, managed notify/sol user-config blocks,
   `.agent` dirs, stale hook bytecode, corrupt `~/.codex/hack-*` state;

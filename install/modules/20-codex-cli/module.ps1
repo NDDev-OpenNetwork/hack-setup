@@ -107,10 +107,21 @@ function Run-Status {
     Die "Codex CLI $wanted is not installed; run .\setup.ps1"
 }
 
+function Ensure-HookTrust {
+    # Twin of POSIX ensure_hook_trust: refresh managed [hooks.state.*]
+    # trusted_hash entries via the shared repair script when Python is
+    # available (uv-managed or system).
+    $py = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $py) { $py = Get-Command python3 -ErrorAction SilentlyContinue }
+    if (-not $py) { return }
+    & $py.Source (Join-Path $env:HACK_REPO_ROOT 'scripts\repair_setup.py') --only hook-trust | Out-Null
+}
+
 function Run-Install {
     $wanted = Get-CliVersion
     Ensure-SolProfile
     Ensure-Notify
+    Ensure-HookTrust
     $found = Find-PinnedCodex
     if ($found) {
         Link-Bin $found $env:HACK_LOCAL_BIN | Out-Null
