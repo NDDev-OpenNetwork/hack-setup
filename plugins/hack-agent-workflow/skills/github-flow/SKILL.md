@@ -1,27 +1,39 @@
 ---
 name: github-flow
-description: Run the Saint Tibo GitHub-first task loop. Use when taking, doing, or closing a task — issues are the source of truth, PRs carry status.
+description: Run the Saint Tibo GitHub-first lane model. Use when taking, doing, merging, or releasing a task — issues are the source of truth; lanes are feat/<issue> → <user> → dev → main, with the dev server proving dev and the prod server following main.
 ---
 
-GitHub issues are the single source of truth for tasks. Tasks are named
-and assigned; all work traces to an issue.
+GitHub issues are the single source of truth for tasks. Branches form
+lanes: `feat/<issue>-<slug>` → `<user>` → `dev` → `main`.
 
-Loop:
+## Worker loop (implementation thread)
 
 1. Take a named issue (`gh issue list --assignee @me`, or
    `gh issue create` + self-assign). Comment which files you claim.
-2. Cut a work branch for that issue. Commit with Conventional Commits;
-   split implementation, tests, docs, and knowledge sync.
-3. Done → merge the work branch into **your personal named branch**
-   (e.g. `danil`) and close the issue. Your branch is yours — push it
-   freely.
-4. Owner says "сливаем" / merge → pull `dev`, rebase or merge yours
-   onto it, adapt and re-verify under `dev`, then
-   `gh pr create` yours → `dev` with Summary + test plan.
-5. Owner says "релиз" / release → `dev` → `main` PR, then the deploy
-   step. Release and deploy are owner calls only.
+2. Cut `feat/<issue>-<slug>` off `dev` — in your own worktree, never in
+   a checkout another thread is using.
+3. Commit with Conventional Commits; split implementation, docs, and
+   knowledge sync. No test suite — `hack:` markers on deferred corners.
+4. Feature verified live (`ship-verify`) → merge into **your personal
+   named branch** (`danil`/`ivan`/`artem`) and push it. Comment
+   `done: <sha>` on the issue. Next feature.
 
-Rules:
+## Merge gate (orchestrator, before `<user>` → `dev`)
+
+1. No active worker threads on that lane
+   (`codex_app.list_threads` / `read_thread`).
+2. `git fetch origin`; the `dev..<user>` diff must not touch files
+   another lane claimed on open issues.
+3. `git merge --no-ff <user>` into `dev`, push. The dev server pulls
+   `dev` itself (deploy watcher).
+4. Verify live on the dev deployment. Report one line.
+
+## Release (owner call only)
+
+`dev` → `main` only when the owner says deploy. The prod server pulls
+`main` itself; then verify prod live and report.
+
+## Rules
 
 - Status lives in issues and PRs, not in chat.
 - Never push `BAITC-Hacks/hack-a58598e0-saint-tibo` until the owner

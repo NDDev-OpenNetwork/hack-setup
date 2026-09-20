@@ -10,8 +10,10 @@ failure path exits silently.
 """
 import json
 import os
+import subprocess
 import sys
 import threading
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,6 +29,69 @@ REMINDER = (
 OFF_COMMANDS = {"normal mode", "stop hack mode", "stop hack-mode", "hack off"}
 ON_COMMANDS = {"hack mode", "hack-mode", "hack on", "hack full"}
 ULTRA_COMMANDS = {"hack ultra", "hack-mode ultra"}
+
+GH_CACHE = Path.home() / ".codex" / "hack-setup-issues.json"
+GH_TTL = 60
+
+
+def _git(*args: str) -> str:
+    try:
+        return subprocess.run(
+            ["git", "-C", str(ROOT), *args],
+            capture_output=True, text=True, timeout=2,
+        ).stdout.strip()
+    except Exception:
+        return ""
+
+
+def _refresh_issues() -> None:
+    try:
+        proc = subprocess.run(
+            ["gh", "issue", "list", "--assignee", "@me", "--state", "open",
+             "--json", "number,title", "--limit", "10"],
+            capture_output=True, text=True, timeout=8, cwd=ROOT,
+        )
+        if proc.returncode == 0:
+            GH_CACHE.write_text(json.dumps(
+                {"ts": time.time(), "root": str(ROOT),
+                 "issues": json.loads(proc.stdout)}))
+    except Exception:
+        pass
+
+
+def issues_status() -> str:
+    try:
+        cache = json.loads(GH_CACHE.read_text())
+    except Exception:
+        cache = {}
+    fresh = (
+        cache.get("root") == str(ROOT)
+        and time.time() - float(cache.get("ts", 0)) < GH_TTL
+    )
+    if not fresh:
+        try:
+            subprocess.Popen(
+                [sys.executable, str(Path(__file__).resolve()), "_refresh-issues"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL, start_new_session=True,
+            )
+        except Exception:
+            pass
+    issues = cache.get("issues") or []
+    if not issues:
+        return "issues:@me=none"
+    return "issues:@me=" + ",".join(f"#{i['number']}" for i in issues)
+
+
+def status_line() -> str:
+    branch = _git("branch", "--show-current") or "?"
+    dirty = _git("status", "--porcelain")
+    n_dirty = len([l for l in dirty.splitlines() if l.strip()])
+    last = _git("log", "-1", "--format=%h %s")[:60]
+    return (
+        f"STATUS repo={ROOT.name} branch={branch} dirty={n_dirty} "
+        f"last={last!r} {issues_status()}"
+    )
 
 
 def read_state() -> dict:
@@ -110,7 +175,7 @@ def prompt(payload: dict) -> None:
         emit(message="HACK-MODE:FULL", context=ruleset("full"))
         return
     if mode() != "off":
-        emit(context=REMINDER)
+        emit(context=f"{REMINDER}\n{status_line()}")
 
 
 def read_stdin(timeout: float = 1.5) -> str:
@@ -130,6 +195,9 @@ def read_stdin(timeout: float = 1.5) -> str:
 
 def main() -> None:
     event = sys.argv[1] if len(sys.argv) > 1 else "session"
+    if event == "_refresh-issues":
+        _refresh_issues()
+        return
     if event == "session":
         session()
         return

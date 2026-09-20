@@ -31,6 +31,10 @@
   (ADR 0013). Hooks belong in `.codex/hooks.json` (project layer):
   portable plugin manifests cannot carry them, and Subagent* hooks are
   banned (agents disabled; lazy-mode injection biases reviewers).
+  Orchestration is `codex_app.*` visible threads in Codex App — never
+  `spawn_agent` (ADR 0014). Deploy is the server-side pull watcher in
+  `install/deploy/` (`registered.deploy`); no GitHub Actions secrets
+  are assumed.
 - Repo skill names in `.agents/skills/` must not collide with any
   plugin skill set. `lsp.*` install commands use bun/go/cargo/rustup —
   never npm or pip.

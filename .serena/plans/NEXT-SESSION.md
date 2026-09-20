@@ -129,10 +129,33 @@ Setup owner stream: Danil.
   `hack mode`) in `~/.codex/hack-setup-mode.json`. Law:
   `registered.hooks`; checker `check_hooks` enforces file/events/
   scripts and bans Subagent* hooks.
+- Orchestration wave (ADR 0014): `delegate-worker` skill — main Codex
+  App chat spawns visible worker threads via `codex_app.*` tools
+  (create_thread/send_message_to_thread/list_threads/read_thread);
+  NOT subagents, `agents.enabled=false` stands. `github-flow` rewritten
+  to the full lane model `feat/<issue>` → `<user>` → `dev` → `main`
+  with orchestrator merge gate + live-verify. Deploy kit
+  `install/deploy/`: server-side pull watcher (deploy-watch.sh +
+  systemd units + provision-server.sh) — no GitHub admin needed.
+  UserPromptSubmit hook now emits a STATUS line per prompt (repo,
+  branch, dirty count, last commit, @me issues via 60 s cache at
+  `~/.codex/hack-setup-issues.json` refreshed by a detached
+  `_refresh-issues` subprocess — daemon threads die with the process).
+  Law: `registered.deploy` + `registered.hooks`.
+- Product skeleton: `NDDev-OpenNetwork/vibestrap` — private mirror of
+  `R3flector/vibestrap` (public, no upstream license file), admin
+  access, `main` + `dev` branches. Agent-surface projection
+  (AGENTS/.codex/hooks/skills) still to be adapted there. BAITC repo
+  untouched until hackathon day.
 
-## Next (blocked on user)
+## Next
 
-Product trees (`web/`, `api/`, …) and nested `AGENTS.md` copies only
-when that code is authored. Copy from `nested/` in the same change.
+- Adapt vibestrap fork to the hackathon setup: project AGENTS +
+  `.codex/config.toml` + hooks + workflow onto the product tree;
+  compose/health endpoints for the deploy watcher.
+- Servers: two doctl droplets day-before; only SSH keys needed from
+  the user; `install/deploy/provision-server.sh <host> <branch>` each.
+- Product trees (`web/`, `api/`, …) and nested `AGENTS.md` copies only
+  when that code is authored. Copy from `nested/` in the same change.
 
-Not requested: BAITC remote, push to origin, Serena/hooks install.
+Not requested: BAITC remote, Serena/hooks install.

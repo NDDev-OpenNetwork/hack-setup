@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 import sys
 import tomllib
 from pathlib import Path
@@ -1204,6 +1205,19 @@ def check_hooks() -> None:
             "subagent hooks are banned: agents are disabled and lazy-mode "
             "injection biases reviewer subagents (openai/codex-style #502)"
         )
+    deploy = pin.get("registered", {}).get("deploy")
+    if not isinstance(deploy, dict):
+        raise CheckError("stack-pin.registered.deploy must be an object")
+    for rel in deploy.get("kit", []):
+        kit_path = ROOT / str(rel)
+        if not kit_path.is_file():
+            raise CheckError(f"deploy kit missing: {rel}")
+        if str(rel).endswith(".sh"):
+            result = subprocess.run(
+                ["sh", "-n", str(kit_path)], capture_output=True, text=True
+            )
+            if result.returncode != 0:
+                raise CheckError(f"{rel} fails sh -n: {result.stderr.strip()}")
 
 
 def py_compile(script_path: str) -> None:

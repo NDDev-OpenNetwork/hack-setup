@@ -110,6 +110,7 @@
       "session-boot",
       "github-flow",
       "agent-handoff",
+      "delegate-worker",
       "hack-mode",
       "ship-verify",
       "debt-ledger"
@@ -142,7 +143,20 @@
       "file": ".codex/hooks.json",
       "scripts": [".codex/hooks/hack_mode.py"],
       "events": ["SessionStart", "UserPromptSubmit"],
-      "note": "project-layer hooks; plugin manifests cannot carry hooks in 0.155.1 (plugin_hooks feature removed, openai/codex#39895). hack_mode.py injects the hack-mode ruleset at SessionStart and a one-line reminder per prompt; standalone 'normal mode'/'hack ultra'/'hack mode' toggle per-project state under ~/.codex/hack-setup-mode.json"
+      "note": "project-layer hooks; plugin manifests cannot carry hooks in 0.155.1 (plugin_hooks feature removed, openai/codex#39895). hack_mode.py injects the hack-mode ruleset at SessionStart and a one-line reminder + git/issues STATUS line per prompt; standalone 'normal mode'/'hack ultra'/'hack mode' toggle per-project state under ~/.codex/hack-setup-mode.json"
+    },
+    "deploy": {
+      "model": "server-side pull watcher, no GitHub admin rights needed",
+      "dev_branch": "dev",
+      "prod_branch": "main",
+      "kit": [
+        "install/deploy/deploy-watch.sh",
+        "install/deploy/deploy-watch.service",
+        "install/deploy/deploy-watch.timer",
+        "install/deploy/provision-server.sh",
+        "install/deploy/README.md"
+      ],
+      "note": "ADR 0014: orchestrator spawns worker threads via codex_app.* tools in Codex App (not subagents); lanes feat/<issue> -> <user> -> dev -> main"
     },
     "mcp_servers": {
       "rule": "six MCP servers projected into .codex/config.toml [mcp_servers.*]; all keyless by default; keys only via env-var references, never literals",

@@ -1,0 +1,58 @@
+# 14. Orchestrator/worker via Codex App threads, lanes feat→user→dev→main, pull-watcher deploys
+
+- Status: accepted
+- Date: 2026-09-21
+- Decision-Makers: Danil Silantyev
+
+## Context and Problem Statement
+
+The hackathon operating model: a user talks to one main Codex App chat
+(the orchestrator) which registers issues, spawns implementation
+sessions, merges lanes, and ships. Three people run this in parallel.
+We needed: a session-spawn mechanism, a branch topology that survives
+parallel workers, and a deploy path that works without GitHub admin
+rights on the product org.
+
+## Decision
+
+**Spawn:** the Codex App injects a `codex_app.*` dynamic tool namespace
+(`create_thread`, `send_message_to_thread`, `list_threads`,
+`read_thread`, `fork_thread`, title/pin/archive setters) into sessions
+running inside the app. The orchestrator uses these — they are
+top-level user-visible threads, not subagents, so `agents.enabled =
+false` and `features.multi_agent = false` stay law. `codex queue
+--thread <id>` is the CLI fallback for messaging a thread.
+
+**Isolation:** every worker thread gets its own `git worktree` cut from
+`dev`. Two agents never share a working tree.
+
+**Lanes:** `feat/<issue>-<slug>` → `<user>` (personal branch) → `dev` →
+`main`. Workers merge only into their own `<user>` lane. The
+orchestrator merges `<user>` → `dev` behind an explicit gate (no active
+workers on the lane, no claim conflicts, live-verify after the dev
+server pulls). `dev` → `main` is an owner call only.
+
+**Deploy:** server-side pull watcher (`install/deploy/`), a 30-second
+systemd timer running `deploy-watch.sh` — fetch, ff-only pull, deploy
+command, health curl. No GitHub Actions secrets or self-hosted runners
+required; both are unavailable on the hackathon org (push/triage only,
+admin 404 on actions APIs).
+
+**Prompt enrichment:** the UserPromptSubmit hook injects a one-line
+`STATUS` (repo, branch, dirty count, last commit, assigned issues via a
+60-second gh cache refreshed by a detached process) so the orchestrator
+always sees live state without asking.
+
+## Consequences
+
+- The orchestrator chat must run in Codex App (or an app-server
+  client); plain `codex` CLI sessions lack `codex_app.*` tools.
+- Worker briefs are generated per spawn — template lives in
+  `$hack-agent-workflow:delegate-worker`.
+- The product repo (vibestrap base, adapted) must carry the same agent
+  surface — AGENTS + `.codex/` are projected there when it is created.
+- Branch tips of `dev`/`main` are always deployable by definition —
+  the merge gate is the only thing protecting prod.
+- Known upstream caveats honoured: whole-message-only mode commands
+  (#161), no Subagent* hooks (#502), threaded+timed stdin read (#443),
+  scope preservation over line-count laziness (#602).
