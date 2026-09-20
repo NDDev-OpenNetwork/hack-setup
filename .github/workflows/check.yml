@@ -24,7 +24,9 @@ jobs:
           echo "$sha  uv-installer.sh" | sha256sum -c -
           UV_INSTALL_DIR="$HOME/.local/bin" UV_NO_MODIFY_PATH=1 sh uv-installer.sh
       - name: Unit tests
-        run: "$HOME/.local/bin/uvx" --from pytest pytest -q
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          uvx --from pytest pytest -q
       - name: Shell syntax
         run: |
           sh -n setup install/bootstrap.sh install/env.sh
