@@ -15,7 +15,7 @@ One loop. `build/stack-pin.json` `control` names it.
    `$hack-agent-standards:<layer-skill>`. Router
    `$hack-agent-standards:apply-agent-standard`. Repo alias
    `$apply-stack-rule`. Pin numbers win. Owner turn beats a frame.
-5. Why: ADRs 0001–0009
+5. Why: ADRs 0001–0010
 
 Do not fork numbers into frames, skills, or memories first. Edit pin +
 config together, then `just check`.
@@ -34,6 +34,8 @@ config together, then `just check`.
 - Web TS `7.0.2` only. bun installer. No Next.js / pnpm
 - Forms: `@tanstack/react-form` `1.33.5` + Standard Schema (zod direct,
   no adapter). No react-hook-form / @hookform/resolvers / zod-form-adapter
+- LLM gateway: Bifrost `maximhq/bifrost:v2.2.1` (ADR 0010). API calls it
+  via openai `3.16.2` `base_url`. No litellm in any env
 - Frames plugin: `hack-agent-standards@saint-tibo` (ADR 0008)
 - Workflow plugin: `hack-agent-workflow@saint-tibo` (ADR 0009) —
   serena-first `session-boot`, github-first `github-flow`,
@@ -50,7 +52,7 @@ This tree is `NDDev-OpenNetwork/hack-setup` on `main`.
 Later remote (no git remote): `BAITC-Hacks/hack-a58598e0-saint-tibo`.
 Setup owner stream: Danil.
 
-## Done (committed on `main`, not pushed)
+## Done (committed and pushed on `main`)
 
 - `9732012` catalogue: INDEX + CORE + QUALITY + 12 area files, all `ready`;
   15 layer skills; nested AGENTS templates; Motion kernel in `AGENTS.md`
@@ -63,8 +65,14 @@ Setup owner stream: Danil.
 - Checker fails on `standards/*.md` orphans not linked in INDEX
 - Host: all declared tools match the pin (`--strict` 14/14); Devin stale
   locks, research zip, merged branch cleaned
-- Host codex: project trusted, `marketplace add .` done — config and both
-  plugins are live on this host
+- Host codex: project trusted, `marketplace add .` done — config and all
+  three plugins are live on this host
+- `bc3c4c3` plugin install steps documented; legacy-profile ban scoped
+  to `sol`
+- `af3f9dd` checker enforces plugin cache parity with the repo
+- `a0dba2e` `ty` `0.0.82` declared as a host tool
+- `bdd614a` `hack-agent-workflow` plugin (ADR 0009): session-boot /
+  github-flow / agent-handoff
 
 ## Next (blocked on user)
 

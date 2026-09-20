@@ -27,13 +27,13 @@ Frozen product + toolchain standard and host doctor.
 - `just check` / `python3 scripts/check_stack.py`: required host doctor + stale standard.
 - `just stack`: print the generated standard.
 - `python3 scripts/check_stack.py --strict`: also fail declared host drift/missing.
-- `just reverify`: hackathon-day network check. openai is range-checked for LiteLLM (`>=2.20,<3`), not compared to latest 3.x.
+- `just reverify`: hackathon-day network check. openai is compared to PyPI latest; `ai.bifrost` is checked against the latest `transports/*` GitHub tag.
 
 ## Current Behavior
 
 Web is React 19.3 + Vite 8.3 + TypeScript 7.0.2 only. No `typescript@6` / `@typescript/typescript6` / typescript-eslint in web. `@hey-api/openapi-ts` `0.99.0` is not a web workspace dep; do not take `@next`. shadcn via `bunx shadcn@4.21.0` only. `@types/node` is `24.13.6`. JS installer is bun. Forms are `@tanstack/react-form` `1.33.5` + Standard Schema (zod direct to `validators`, no adapter); no react-hook-form / `@hookform/resolvers` / `@tanstack/zod-form-adapter`.
 
-API: FastAPI, `httpx` `0.28.1` (`<1`). Isolated Python envs: API/workers redis-py 8.1.0, Telegram redis-py 7.4.1. openai `2.54.0` (LiteLLM `1.101.0` `openai>=2.20,<3`). cliproxyapi `7.3.9` is a GitHub release. Docling default extra `standard` is not API-safe; only `cv2` is opencv-python-headless `5.0.0.93`.
+API: FastAPI, `httpx` `0.28.1` (`<1`). Isolated Python envs: API/workers redis-py 8.1.0, Telegram redis-py 7.4.1. LLM calls go through Bifrost `maximhq/bifrost:v2.2.1` (OpenAI-compatible `:8080/v1`, `environments.bifrost`); API carries openai `3.16.2` with `base_url`, no litellm anywhere (ADR 0010). cliproxyapi `7.3.9` is a GitHub release. Docling default extra `standard` is not API-safe; only `cv2` is opencv-python-headless `5.0.0.93`.
 
 Flutter 3.47.5 + bundled Dart 3.13.4. Tauri 2 npm `2.11.4`/`2.11.1`, crate `2.11.5`.
 
@@ -50,7 +50,7 @@ Flutter 3.47.5 + bundled Dart 3.13.4. Tauri 2 npm `2.11.4`/`2.11.1`, crate `2.11
 - No Makefile. Project commands are `just`.
 - Web/desktop typescript is only `7.0.2`. Generated clients are typechecked by that `tsc`.
 - User code never runs in the API process.
-- Do not put openai 3.x in the API env.
+- openai in the API env is 3.x (pin `3.16.2`); the LiteLLM `<3` cap is gone.
 - Version bumps are explicit pin edits.
 
 ## Change Rules
@@ -64,5 +64,5 @@ Flutter 3.47.5 + bundled Dart 3.13.4. Tauri 2 npm `2.11.4`/`2.11.1`, crate `2.11
 
 ## Known Gaps
 
-- `reverify_stack_pin.py` checks a subset of pins; openai is range-checked (`>=2.20,<3`).
+- `reverify_stack_pin.py` checks a subset of pins: npm/PyPI latest, Node LTS, and the Bifrost `transports/*` GitHub tag.
 - `@hey-api/openapi-ts` `0.99.0` still crashes next to typescript 7; wait for a stable release without the Compiler API.
