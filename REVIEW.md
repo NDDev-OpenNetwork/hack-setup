@@ -6,7 +6,9 @@
 - Confirm `python3 scripts/check_stack.py` reports required host tools OK.
 - Reject a Makefile. Project commands are `just` / `justfile`.
 - Reject Next.js, pnpm, a second JS lockfile, `typescript@6` in web,
-  `@hey-api/openapi-ts@next`, `bun add shadcn`, and `opencv-python`.
+  `@hey-api/openapi-ts@next`, `bun add shadcn`, `react-hook-form` /
+  `@hookform/resolvers` (forms are `@tanstack/react-form` +
+  Standard Schema), `@tanstack/zod-form-adapter`, and `opencv-python`.
 - Confirm `./setup` is the entry and `install/catalog.toml` matches `install/modules/`.
 - Reject a root file named `install` (conflicts with `install/` on macOS).
 - Reject `approval_policy = "untrusted"` and `features.web_search*`.

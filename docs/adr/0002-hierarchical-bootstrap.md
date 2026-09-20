@@ -14,7 +14,8 @@ the entrypoint.
 
 - One command after `git clone`
 - macOS cannot keep both a file named `install` and directory `install/`
-- Pin the official Codex `install.sh` and its sha256, not an unpinned URL
+- Pin the Codex release package per platform and its sha256, not an
+  unpinned URL (hashed official `install.sh` is the fallback)
 - Install the CLI to `~/.local/bin` so shell profiles do not store a
   clone-absolute PATH
 - Leave room for later modules (runtimes, CLIs, datasets)
@@ -34,16 +35,13 @@ of those directories; bootstrap does not read it. `enabled` is
 documentary. `scripts/check_codex_setup.py` requires the snapshot to
 match the numbered dirs exactly.
 
-The Codex module downloads
-`https://github.com/openai/codex/releases/download/rust-v0.155.1/install.sh`,
-verifies `build/codex-pin.json` `installer.sha256`, then runs:
-
-```
-CODEX_RELEASE=0.155.1
-CODEX_NON_INTERACTIVE=1
-CODEX_INSTALLER_USE_RELEASES_OPENAI_COM=false
-CODEX_INSTALL_DIR=$HOME/.local/bin
-```
+The Codex module downloads the pinned
+`codex-package-<triple>.tar.gz`, verifies
+`build/codex-pin.json` `packages.<platform>.sha256`, extracts it to
+`~/.codex/packages/standalone/releases/<ver>-<triple>/`, and links
+`bin/codex` into `~/.local/bin` and `$REPO/.local/bin`. The hashed
+official `install.sh` (`installer.sha256`) runs only when the host
+platform has no pinned package entry.
 
 Windows is fail-closed. bun/npm/brew copies are not uninstalled; PATH
 order after `. install/env.sh` prefers the pinned binary.

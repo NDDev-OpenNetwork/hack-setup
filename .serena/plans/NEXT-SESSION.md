@@ -29,6 +29,8 @@ config together, then `just check`.
 - Subagents off. No `.codex/agents/*.toml`. No `model_catalog_json`
 - Commands: `justfile` only
 - Web TS `7.0.2` only. bun installer. No Next.js / pnpm
+- Forms: `@tanstack/react-form` `1.33.5` + Standard Schema (zod direct,
+  no adapter). No react-hook-form / @hookform/resolvers / zod-form-adapter
 - Frames plugin: `hack-agent-standards@saint-tibo` (ADR 0008)
 - Plugin skill set: `registered.standards_plugin_skills` (15 names)
 
@@ -41,25 +43,25 @@ This tree is `NDDev-OpenNetwork/hack-setup` on `main`.
 Later remote (no git remote): `BAITC-Hacks/hack-a58598e0-saint-tibo`.
 Setup owner stream: Danil.
 
-## Done on disk (uncommitted unless the owner asked)
+## Done (committed on `main`, not pushed)
 
-- Catalogue: INDEX + CORE + QUALITY + 12 area files, all `ready`
-- Layer skills: 15 DirectChildren under `plugins/hack-agent-standards/skills/`
-- Nested AGENTS templates: `plugins/hack-agent-standards/nested/`
-- Motion kernel in root `AGENTS.md`
-- Module 20 installs the pinned `codex-package-<triple>.tar.gz`
+- `9732012` catalogue: INDEX + CORE + QUALITY + 12 area files, all `ready`;
+  15 layer skills; nested AGENTS templates; Motion kernel in `AGENTS.md`
+- `2410c1c` module 20 installs the pinned `codex-package-<triple>.tar.gz`
   (verifies `packages.<platform>.sha256`); `install.sh` is fallback.
-  ADR 0001 updated.
-- Checker now fails on `standards/*.md` orphans not linked in INDEX.
-- Host tidied: stale Devin locks removed, research zip deleted
-  (content lives in `docs/research/`), merged branch dropped.
+  ADRs 0001+0002 updated
+- `06ace13` serena memories synced
+- `c8ceb4b` forms switched to `@tanstack/react-form` + Standard Schema;
+  `reverify` watches the new package; stale RHF refs removed
+- Checker fails on `standards/*.md` orphans not linked in INDEX
+- Host: all declared tools match the pin (`--strict` 14/14); Devin stale
+  locks, research zip, merged branch cleaned
+- Host codex: project trusted, `marketplace add .` done — config and both
+  plugins are live on this host
 
 ## Next (blocked on user)
 
 Product trees (`web/`, `api/`, …) and nested `AGENTS.md` copies only
 when that code is authored. Copy from `nested/` in the same change.
 
-Not requested: BAITC remote, Serena/hooks install, commit/push.
-Pending on this host: trust `hack-setup` in Codex (`projects.*` entry)
-and `codex plugin marketplace add .` — until then `.codex/config.toml`
-and both plugins are dormant here.
+Not requested: BAITC remote, push to origin, Serena/hooks install.

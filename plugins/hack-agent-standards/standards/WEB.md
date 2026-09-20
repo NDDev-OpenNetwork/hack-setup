@@ -115,10 +115,11 @@ generated client.
   pass generated schemas to form validators.
 
 Query mutation takes the **DTO**. `form.Subscribe` on
-`isSubmitting` / `canSubmit` disables submit. API field errors map
-through `setErrorMap` `onServer` keyed by field name, not per-field
-state. Form mounts after edit data exists (or async
-`defaultValues`).
+`isSubmitting` / `canSubmit` disables submit. API field errors come
+back through `validators.onSubmitAsync` returning
+`{ form?, fields: { <name>: <msg> } }` (nested names like
+`items[0].title` work), not per-field state. Form mounts after edit
+data exists (or async `defaultValues`).
 
 ### UI
 

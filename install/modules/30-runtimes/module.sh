@@ -56,7 +56,7 @@ install_uv() {
   hack_download "$url" "$installer"
   hack_verify_sha256 "$installer" "$sha"
   mkdir -p "${HOME}/.local/bin"
-  UV_INSTALL_DIR="${HOME}/.local/bin" sh "$installer"
+  UV_INSTALL_DIR="${HOME}/.local/bin" UV_NO_MODIFY_PATH=1 sh "$installer"
   got="$(bin_version "${HOME}/.local/bin/uv" --version || true)"
   [ "$got" = "$wanted" ] || die "uv reported $got, expected $wanted"
   link_bin "${HOME}/.local/bin/uv"

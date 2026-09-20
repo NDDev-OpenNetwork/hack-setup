@@ -18,7 +18,8 @@ hack_verify_sha256() {
   expected="$2"
   actual="$(hack_sha256 "$path")"
   if [ "$actual" != "$expected" ]; then
-    die "checksum mismatch for $path (expected $expected, got $actual)"
+    rm -f "$path"
+    die "checksum mismatch for $path (expected $expected, got $actual); file removed"
   fi
 }
 
@@ -26,7 +27,7 @@ hack_download() {
   url="$1"
   dest="$2"
   if command -v curl >/dev/null 2>&1; then
-    curl -fsSL "$url" -o "$dest"
+    curl -fsSL --proto '=https' --tlsv1.2 --max-redirs 5 "$url" -o "$dest"
     return
   fi
   if command -v wget >/dev/null 2>&1; then
