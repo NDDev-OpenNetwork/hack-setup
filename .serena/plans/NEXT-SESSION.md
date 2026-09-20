@@ -67,7 +67,7 @@ Setup owner stream: Danil.
 - Host: all declared tools match the pin (`--strict` 15/15); Devin stale
   locks, research zip, merged branch cleaned
 - Host codex: project trusted, `marketplace add .` done — config and all
-  four plugins are live on this host
+  five plugins are live on this host
 - `bc3c4c3` plugin install steps documented; legacy-profile ban scoped
   to `sol`
 - `af3f9dd` checker enforces plugin cache parity with the repo
@@ -90,7 +90,7 @@ Setup owner stream: Danil.
 - Deep audit wave: `lsp.dart` now resolves `clients.flutter.dart`
   (3.13.4, the actual server version); `lsp.markdown` package filled;
   CI artifacts job bootstraps the pinned uv instead of pip; checker
-  rejects npm/pip/pnpm in `lsp.*.install`; REVIEW covers all 4 plugins
+  rejects npm/pip/pnpm in `lsp.*.install`; REVIEW covers all 5 plugins
 - Windows x86_64 support = WSL2 Ubuntu (ADR 0012): os.sh detects WSL,
   `.gitattributes` pins eol=lf, CI gains a `setup-e2e-windows-wsl` job;
   checker + module 40 now iterate `marketplace.json` as the plugin SoT
@@ -100,7 +100,7 @@ Setup owner stream: Danil.
   in codex-pin (`f45c273b…`) + node/bun zips, `installer_ps1` pins for
   codex (`ab832ca3…`) and uv (`e08cfe98…`); checker requires the ps1
   twins + `entry_windows`; CI `setup-e2e-windows` (windows-latest) is
-  GREEN — codex-cli 0.155.1, all 4 plugins installed/enabled, both
+  GREEN — codex-cli 0.155.1, all 5 plugins installed/enabled, both
   checkers PASS, all 5 required probes OK on a real Windows host. WSL2
   remains an optional POSIX path; Windows arm64 fail-closed.
   Strict-mode `.Count` scalar bug fixed via `@(...)` wrap.

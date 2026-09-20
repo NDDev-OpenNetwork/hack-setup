@@ -64,13 +64,14 @@ shims; Windows additionally exposes `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin`.
 | `.codex/config.toml` | Runtime projection of session + models + features |
 | `build/stack-standard.md` | Generated; refresh with `--write` |
 | `just check` | Proof that pin == config == AGENTS == generated |
-| `docs/adr/0001`–`0012` | Decisions |
-| `justfile` | Project commands (`just gate`, `just check`) |
+| `docs/adr/0001`–`0015` | Decisions |
+| `justfile` | Project commands (`just gate`, `just check`, `just repair`) |
 | `plugins/hack-agent-standards/standards/` | On-demand frames. `docs/research/` is archive |
 
 ```bash
 codex --version     # expected: codex-cli 0.155.1
 just check          # artifact validator + host doctor
+just repair         # diagnose + auto-fix safe drift (plugin cache, user config)
 just stack          # print generated standard
 just reverify       # hackathon-day network drift
 ```

@@ -1,30 +1,19 @@
 # Claude Code notes for hack-setup
 
-This repository is Codex harness setup, not an application. The product is
-the tracked Codex project surfaces.
+The contract is `AGENTS.md` — read it first; it carries the pin, the
+operating model, the plugin map, hooks, and the boundaries. This file
+only holds Claude-specific deltas. When the two disagree, `AGENTS.md`
+wins — update this file in the same change that changes the contract.
 
-Law is `build/codex-pin.json` + `build/stack-pin.json`. Runtime is
-`.codex/config.toml`. Proof is `just check`. Frames are on-demand in
-`plugins/hack-agent-standards/standards/` (ADR 0008).
-
-## Pin
-
-Codex CLI must be `0.155.1`. See `build/codex-pin.json` and
-`docs/adr/0001-codex-cli-155-pin.md`. The product stack is
-`build/stack-pin.json` schema 2 and `docs/adr/0004-product-stack.md`.
-Do not add Next.js, pnpm, `typescript@6` in web, `@hey-api/openapi-ts`
-next to TypeScript `7.0.2`, or a Makefile. Codex session is YOLO
-(`registered.session`, ADR 0006): never ask, no OS sandbox. Models
-are `gpt-6-astra` / `gpt-5.6-sol` at `xhigh`, window `872000` /
-compact `700000`, no Codex subagents (ADR 0007). Commands:
-`just gate` / `just check`. Host doctor: `python3 scripts/check_stack.py`.
-Hackathon-day: `just reverify`. `docs/research/` is archive, not law.
+This repository is Codex harness setup, not an application. The product
+is the tracked Codex project surfaces. Law is `build/codex-pin.json` +
+`build/stack-pin.json`; proof is `just check`.
 
 ## Do not treat this as a Claude skill tree
 
-Repo workflows live in `.agents/skills/`. Do not copy them into
-`.claude/skills/` unless a Claude-only workflow is required. Do not add a
-root `CLAUDE.md`.
+Repo workflows live in `.agents/skills/` and plugin skills in
+`plugins/*/skills/`. Do not copy them into `.claude/skills/` unless a
+Claude-only workflow is required. Do not add a root `CLAUDE.md`.
 
 ## Commands
 
@@ -33,9 +22,13 @@ root `CLAUDE.md`.
 . install/env.sh
 just gate
 just test
+just repair
 ```
 
-Do not add a root file named `install`. The entry is `./setup`.
+`just repair` diagnoses and auto-fixes safe drift (plugin cache,
+managed user-config blocks, `.agent` dirs, stale hook bytecode). Do not
+add a root file named `install`. The entry is `./setup` /
+`.\setup.ps1`.
 
 ## Diagnostics
 
