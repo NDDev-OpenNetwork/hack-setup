@@ -10,6 +10,7 @@ failure path exits silently.
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -157,15 +158,18 @@ def ruleset(level: str) -> str:
     return f"HACK-MODE ACTIVE — level: {level}\n\n{body}"
 
 
-def emit(context: str = "", message: str = "") -> None:
+def emit(context: str = "", message: str = "", event: str = "") -> None:
     out = {}
     if message:
         out["systemMessage"] = message
     if context:
         out["hookSpecificOutput"] = {
-            "hookEventName": "SessionStart"
-            if (sys.argv[1] if len(sys.argv) > 1 else "") == "session"
-            else "UserPromptSubmit",
+            "hookEventName": event
+            or (
+                "SessionStart"
+                if (sys.argv[1] if len(sys.argv) > 1 else "") == "session"
+                else "UserPromptSubmit"
+            ),
             "additionalContext": context,
         }
     if out:
@@ -200,6 +204,104 @@ def prompt(payload: dict) -> None:
         emit(context=f"{REMINDER}\n{status_line()}")
 
 
+LANES_FILE = ".codex/lanes.json"
+ORCH_MARKER = ".agent/orchestrator"
+
+
+def _repo_root(cwd: str) -> Path | None:
+    try:
+        out = subprocess.run(
+            ["git", "-C", cwd, "rev-parse", "--show-toplevel"],
+            capture_output=True, text=True, timeout=2,
+        )
+        return Path(out.stdout.strip()) if out.returncode == 0 else None
+    except Exception:
+        return None
+
+
+def _protected_branches(root: Path) -> list[str]:
+    """Lane law applies only where the tracked `.codex/lanes.json` exists —
+    this setup repo pushes main/dev freely; the product repo declares lanes."""
+    try:
+        data = json.loads((root / LANES_FILE).read_text())
+        branches = data.get("protected_branches")
+        if isinstance(branches, list) and branches:
+            return [str(b) for b in branches]
+    except Exception:
+        pass
+    return []
+
+
+def pretooluse(payload: dict) -> None:
+    """Lane enforcement: in a repo that declares `.agent/lanes.json`, only
+    the orchestrator checkout (untracked `.agent/orchestrator` marker —
+    worker worktrees never have it) may push protected branches or merge
+    PRs."""
+    command = str(payload.get("tool_input", {}).get("command") or "")
+    if not command:
+        return
+    root = _repo_root(str(payload.get("cwd") or "."))
+    if not root:
+        return
+    protected = _protected_branches(root)
+    if not protected or (root / ORCH_MARKER).is_file():
+        return
+    guard = "|".join(re.escape(b) for b in protected)
+    hit = re.search(rf"\bgit\s+push\b[^|;&]*\b({guard})\b", command) or re.search(
+        r"\bgh\s+pr\s+merge\b", command
+    )
+    if not hit:
+        return
+    emit_pre(
+        {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": (
+                f"lane law: workers push only their personal lane "
+                f"(feat/<issue> -> <user>). {guard} pushes and PR merges "
+                f"run from the orchestrator checkout "
+                f"(mkdir -p .agent && touch .agent/orchestrator there)."
+            ),
+        }
+    )
+
+
+def emit_pre(out: dict) -> None:
+    sys.stdout.write(json.dumps({"hookSpecificOutput": out}))
+
+
+def posttooluse(payload: dict) -> None:
+    command = str(payload.get("tool_input", {}).get("command") or "")
+    if "git push" not in command:
+        return
+    emit(
+        context=(
+            "Push landed. If it carried a feature/lane: verify live on the "
+            "server before calling it done — ship-verify, done means live."
+        ),
+        event="PostToolUse",
+    )
+
+
+def sessionend(payload: dict) -> None:
+    root = _repo_root(str(payload.get("cwd") or "."))
+    if not root:
+        return
+    try:
+        log_dir = root / ".agent"
+        log_dir.mkdir(exist_ok=True)
+        with (log_dir / "session-log.ndjson").open("a") as fh:
+            fh.write(json.dumps({
+                "ts": int(time.time()),
+                "repo": root.name,
+                "branch": _git("branch", "--show-current"),
+                "reason": payload.get("reason"),
+                "session": payload.get("session_id"),
+            }) + "\n")
+    except Exception:
+        pass
+
+
 def read_stdin(timeout: float = 1.5) -> str:
     buf = []
 
@@ -228,6 +330,15 @@ def main() -> None:
         payload = json.loads(raw) if raw.strip() else {}
     except Exception:
         payload = {}
+    if event == "pretooluse":
+        pretooluse(payload)
+        return
+    if event == "posttooluse":
+        posttooluse(payload)
+        return
+    if event == "sessionend":
+        sessionend(payload)
+        return
     prompt(payload)
 
 

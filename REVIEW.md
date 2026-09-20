@@ -34,7 +34,10 @@
   Orchestration is `codex_app.*` visible threads in Codex App — never
   `spawn_agent` (ADR 0014). Deploy is the server-side pull watcher in
   `install/deploy/` (`registered.deploy`); no GitHub Actions secrets
-  are assumed.
+  are assumed. `developer_instructions`/`compact_prompt` are law via
+  `registered.session.*_markers`; `model_instructions_file` and
+  project-level `notify` are banned (ADR 0015). The PreToolUse lane
+  guard activates only where `.codex/lanes.json` exists.
 - Repo skill names in `.agents/skills/` must not collide with any
   plugin skill set. `lsp.*` install commands use bun/go/cargo/rustup —
   never npm or pip.

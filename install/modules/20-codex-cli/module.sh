@@ -95,6 +95,9 @@ while i < n:
         while i < n and lines[i].lstrip().startswith("#"):
             i += 1
         continue
+    if "# hack-setup" in line and "=" in line:
+        i += 1
+        continue
     if re.fullmatch(r"\[profiles\.sol\]", line.strip()):
         i += 1
         while i < n and not lines[i].strip().startswith("["):
@@ -109,9 +112,28 @@ PY
   log "installed user profile ~/.codex/sol.config.toml ($secondary)"
 }
 
+ensure_notify() {
+  # User-level only (project config ignores `notify`): append a managed
+  # block to ~/.codex/config.toml pointing at the repo script. The
+  # '# hack-setup' markers make it removable by the scrubber above.
+  cfg="${HOME}/.codex/config.toml"
+  mkdir -p "${HOME}/.codex"
+  [ -f "$cfg" ] || : > "$cfg"
+  if grep -q 'hack-setup: notify' "$cfg"; then
+    return 0
+  fi
+  cat >> "$cfg" <<EOF
+
+# hack-setup: notify
+notify = ["${HACK_REPO_ROOT}/install/notify.sh"]  # hack-setup
+EOF
+  log "wired turn-complete notify -> install/notify.sh"
+}
+
 run_install() {
   wanted="$(cli_version)"
   ensure_sol_profile
+  ensure_notify
   if found="$(already_pinned)"; then
     link_repo_bin "$found"
     log "Codex CLI $wanted already present; linked $HACK_LOCAL_BIN/codex"

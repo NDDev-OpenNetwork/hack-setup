@@ -49,7 +49,9 @@ Hard limits that shape the flow:
 # Worker <user> round <N>
 
 Issues (SoT — `gh issue view <n>` before starting): #12, #15
-Lane: merge into `<user>` only. Never push dev or main.
+Lane: merge into `<user>` only. Never push dev or main — the
+PreToolUse hook denies it anyway; never create `.agent/orchestrator`
+in your worktree (that marker is the orchestrator's).
 Worktree: `git worktree add ../<repo>-w<N> -b feat/<issue>-<slug> origin/dev`; cd in.
 
 Live rules (already injected by hooks; recap):

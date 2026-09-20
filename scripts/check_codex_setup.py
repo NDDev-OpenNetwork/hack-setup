@@ -832,6 +832,20 @@ def check_config() -> None:
         raise CheckError("allow_login_shell must be true")
     if config.get("web_search") != session.get("web_search", "live"):
         raise CheckError('web_search must match stack-pin.registered.session ("live")')
+    if config.get("check_for_update_on_startup") is not False:
+        raise CheckError(
+            "check_for_update_on_startup must be false; the CLI is pinned"
+        )
+    for key in ("developer_instructions", "compact_prompt"):
+        want_markers = session.get(f"{key}_markers")
+        if not want_markers:
+            continue
+        value = config.get(key)
+        if not isinstance(value, str):
+            raise CheckError(f"{key} must be a string (law: registered.session)")
+        missing = [m for m in want_markers if m not in value]
+        if missing:
+            raise CheckError(f"{key} is missing pinned markers: {missing}")
     models = {}
     if isinstance(pin, dict) and isinstance(pin.get("models"), dict):
         models = pin["models"]

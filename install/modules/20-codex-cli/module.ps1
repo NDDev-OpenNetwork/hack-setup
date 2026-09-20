@@ -68,6 +68,7 @@ function Ensure-SolProfile {
                 while ($i -lt $n -and $src[$i].TrimStart().StartsWith('#')) { $i++ }
                 continue
             }
+            if ($line.Contains('# hack-setup') -and $line.Contains('=')) { $i++; continue }
             if ($line.Trim() -eq '[profiles.sol]') {
                 $i++
                 while ($i -lt $n -and -not $src[$i].TrimStart().StartsWith('[')) { $i++ }
@@ -83,6 +84,22 @@ function Ensure-SolProfile {
     Log "installed user profile ~/.codex/sol.config.toml ($secondary)"
 }
 
+function Ensure-Notify {
+    # Twin of the POSIX ensure_notify: user-level `notify` block in
+    # ~/.codex/config.toml pointing at the repo script (ps1 twin on
+    # Windows). '# hack-setup' markers make it removable by the scrubber.
+    $cfg = Join-Path $HOME '.codex\config.toml'
+    New-Item -ItemType Directory -Force -Path (Join-Path $HOME '.codex') | Out-Null
+    if (-not (Test-Path -LiteralPath $cfg -PathType Leaf)) {
+        [System.IO.File]::WriteAllText($cfg, '')
+    }
+    if (([System.IO.File]::ReadAllText($cfg)) -match 'hack-setup: notify') { return }
+    $script = Join-Path $env:HACK_REPO_ROOT 'install\notify.ps1'
+    $block = "`n# hack-setup: notify`nnotify = [`"powershell`", `"-NoProfile`", `"-File`", `"$script`"]  # hack-setup`n"
+    [System.IO.File]::AppendAllText($cfg, $block)
+    Log "wired turn-complete notify -> install/notify.ps1"
+}
+
 function Run-Status {
     $wanted = Get-CliVersion
     $found = Find-PinnedCodex
@@ -93,6 +110,7 @@ function Run-Status {
 function Run-Install {
     $wanted = Get-CliVersion
     Ensure-SolProfile
+    Ensure-Notify
     $found = Find-PinnedCodex
     if ($found) {
         Link-Bin $found $env:HACK_LOCAL_BIN | Out-Null

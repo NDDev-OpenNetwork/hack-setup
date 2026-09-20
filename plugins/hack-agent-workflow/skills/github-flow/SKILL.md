@@ -18,6 +18,14 @@ lanes: `feat/<issue>-<slug>` → `<user>` → `dev` → `main`.
    named branch** (`danil`/`ivan`/`artem`) and push it. Comment
    `done: <sha>` on the issue. Next feature.
 
+The repo enforces lanes mechanically: `.codex/lanes.json` declares
+`dev`/`main` protected, and the PreToolUse hook denies pushes to them
+and `gh pr merge` from any checkout without the untracked
+`.agent/orchestrator` marker. The orchestrator creates it once:
+`mkdir -p .agent && touch .agent/orchestrator` in the main checkout —
+worker worktrees never have it. Workers pushing their own lane are
+unaffected.
+
 ## Merge gate (orchestrator, before `<user>` → `dev`)
 
 1. No active worker threads on that lane

@@ -142,8 +142,14 @@
     "hooks": {
       "file": ".codex/hooks.json",
       "scripts": [".codex/hooks/hack_mode.py"],
-      "events": ["SessionStart", "UserPromptSubmit"],
-      "note": "project-layer hooks; plugin manifests cannot carry hooks in 0.155.1 (plugin_hooks feature removed, openai/codex#39895). hack_mode.py injects the hack-mode ruleset at SessionStart and a one-line reminder + git/issues STATUS line per prompt; standalone 'normal mode'/'hack ultra'/'hack mode' toggle per-project state under ~/.codex/hack-setup-mode.json"
+      "events": [
+        "SessionStart",
+        "UserPromptSubmit",
+        "PreToolUse",
+        "PostToolUse",
+        "SessionEnd"
+      ],
+      "note": "project-layer hooks; plugin manifests cannot carry hooks in 0.155.1 (plugin_hooks feature removed, openai/codex#39895). hack_mode.py: SessionStart injects the ruleset (compact matcher re-injects after auto-compact); UserPromptSubmit emits reminder + git/issues STATUS; PreToolUse(Bash) denies protected-branch pushes and gh pr merge unless the checkout carries .agent/orchestrator (lane law activates via tracked .codex/lanes.json); PostToolUse(Bash) reminds ship-verify after git push; SessionEnd appends .agent/session-log.ndjson. additionalContext only works on PreToolUse/PostToolUse/SessionStart/UserPromptSubmit/SubagentStart. Standalone 'normal mode'/'hack ultra'/'hack mode' toggle per-project state under ~/.codex/hack-mode-<repo>.json"
     },
     "deploy": {
       "model": "server-side pull watcher, no GitHub admin rights needed",
@@ -226,7 +232,14 @@
       "not_yolo": "--full-auto",
       "project_execpolicy_rules": false,
       "ignore_rules_is_config_key": false,
-      "ignore_rules_cli": "codex exec --ignore-rules"
+      "ignore_rules_cli": "codex exec --ignore-rules",
+      "check_for_update_on_startup": false,
+      "developer_instructions_markers": [
+        "feat/<issue>",
+        "done means verified live",
+        "hack:"
+      ],
+      "compact_prompt_markers": ["worktree", "lane", "hack:"]
     }
   },
   "models": {

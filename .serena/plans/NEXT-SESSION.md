@@ -160,6 +160,25 @@ Setup owner stream: Danil.
   repo-portable: STATE/GH_CACHE named per ROOT.name, SKILL falls back
   to `~/.codex/plugins/cache/*/hack-agent-workflow/*/` when the repo
   has no plugins/ tree.
+- ADR 0015 surface wave: `developer_instructions` (additive developer
+  block, compaction-proof — NOT `model_instructions_file` which
+  replaces base instructions) + custom `compact_prompt` (preserves
+  issues/branch/worktree/lane/`hack:` markers) +
+  `check_for_update_on_startup=false` in project config. Hook surface
+  now 5 events: +PreToolUse(Bash) lane guard — denies protected-branch
+  pushes + `gh pr merge` unless `.agent/orchestrator` marker exists
+  (activates only where tracked `.codex/lanes.json` declares protected
+  branches — vibestrap has it, hack-setup does not push-guard itself);
+  +PostToolUse(Bash) ship-verify nudge after `git push`; +SessionEnd
+  appends `.agent/session-log.ndjson`. additionalContext only lands on
+  PreToolUse/PostToolUse/SessionStart/UserPromptSubmit/SubagentStart —
+  PostCompact cannot inject, so compact survival lives in
+  `compact_prompt` + SessionStart `compact` matcher. `notify` is
+  host-owned: module 20 writes a managed `# hack-setup:` block into
+  `~/.codex/config.toml` → `install/notify.sh`/`notify.ps1` toast on
+  agent-turn-complete (scrubber now also strips `# hack-setup` inline
+  lines). No custom slash commands in 0.155.1 — `/worktree` `/fork`
+  `/app` are the manual paths.
 
 ## Next
 

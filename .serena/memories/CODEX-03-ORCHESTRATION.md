@@ -32,3 +32,14 @@ Orchestrator/worker flow and deployment model (ADR 0014).
 - Servers: two doctl droplets day-before; `provision-server.sh <host>
   <branch> <repo>`; vibestrap compose healthchecks exist
   (`/health/ready`, frontend fetch). BAITC repo untouched until day.
+- ADR 0015: `developer_instructions` (compaction-proof law block) +
+  `compact_prompt` (preserves issue/branch/worktree/lane/hack: state) +
+  `check_for_update_on_startup=false`. Lane guard: PreToolUse(Bash)
+  denies protected-branch push + `gh pr merge` unless untracked
+  `.agent/orchestrator` marker; activates via tracked
+  `.codex/lanes.json` (vibestrap carries it). PostToolUse → ship-verify
+  nudge after push; SessionEnd → `.agent/session-log.ndjson`.
+  PostCompact CANNOT inject context (only
+  PreToolUse/PostToolUse/SessionStart/UserPromptSubmit/SubagentStart
+  can). `notify` host-owned → module 20 managed block in user config →
+  `install/notify.sh|ps1`.

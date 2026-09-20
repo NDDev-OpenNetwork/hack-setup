@@ -104,15 +104,29 @@ wiring is law: `registered.mcp_servers` → `.codex/config.toml`
 `[mcp_servers.*]`. Keyless by default; keys via env-var names only.
 
 Hooks live at the project layer: `.codex/hooks.json` runs
-`.codex/hooks/hack_mode.py` — injects the `hack-mode` ruleset on
-SessionStart (startup/resume/clear/compact) and a one-line reminder +
-`STATUS` line (repo, branch, dirty count, last commit, assigned issues
-via 60 s gh cache) on every prompt. Plugin manifests cannot carry
-hooks in 0.155.1 (`plugin_hooks` removed, openai/codex#39895); no
-subagent hooks (agents are disabled and lazy-mode injection biases
-reviewers). Standalone commands toggle per-project state
-(`~/.codex/hack-setup-mode.json`): `hack ultra`, `normal mode`,
+`.codex/hooks/hack_mode.py` for five events — SessionStart
+(startup/resume/clear/compact: injects the `hack-mode` ruleset,
+including re-injection after every auto-compact), UserPromptSubmit
+(reminder + `STATUS` line: repo, branch, dirty count, last commit,
+assigned issues via 60 s gh cache), PreToolUse `Bash` (denies pushes to
+protected branches and `gh pr merge` unless the checkout carries the
+untracked `.agent/orchestrator` marker; enforcement activates where
+tracked `.codex/lanes.json` exists — product repo only), PostToolUse
+`Bash` (ship-verify reminder after `git push`), SessionEnd (appends
+`.agent/session-log.ndjson`). Plugin manifests cannot carry hooks in
+0.155.1 (`plugin_hooks` removed, openai/codex#39895); no subagent
+hooks. Standalone commands toggle per-project state
+(`~/.codex/hack-mode-<repo>.json`): `hack ultra`, `normal mode`,
 `hack mode`. Law: `registered.hooks`.
+
+Persistent instructions (ADR 0015): `developer_instructions` carries
+the operating law in the base instruction chain (survives compaction);
+`compact_prompt` preserves issues/branch/worktree/lane/`hack:` markers
+across auto-compact; `check_for_update_on_startup = false` (pinned
+CLI). `notify` is host-owned — module 20 wires a managed block into
+`~/.codex/config.toml` → `install/notify.sh` / `notify.ps1` toast on
+turn complete. No custom slash commands exist in 0.155.1; `/worktree`,
+`/fork`, `/app` are the manual paths.
 
 Orchestration (ADR 0014): the main chat in Codex App spawns visible
 worker threads with `codex_app.create_thread` +
