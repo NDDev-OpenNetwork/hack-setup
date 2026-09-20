@@ -3,26 +3,34 @@ name: lsp-setup
 description: Install or repair the pinned language servers on a Saint Tibo host. Use when an editor or Serena cannot find an LSP, or on a fresh machine.
 ---
 
-`./setup` pins the toolchain; LSP servers ride on it. Install only what
-you need — every command below is idempotent and version-pinned in
-`build/stack-pin.json` `lsp.*`.
+`./setup` pins node, bun, python, uv, codex and the plugins; LSP
+servers ride on that toolchain but are not installed by it — install
+only what your language and editor need. Every command below is
+idempotent and version-pinned in `build/stack-pin.json` `lsp.*`.
 
-Already installed by `./setup` (no action):
+Already present on a compliant host (no action):
 
-- `ty server`, `ruff server` — uv tools (`quality.ty`, `quality.ruff`)
+- `ty server`, `ruff server` — declared host tools, proven by
+  `check_stack.py --strict`
 - `biome lsp-proxy` — per-project `bunx @biomejs/biome`
-- `tsserver` — ships with the pinned `typescript` package; VS
-  Code/Cursor use it built-in. Editors needing stdio:
-  `npm i -g typescript-language-server@6.0.0` next to the pinned TS
-- `dart language-server` — inside the Flutter SDK
-- `rust-analyzer` — `rustup component add rust-analyzer`
+- `tsserver` — ships inside the pinned `typescript` dependency; VS
+  Code/Cursor attach it built-in. Editors needing stdio:
+  `npm i -g typescript typescript-language-server@6.0.0`
+
+Needs a matching toolchain on the host first:
+
+- `rust-analyzer` — `rustup component add rust-analyzer` (requires a
+  rustup-installed toolchain; a distro `rustc` has no component add)
+- `dart language-server` — inside the Flutter SDK; `./setup` does not
+  install Flutter, install it per the `clients.flutter` pin
+- `gopls` — needs the pinned Go (`verify.declared` go 1.27.1)
 
 Per-language extras:
 
 ```bash
 go install golang.org/x/tools/gopls@v0.23.0          # Go
 cargo install taplo-cli --locked --version 0.10.0    # TOML
-brew install marksman                                # Markdown
+brew install marksman                                # Markdown, macOS
 npm i -g vscode-langservers-extracted@4.10.0         # JSON/HTML/CSS
 npm i -g yaml-language-server@1.24.0                 # YAML
 npm i -g bash-language-server@5.8.1                  # Shell
@@ -31,10 +39,11 @@ npm i -g dockerfile-language-server-nodejs@0.15.0    # Dockerfile
 
 Notes:
 
-- npm `-g` goes to the pinned node from `./setup` (`.local/bin`), not a
-  system package manager.
-- `taplo` on Linux: `cargo install` works; `brew` also carries it.
-- `gopls` needs the pinned Go (`verify.declared` go 1.27.1).
+- `npm i -g` targets the pinned node; its global bin dir is on PATH
+  after `. install/env.sh`. Verify with `which <server>`.
+- `marksman` on Linux: no brew — fetch the `marksman-linux-x64` asset
+  from GitHub release `2026-02-08`, chmod +x, drop into
+  `~/.local/bin`.
 - If an editor reports a missing server, check the binary is on PATH
   inside the editor's shell — launch the editor from a shell that
   sourced `install/env.sh`, or point the editor at the absolute path.

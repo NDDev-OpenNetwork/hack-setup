@@ -25,5 +25,12 @@ HACK_ENV_ROOT="$(CDPATH= cd -- "$(dirname -- "${_hack_env_src}")/.." && pwd)" ||
   unset _hack_env_src HACK_ENV_ROOT
   return 1 2>/dev/null || exit 1
 }
-export PATH="$HACK_ENV_ROOT/.local/bin:$HOME/.local/bin:$PATH"
-unset HACK_ENV_ROOT _hack_env_src
+_hack_npm_global_bin=""
+_hack_npm_link="$HACK_ENV_ROOT/.local/bin/npm"
+if [ -L "$_hack_npm_link" ]; then
+  # npm -g installs into the pinned node's own bin dir; put it on PATH
+  # so global tools (language servers, CLIs) resolve for editors too.
+  _hack_npm_global_bin="$(dirname -- "$(readlink "$_hack_npm_link")")"
+fi
+export PATH="$HACK_ENV_ROOT/.local/bin:$HOME/.local/bin${_hack_npm_global_bin:+:$_hack_npm_global_bin}:$PATH"
+unset HACK_ENV_ROOT _hack_env_src _hack_npm_link _hack_npm_global_bin
