@@ -138,6 +138,12 @@
       "research-workflow",
       "component-workflow"
     ],
+    "hooks": {
+      "file": ".codex/hooks.json",
+      "scripts": [".codex/hooks/hack_mode.py"],
+      "events": ["SessionStart", "UserPromptSubmit"],
+      "note": "project-layer hooks; plugin manifests cannot carry hooks in 0.155.1 (plugin_hooks feature removed, openai/codex#39895). hack_mode.py injects the hack-mode ruleset at SessionStart and a one-line reminder per prompt; standalone 'normal mode'/'hack ultra'/'hack mode' toggle per-project state under ~/.codex/hack-setup-mode.json"
+    },
     "mcp_servers": {
       "rule": "six MCP servers projected into .codex/config.toml [mcp_servers.*]; all keyless by default; keys only via env-var references, never literals",
       "serena": {

@@ -1153,6 +1153,68 @@ def check_skills() -> None:
         raise CheckError(f"AGENTS.md must name plugin skills {missing}")
 
 
+def check_hooks() -> None:
+    pin = load_json(STACK_PIN_PATH)
+    hooks_spec = pin.get("registered", {}).get("hooks")
+    if not isinstance(hooks_spec, dict):
+        raise CheckError("stack-pin.registered.hooks must be an object")
+    hooks_path = ROOT / str(hooks_spec.get("file", ".codex/hooks.json"))
+    if not hooks_path.is_file():
+        raise CheckError(f"{hooks_spec.get('file')} is missing")
+    try:
+        hooks_doc = json.loads(hooks_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise CheckError(f"{hooks_path.relative_to(ROOT)} must parse: {exc}") from exc
+    events = hooks_doc.get("hooks")
+    if not isinstance(events, dict):
+        raise CheckError(".codex/hooks.json must carry a hooks object")
+    expected_events = set(hooks_spec.get("events", []))
+    if set(events) != expected_events:
+        raise CheckError(
+            f".codex/hooks.json events must be {sorted(expected_events)}, "
+            f"got {sorted(events)}"
+        )
+    scripts = {str(s) for s in hooks_spec.get("scripts", [])}
+    seen_scripts: set[str] = set()
+    for event, groups in events.items():
+        if not isinstance(groups, list) or not groups:
+            raise CheckError(f"hooks.{event} must be a non-empty list")
+        for group in groups:
+            for hook in (group or {}).get("hooks", []):
+                command = str(hook.get("command", ""))
+                match = re.search(r"(\.codex/hooks/\S+)", command)
+                if not match:
+                    raise CheckError(
+                        f"hooks.{event} command must reference .codex/hooks/: {command}"
+                    )
+                script = match.group(1)
+                if script not in scripts:
+                    raise CheckError(f"hook script {script} not in registered.hooks.scripts")
+                seen_scripts.add(script)
+                script_path = ROOT / script
+                if not script_path.is_file():
+                    raise CheckError(f"hook script {script} is missing")
+                py_compile(str(script_path))
+    if seen_scripts != scripts:
+        raise CheckError(
+            f"registered.hooks.scripts unused: {sorted(scripts - seen_scripts)}"
+        )
+    if "SubagentStart" in events or "SubagentStop" in events:
+        raise CheckError(
+            "subagent hooks are banned: agents are disabled and lazy-mode "
+            "injection biases reviewer subagents (openai/codex-style #502)"
+        )
+
+
+def py_compile(script_path: str) -> None:
+    import py_compile as _py_compile
+
+    try:
+        _py_compile.compile(script_path, doraise=True)
+    except _py_compile.PyCompileError as exc:
+        raise CheckError(f"{script_path} must compile: {exc}") from exc
+
+
 def main() -> int:
     checks = (
         check_pin,
@@ -1165,6 +1227,7 @@ def main() -> int:
         check_plugin_cache_sync,
         check_skills,
         check_nested_templates,
+        check_hooks,
     )
     errors: list[str] = []
     for check in checks:

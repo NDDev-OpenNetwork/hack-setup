@@ -28,7 +28,9 @@
   Skills belong in `skills/`, not a root `skills` field. MCP wiring is
   `registered.mcp_servers` → `.codex/config.toml`, never plugin
   `mcp.json` or literal credentials — only `*_env_var` references
-  (ADR 0013).
+  (ADR 0013). Hooks belong in `.codex/hooks.json` (project layer):
+  portable plugin manifests cannot carry them, and Subagent* hooks are
+  banned (agents disabled; lazy-mode injection biases reviewers).
 - Repo skill names in `.agents/skills/` must not collide with any
   plugin skill set. `lsp.*` install commands use bun/go/cargo/rustup —
   never npm or pip.

@@ -116,6 +116,19 @@ Setup owner stream: Danil.
   research-workflow, component-workflow). Module 30 now guarantees
   `bunx`/`uvx` links on all paths and pre-warms both stdio caches.
   reverify tracks `mcp.serena` (PyPI serena-agent).
+- Skills wave: `hack-agent-workflow` gained `hack-mode` (ponytail
+  ladder adapted: no review round, no test suite, `hack:` markers,
+  done = verified live), `ship-verify` (build on server + check the
+  live surface) and `debt-ledger` (harvest hack:/ponytail: markers).
+  Upstream snapshot archived at `docs/research/ponytail/` (MIT,
+  e3ba2aa6). Hooks live at project layer `.codex/hooks.json` +
+  `.codex/hooks/hack_mode.py` (plugin manifests cannot carry hooks —
+  plugin_hooks removed, openai/codex#39895): SessionStart injects the
+  ruleset, UserPromptSubmit emits a one-line reminder and tracks
+  standalone whole-message commands (`normal mode`, `hack ultra`,
+  `hack mode`) in `~/.codex/hack-setup-mode.json`. Law:
+  `registered.hooks`; checker `check_hooks` enforces file/events/
+  scripts and bans Subagent* hooks.
 
 ## Next (blocked on user)
 

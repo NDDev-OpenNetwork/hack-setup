@@ -101,6 +101,16 @@ keenable web), `component-workflow` (shadcn registry flow). Server
 wiring is law: `registered.mcp_servers` → `.codex/config.toml`
 `[mcp_servers.*]`. Keyless by default; keys via env-var names only.
 
+Hooks live at the project layer: `.codex/hooks.json` runs
+`.codex/hooks/hack_mode.py` — injects the `hack-mode` ruleset on
+SessionStart (startup/resume/clear/compact) and a one-line reminder on
+every prompt. Plugin manifests cannot carry hooks in 0.155.1
+(`plugin_hooks` removed, openai/codex#39895); no subagent hooks
+(agents are disabled and lazy-mode injection biases reviewers).
+Standalone commands toggle per-project state
+(`~/.codex/hack-setup-mode.json`): `hack ultra`, `normal mode`,
+`hack mode`. Law: `registered.hooks`.
+
 ## Technology rules
 
 Codex 0.155.1 has no glob / `.mdc` / `alwaysApply` loader. Do not dump the
@@ -133,6 +143,7 @@ change that creates the tree. Do not create empty product trees.
 | Plugin | `plugins/saint-tibo/plugin.json` | Portable Agent Plugins 1.0.0. |
 | Workflow plugin | `plugins/hack-agent-workflow/plugin.json` | serena-first / github-first / agent-first. ADR 0009. |
 | MCP plugin | `plugins/hack-agent-mcp/plugin.json` | MCP workflow skills. Wiring: `registered.mcp_servers`. ADR 0013. |
+| Hooks | `.codex/hooks.json` + `.codex/hooks/` | hack-mode injection. Law: `registered.hooks`. Never plugin manifests. |
 | Project config | `.codex/config.toml` | YOLO after trust. Matches `registered.session` + `models` + `registered.mcp_servers`. Loads only after the project is trusted. |
 | Bootstrap | `./setup` / `.\setup.ps1` → `install/` | macOS/Linux + native Windows modules. Discovery: `install/modules/<nn>-*`. |
 | Codex pin | `build/codex-pin.json` | CLI `0.155.1` + official installer hashes. |

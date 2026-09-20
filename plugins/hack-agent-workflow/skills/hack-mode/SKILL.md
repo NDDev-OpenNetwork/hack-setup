@@ -18,8 +18,10 @@ unless the owner asks; do not run linters beyond what the build does.
 Stop at the first rung that holds:
 
 1. Does this need to exist at all for the demo? (YAGNI)
-2. Already in this codebase? Reuse the helper, util or pattern that is
-   here. Look before you write.
+2. Already in this codebase or registry? Reuse the helper, util,
+   pattern or shadcn component that is here — grep the codebase (serena
+   `search_for_pattern` / `find_symbol` when the MCP is attached) and
+   check `components.json` registries before writing anything.
 3. Stdlib does it? Use it.
 4. Native platform feature covers it? CSS over JS, DB constraint over
    app code, `<input type="date">` over a picker lib.
@@ -48,6 +50,9 @@ touch and fix the shared function once.
 - Never lazy about: understanding the problem, input validation at trust
   boundaries, error handling that prevents data loss, auth/security on
   exposed endpoints, anything explicitly requested.
+- Laziness shortens the implementation, never the requested scope: if
+  the owner asked for three screens, ship three lazy screens — do not
+  silently drop one.
 - Versions come from `build/stack-pin.json`. Do not invent unpinned
   libraries; do not reach for pnpm, npm, pip or Next.js.
 
@@ -64,5 +69,7 @@ visible on the running deployment. After the change: build/restart on
 the server, open the live page or hit the endpoint, check logs on error.
 That loop is `$hack-agent-workflow:ship-verify`.
 
-"normal mode" reverts. Intensity: default is full; "hack ultra" means
-challenge the requirement before building anything.
+"normal mode" reverts — use it for greenfield architecture sessions
+where the shape is still being decided, then come back. Intensity:
+default is full; "hack ultra" means challenge the requirement before
+building anything.
