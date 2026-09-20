@@ -125,7 +125,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `lsp.python_types` | `0.0.82 (via quality.ty)` | `ty server` |
 | `lsp.python_lint` | `0.16.8 (via quality.ruff)` | `ruff server` |
 | `lsp.rust` | `1.98.1 (via runtimes.rust)` | `rust-analyzer` |
-| `lsp.dart` | `3.47.5 (via clients.flutter)` | `dart language-server` |
+| `lsp.dart` | `3.13.4 (via clients.flutter.dart)` | `dart language-server` |
 | `lsp.go` | `v0.23.0` | `golang.org/x/tools/gopls` |
 | `lsp.toml` | `0.10.0` | `taplo-cli` |
 | `lsp.markdown` | `2026-02-08` | `marksman` |

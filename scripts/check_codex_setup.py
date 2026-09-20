@@ -442,6 +442,19 @@ def check_stack_pin() -> None:
             raise CheckError(f"stack-pin.do_not_use must include {needed}")
     if any(isinstance(item, str) and "gpt-6-astra until" in item for item in banned):
         raise CheckError("do_not_use must not ban gpt-6-astra; it is the primary model")
+    lsp = pin.get("lsp")
+    if not isinstance(lsp, dict):
+        raise CheckError("stack-pin.lsp must be an object")
+    for key, entry in lsp.items():
+        if not isinstance(entry, dict):
+            continue
+        install = entry.get("install")
+        if isinstance(install, str) and (
+            "npm " in install or "pip " in install or "pnpm" in install
+        ):
+            raise CheckError(
+                f"stack-pin.lsp.{key}.install must not use npm/pip/pnpm: {install}"
+            )
     conflicts = pin.get("conflicts")
     if not isinstance(conflicts, list):
         raise CheckError("stack-pin.conflicts must be a list")

@@ -15,7 +15,7 @@ language; do not pick versions outside the pin.
 | Python lint/format | `ruff server` | `quality.ruff` |
 | Rust | `rust-analyzer` | `runtimes.rust` (rustup component) |
 | Go | `gopls` | `lsp.go` pin (`go install` it) |
-| Dart / Flutter | `dart language-server` | `clients.flutter` (bundled) |
+| Dart / Flutter | `dart language-server` | `clients.flutter.dart` (bundled 3.13.4) |
 | TOML | `taplo lsp` | `lsp.toml` pin |
 | Markdown | `marksman` | `lsp.markdown` pin |
 | JSON / HTML / CSS | `vscode-langservers-extracted` | `lsp.json_html_css` pin |

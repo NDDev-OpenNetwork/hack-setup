@@ -16,10 +16,15 @@ jobs:
           python-version: "3.13"
       - name: Codex project artifacts
         run: python3 scripts/check_codex_setup.py
-      - name: Unit tests
+      - name: Install pinned uv
         run: |
-          python3 -m pip install --quiet pytest
-          python3 -m pytest -q
+          url="$(python3 -c 'import json; print(json.load(open("build/stack-pin.json"))["runtimes"]["uv"]["installer"]["url"])')"
+          sha="$(python3 -c 'import json; print(json.load(open("build/stack-pin.json"))["runtimes"]["uv"]["installer"]["sha256"])')"
+          curl -fsSL "$url" -o uv-installer.sh
+          echo "$sha  uv-installer.sh" | sha256sum -c -
+          UV_INSTALL_DIR="$HOME/.local/bin" UV_NO_MODIFY_PATH=1 sh uv-installer.sh
+      - name: Unit tests
+        run: "$HOME/.local/bin/uvx" --from pytest pytest -q
       - name: Shell syntax
         run: |
           sh -n setup install/bootstrap.sh install/env.sh

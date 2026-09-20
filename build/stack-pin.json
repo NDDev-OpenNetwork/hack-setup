@@ -554,7 +554,7 @@
     "python_types": { "server": "ty server", "version_from": "quality.ty" },
     "python_lint": { "server": "ruff server", "version_from": "quality.ruff" },
     "rust": { "server": "rust-analyzer", "version_from": "runtimes.rust", "install": "rustup component add rust-analyzer" },
-    "dart": { "server": "dart language-server", "version_from": "clients.flutter" },
+    "dart": { "server": "dart language-server", "version_from": "clients.flutter.dart" },
     "go": {
       "server": "gopls",
       "package": "golang.org/x/tools/gopls",
