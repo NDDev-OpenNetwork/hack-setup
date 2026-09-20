@@ -60,8 +60,19 @@ the discontinued `codex-app` cask.
 2. Trust this project in Codex so `.codex/config.toml` loads. Session
    law is YOLO (`approval_policy = "never"`,
    `sandbox_mode = "danger-full-access"`). See ADR 0006.
-3. Use repo skills from `.agents/skills/`.
-4. Models: `gpt-6-astra` primary, `gpt-5.6-sol` secondary — `/review`
+3. From the repo root, register and install the plugins:
+
+   ```bash
+   codex plugin marketplace add .
+   codex plugin add saint-tibo@saint-tibo
+   codex plugin add hack-agent-standards@saint-tibo
+   ```
+
+   Installed plugins are a copy under `~/.codex/plugins/cache/`. After
+   editing `plugins/*/` re-run `codex plugin add <name>@saint-tibo`;
+   `just check` fails on drift.
+4. Use repo skills from `.agents/skills/`.
+5. Models: `gpt-6-astra` primary, `gpt-5.6-sol` secondary — `/review`
    uses it; an explicit sol session here is `codex -m gpt-5.6-sol`
    (project `model` outranks profile overlays). `./setup` also installs
    `~/.codex/sol.config.toml` so `--profile sol` works in unpinned dirs.

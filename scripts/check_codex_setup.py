@@ -683,9 +683,11 @@ def check_config() -> None:
     user_cfg_path = Path.home() / ".codex" / "config.toml"
     sol_path = Path.home() / ".codex" / "sol.config.toml"
     if codex_bin.exists():
-        if user_cfg_path.exists() and "profiles" in load_toml(user_cfg_path):
+        if user_cfg_path.exists() and "sol" in load_toml(user_cfg_path).get(
+            "profiles", {}
+        ):
             raise CheckError(
-                "legacy [profiles.*] in ~/.codex/config.toml blocks --profile; run ./setup"
+                "legacy [profiles.sol] in ~/.codex/config.toml blocks --profile sol; run ./setup"
             )
         if not sol_path.exists():
             raise CheckError(
