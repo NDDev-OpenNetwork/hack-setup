@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 2d182e1 docs(plugin): list apply-stack-rule among repo skill names
+Last commit: 2410c1c feat(install): install codex from the sha256-verified package tarball
 Scope: setup, install/, justfile, docs/adr/0002-hierarchical-bootstrap.md
 Area: INFRA
 -->
@@ -32,7 +32,7 @@ One-command macOS/Linux install after clone, with a numbered module catalog.
 
 Bootstrap sources `install/lib/{common,os,download}.sh`, rejects non-Darwin/Linux hosts, and globs `10-prereqs`, `20-codex-cli`, `30-runtimes`, `40-project-verify`. A `disabled` file skips a module. `catalog.toml` `enabled` is documentary. The artifact gate requires numbered dirs to match the catalog exactly.
 
-Codex module installs official `rust-v0.155.1` into `~/.local/bin` and symlinks `$REPO/.local/bin`; it verifies `install.sh` sha256 and does not use `packages.*.sha256`. Runtimes module installs pinned Node, bun, uv, and CPython from `build/stack-pin.json` and links `python3.<minor>` from `runtimes.python.version`. Verify module runs the two Python checkers.
+Codex module installs `rust-v0.155.1` into `~/.local/bin` and symlinks `$REPO/.local/bin`; primary path downloads the pinned `codex-package-<triple>.tar.gz` and verifies `packages.<platform>.sha256`, with hashed official `install.sh` as fallback for a platform missing from `packages`. Runtimes module installs pinned Node, bun, uv, and CPython from `build/stack-pin.json` and links `python3.<minor>` from `runtimes.python.version`. Verify module runs the two Python checkers.
 
 `. install/env.sh` resolves the sourced file via `BASH_SOURCE[0]` (bash) or zsh `%x`. POSIX `sh`/`dash` fail closed.
 
@@ -59,4 +59,4 @@ Codex module installs official `rust-v0.155.1` into `~/.local/bin` and symlinks 
 ## Known Gaps
 
 - Bootstrap still globs; an extra numbered dir would install if `./setup` is run before the artifact gate.
-- Codex `packages.*.sha256` are stored and unused by the installer.
+- Codex `packages.*.sha256` are verified on the tarball install path; `install.sh` sha256 covers only the fallback.

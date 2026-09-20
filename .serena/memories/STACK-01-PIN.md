@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 53d8d31 docs: accept ADR 0008 and retarget routers to the plugin
+Last commit: 9732012 feat(standards): ship the area catalogue, layer skills, and nested templates
 Scope: build/stack-pin.json, build/stack-standard.md, docs/adr/0003-stack-pin.md, docs/adr/0004-product-stack.md, docs/adr/0008-agent-standards-plugin.md, justfile, scripts/check_stack.py
 Area: STACK
 -->

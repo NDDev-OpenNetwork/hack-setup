@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
-Last commit: 2d182e1 docs(plugin): list apply-stack-rule among repo skill names
+Last commit: 2410c1c feat(install): install codex from the sha256-verified package tarball
 Scope: build/codex-pin.json, docs/adr/0001-codex-cli-155-pin.md, install/modules/20-codex-cli/module.sh
 Area: CODEX
 -->
@@ -19,7 +19,7 @@ Record the Codex CLI pin for this repository.
 
 ## Current Behavior
 
-`./setup` installs the official standalone package to `$HOME/.local/bin/codex` and symlinks `$REPO/.local/bin/codex`. The module verifies `install.sh` sha256 and skips when `--version` already matches. Per-platform `packages.*.sha256` are stored in the pin and unused by the installer.
+`./setup` installs the official standalone package to `$HOME/.local/bin/codex` and symlinks `$REPO/.local/bin/codex`. The module downloads the pinned `codex-package-<triple>.tar.gz`, verifies `packages.<platform>.sha256`, extracts the binary, and skips when `--version` already matches. Hashed official `install.sh` is the fallback for a platform missing from `packages`.
 
 ## Contracts And Data
 
@@ -40,4 +40,4 @@ Record the Codex CLI pin for this repository.
 
 ## Known Gaps
 
-- Installer does not verify downloaded package bytes against `packages.*.sha256`.
+- Installer verifies downloaded package bytes against `packages.*.sha256`; `install.sh` sha256 covers only the fallback path.
