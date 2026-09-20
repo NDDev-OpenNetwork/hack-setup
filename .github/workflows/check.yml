@@ -22,5 +22,5 @@ jobs:
           python3 -m pytest -q
       - name: Shell syntax
         run: |
-          sh -n setup
-          for f in install/setup install/lib/*.sh install/modules/*/module.sh; do sh -n "$f"; done
+          sh -n setup install/bootstrap.sh install/env.sh
+          for f in install/lib/*.sh install/modules/*/module.sh; do sh -n "$f"; done
