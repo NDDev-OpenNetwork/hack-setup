@@ -216,6 +216,9 @@ the toolchain refuses outright:
 - One claimed file owner at a time — claim files in an issue comment
   before editing.
 - Conventional Commits; split implementation, docs, and knowledge sync.
+- Commit messages carry only the message itself — the repo owner is the
+  sole author. No `Co-Authored-By` lines, no "Generated with" trailers,
+  no AI attribution of any kind.
 - A check counts as passing only when you ran it.
 - Check commands read state — they leave formatting, lockfiles,
   generated clients and migrations untouched.
