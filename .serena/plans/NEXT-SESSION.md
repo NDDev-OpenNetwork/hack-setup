@@ -67,7 +67,7 @@ Setup owner stream: Danil.
 - Host: all declared tools match the pin (`--strict` 14/14); Devin stale
   locks, research zip, merged branch cleaned
 - Host codex: project trusted, `marketplace add .` done — config and all
-  three plugins are live on this host
+  four plugins are live on this host
 - `bc3c4c3` plugin install steps documented; legacy-profile ban scoped
   to `sol`
 - `af3f9dd` checker enforces plugin cache parity with the repo
@@ -77,6 +77,16 @@ Setup owner stream: Danil.
 - `1222e53`..`a5fa77d` LiteLLM → Bifrost gateway (ADR 0010); CI
   `check.yml` with artifacts + setup-e2e on ubuntu+macos; `dev` branch
   live; module 40 installs all plugins
+- `cde1512` `hack-agent-lsp` plugin (ADR 0011): `lsp.*` matrix in the
+  pin, `version_from` rendering, checker + reverify coverage
+- `dfa98fc` serena sync for the lsp plugin
+- `692874d` TS LSP is bundled `tsserver` (tsgo only exists as
+  native-preview dev builds); `typescript-language-server` 6.0.0 is the
+  optional stdio wrapper
+- `5dcdbed` env.sh puts the JS-global bin dir on PATH; lsp-setup splits
+  strict-declared / bundled / toolchain-required rows honestly
+- `057e173` + `5947536` JS LSP installs use `bun i -g` into `~/.bun/bin`
+  (npm banned by `do_not_use`); pin formatting restored
 
 ## Next (blocked on user)
 

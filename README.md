@@ -60,8 +60,9 @@ the discontinued `codex-app` cask.
 2. Trust this project in Codex so `.codex/config.toml` loads. Session
    law is YOLO (`approval_policy = "never"`,
    `sandbox_mode = "danger-full-access"`). See ADR 0006.
-3. `./setup` also registers the marketplace and installs all three
-   plugins (`saint-tibo`, `hack-agent-standards`, `hack-agent-workflow`).
+3. `./setup` also registers the marketplace and installs all four
+   plugins (`saint-tibo`, `hack-agent-standards`, `hack-agent-workflow`,
+   `hack-agent-lsp`).
    Installed plugins are a copy under `~/.codex/plugins/cache/`. After
    editing `plugins/*/` re-run `codex plugin add <name>@saint-tibo`;
    `just check` fails on drift.

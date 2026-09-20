@@ -128,7 +128,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `lsp.dart` | `3.47.5 (via clients.flutter)` | `dart language-server` |
 | `lsp.go` | `v0.23.0` | `golang.org/x/tools/gopls` |
 | `lsp.toml` | `0.10.0` | `taplo-cli` |
-| `lsp.markdown` | `2026-02-08` |  |
+| `lsp.markdown` | `2026-02-08` | `marksman` |
 | `lsp.json_html_css` | `4.10.0` | `vscode-langservers-extracted` |
 | `lsp.yaml` | `1.24.0` | `yaml-language-server` |
 | `lsp.shell` | `5.8.1` | `bash-language-server` |

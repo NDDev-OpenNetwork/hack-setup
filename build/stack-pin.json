@@ -575,6 +575,7 @@
     },
     "markdown": {
       "server": "marksman",
+      "package": "marksman",
       "version": "2026-02-08",
       "install": "brew install marksman",
       "github_repo": "artempyanykh/marksman",
