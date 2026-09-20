@@ -179,6 +179,17 @@ Setup owner stream: Danil.
   agent-turn-complete (scrubber now also strips `# hack-setup` inline
   lines). No custom slash commands in 0.155.1 — `/worktree` `/fork`
   `/app` are the manual paths.
+- `Interrupt` is the 6th hook event — same ndjson log as SessionEnd.
+- `just repair` = `scripts/repair_setup.py` (law `registered.repair`):
+  auto-fixes plugin-cache drift, managed notify/sol user-config blocks,
+  `.agent` dirs, stale hook bytecode, corrupt `~/.codex/hack-*` state;
+  reports codex/python3/hook-smoke/env/git/serena; ends with the real
+  checkers. Never clobbers a foreign `notify` key (duplicate key would
+  break the user TOML). module.ps1 emits the notify path as a TOML
+  literal string (backslashes broke basic-string escapes).
+- Commit messages carry no attribution trailers — sole author is the
+  repo owner (Team rules in AGENTS.md). History was rewritten clean
+  (filter-repo, all SHAs changed; teammates must re-sync clones).
 
 ## Next
 
