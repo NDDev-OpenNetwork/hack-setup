@@ -40,9 +40,6 @@ jobs:
         run: |
           export PATH="$PWD/.local/bin:$HOME/.local/bin:$PATH"
           codex --version
-          codex plugin marketplace add .
-          codex plugin add saint-tibo@saint-tibo
-          codex plugin add hack-agent-standards@saint-tibo
-          codex plugin add hack-agent-workflow@saint-tibo
+          codex plugin list
           python3 scripts/check_codex_setup.py
           python3 scripts/check_stack.py

@@ -60,15 +60,8 @@ the discontinued `codex-app` cask.
 2. Trust this project in Codex so `.codex/config.toml` loads. Session
    law is YOLO (`approval_policy = "never"`,
    `sandbox_mode = "danger-full-access"`). See ADR 0006.
-3. From the repo root, register and install the plugins:
-
-   ```bash
-   codex plugin marketplace add .
-   codex plugin add saint-tibo@saint-tibo
-   codex plugin add hack-agent-standards@saint-tibo
-   codex plugin add hack-agent-workflow@saint-tibo
-   ```
-
+3. `./setup` also registers the marketplace and installs all three
+   plugins (`saint-tibo`, `hack-agent-standards`, `hack-agent-workflow`).
    Installed plugins are a copy under `~/.codex/plugins/cache/`. After
    editing `plugins/*/` re-run `codex plugin add <name>@saint-tibo`;
    `just check` fails on drift.

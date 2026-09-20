@@ -25,7 +25,7 @@ Map native Codex 0.155.1 project surfaces in this repo.
 
 ## Current Behavior
 
-Repo skills load without plugin install. Three plugins are enabled after trust: `saint-tibo@saint-tibo`, `hack-agent-standards@saint-tibo`, `hack-agent-workflow@saint-tibo`. INDEX links every catalogue file as `ready`. Root `AGENTS.md` has a Motion kernel and names every standards and workflow plugin skill. Codex 0.155.1 matches plugin skills only as `$hack-agent-standards:<name>` / `$hack-agent-workflow:<name>`. Bare `$apply-agent-standard` does not select the plugin skill. Repo alias `$apply-stack-rule` stays unqualified. `./setup` does not run `codex plugin marketplace add`.
+Repo skills load without plugin install. Three plugins are enabled after trust: `saint-tibo@saint-tibo`, `hack-agent-standards@saint-tibo`, `hack-agent-workflow@saint-tibo`. INDEX links every catalogue file as `ready`. Root `AGENTS.md` has a Motion kernel and names every standards and workflow plugin skill. Codex 0.155.1 matches plugin skills only as `$hack-agent-standards:<name>` / `$hack-agent-workflow:<name>`. Bare `$apply-agent-standard` does not select the plugin skill. Repo alias `$apply-stack-rule` stays unqualified. `./setup` module 40 registers the marketplace and installs all three plugins before the checkers run.
 
 ## Contracts And Data
 
