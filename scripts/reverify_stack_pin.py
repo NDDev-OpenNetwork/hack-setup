@@ -26,6 +26,10 @@ NPM = [
     ("quality.biome", "@biomejs/biome"),
     ("quality.vitest", "vitest"),
     ("quality.playwright", "@playwright/test"),
+    ("lsp.json_html_css", "vscode-langservers-extracted"),
+    ("lsp.yaml", "yaml-language-server"),
+    ("lsp.shell", "bash-language-server"),
+    ("lsp.dockerfile", "dockerfile-language-server-nodejs"),
 ]
 PYPI = [
     ("backend.fastapi", "fastapi"),
@@ -107,13 +111,19 @@ def main() -> int:
     if mark == "DRIFT":
         drift += 1
     print(f"{mark:5} {'runtimes.node':28} pin={pinned_node:12} latest={latest_node} (newest LTS row)")
-    bifrost = pin.get("ai", {}).get("bifrost", {})
-    pinned_tag = bifrost.get("github_tag", "")
-    latest_tag = github_latest_tag("maximhq/bifrost", "transports/")
-    mark = "OK" if pinned_tag == latest_tag else "DRIFT"
-    if mark == "DRIFT":
-        drift += 1
-    print(f"{mark:5} {'ai.bifrost':28} pin={pinned_tag:12} latest={latest_tag} (transports tag)")
+    github_rows = [("ai.bifrost", pin.get("ai", {}).get("bifrost", {}))]
+    for name, entry in pin.get("lsp", {}).items():
+        if isinstance(entry, dict) and entry.get("github_tag"):
+            github_rows.append((f"lsp.{name}", entry))
+    for label, entry in github_rows:
+        pinned_tag = entry.get("github_tag", "")
+        latest_tag = github_latest_tag(
+            entry.get("github_repo", ""), entry.get("github_prefix", "")
+        )
+        mark = "OK" if pinned_tag == latest_tag else "DRIFT"
+        if mark == "DRIFT":
+            drift += 1
+        print(f"{mark:5} {label:28} pin={pinned_tag:22} latest={latest_tag}")
     if drift:
         print(f"DRIFT {drift} entries; update build/stack-pin.json and verified_on")
         return 1

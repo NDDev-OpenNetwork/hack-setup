@@ -217,18 +217,17 @@ def check_stack_pin() -> None:
         raise CheckError(
             "standards_plugin.path must be plugins/hack-agent-standards/plugin.json"
         )
-    workflow_plugin = registered.get("workflow_plugin")
-    if (
-        not isinstance(workflow_plugin, dict)
-        or workflow_plugin.get("id") != "hack-agent-workflow@saint-tibo"
+    for plugin_key, plugin_id, plugin_path in (
+        ("workflow_plugin", "hack-agent-workflow@saint-tibo", "plugins/hack-agent-workflow/plugin.json"),
+        ("lsp_plugin", "hack-agent-lsp@saint-tibo", "plugins/hack-agent-lsp/plugin.json"),
     ):
-        raise CheckError(
-            "stack-pin must register workflow_plugin id hack-agent-workflow@saint-tibo"
-        )
-    if workflow_plugin.get("path") != "plugins/hack-agent-workflow/plugin.json":
-        raise CheckError(
-            "workflow_plugin.path must be plugins/hack-agent-workflow/plugin.json"
-        )
+        entry = registered.get(plugin_key)
+        if not isinstance(entry, dict) or entry.get("id") != plugin_id:
+            raise CheckError(
+                f"stack-pin must register {plugin_key} id {plugin_id}"
+            )
+        if entry.get("path") != plugin_path:
+            raise CheckError(f"{plugin_key}.path must be {plugin_path}")
     if standards_plugin.get("standards") != "plugins/hack-agent-standards/standards/INDEX.md":
         raise CheckError(
             "standards_plugin.standards must be plugins/hack-agent-standards/standards/INDEX.md"
@@ -764,6 +763,7 @@ def check_config() -> None:
         "saint-tibo@saint-tibo",
         "hack-agent-standards@saint-tibo",
         "hack-agent-workflow@saint-tibo",
+        "hack-agent-lsp@saint-tibo",
     ):
         entry = plugins.get(plugin_id)
         if not isinstance(entry, dict) or entry.get("enabled") is not True:
@@ -840,7 +840,7 @@ def check_plugin_cache_sync() -> None:
     if not codex_bin.exists():
         return
     cache_root = Path.home() / ".codex" / "plugins" / "cache" / "saint-tibo"
-    for name in ("saint-tibo", "hack-agent-standards", "hack-agent-workflow"):
+    for name in ("saint-tibo", "hack-agent-standards", "hack-agent-workflow", "hack-agent-lsp"):
         repo_dir = ROOT / "plugins" / name
         version = load_json(repo_dir / "plugin.json").get("version", "")
         cache_dir = cache_root / name / str(version)
@@ -877,6 +877,7 @@ def check_plugin_and_marketplace() -> None:
     check_portable_plugin("plugins/saint-tibo/plugin.json", "saint-tibo")
     check_portable_plugin("plugins/hack-agent-standards/plugin.json", "hack-agent-standards")
     check_portable_plugin("plugins/hack-agent-workflow/plugin.json", "hack-agent-workflow")
+    check_portable_plugin("plugins/hack-agent-lsp/plugin.json", "hack-agent-lsp")
 
     marketplace = load_json(ROOT / ".agents" / "plugins" / "marketplace.json")
     if not isinstance(marketplace, dict):
@@ -888,11 +889,12 @@ def check_plugin_and_marketplace() -> None:
         ("saint-tibo", "plugins/saint-tibo"),
         ("hack-agent-standards", "plugins/hack-agent-standards"),
         ("hack-agent-workflow", "plugins/hack-agent-workflow"),
+        ("hack-agent-lsp", "plugins/hack-agent-lsp"),
     )
     if not isinstance(plugins, list) or len(plugins) != len(expected):
         raise CheckError(
             "marketplace.plugins must list saint-tibo, hack-agent-standards, "
-            "then hack-agent-workflow"
+            "hack-agent-workflow, then hack-agent-lsp"
         )
     for entry, (name, dest) in zip(plugins, expected, strict=True):
         check_marketplace_entry(entry, name, dest)
@@ -931,6 +933,9 @@ def check_skills() -> None:
     )
     workflow_skills = collect_skill_names(
         ROOT / "plugins" / "hack-agent-workflow" / "skills"
+    )
+    lsp_skills = collect_skill_names(
+        ROOT / "plugins" / "hack-agent-lsp" / "skills"
     )
     expected_repo = {
         "repo-orientation",
@@ -992,8 +997,19 @@ def check_skills() -> None:
             "stack-pin.registered.workflow_plugin_skills: "
             f"expected {sorted(listed_workflow)}, got {sorted(workflow_skills)}"
         )
+    listed_lsp = registered.get("lsp_plugin_skills")
+    if not isinstance(listed_lsp, list) or not listed_lsp:
+        raise CheckError(
+            "stack-pin.registered.lsp_plugin_skills must be a non-empty list"
+        )
+    if set(lsp_skills) != set(listed_lsp):
+        raise CheckError(
+            "lsp plugin skills must match "
+            "stack-pin.registered.lsp_plugin_skills: "
+            f"expected {sorted(listed_lsp)}, got {sorted(lsp_skills)}"
+        )
     seen: dict[str, Path] = {}
-    for group in (repo_skills, plugin_skills, standards_skills, workflow_skills):
+    for group in (repo_skills, plugin_skills, standards_skills, workflow_skills, lsp_skills):
         for name, path in group.items():
             if name in seen:
                 raise CheckError(
@@ -1004,9 +1020,11 @@ def check_skills() -> None:
     missing = [name for name in listed_standards if name not in agents]
     if missing:
         raise CheckError(f"AGENTS.md must name standards skills {missing}")
-    missing_workflow = [name for name in listed_workflow if name not in agents]
-    if missing_workflow:
-        raise CheckError(f"AGENTS.md must name workflow skills {missing_workflow}")
+    missing_plugin = [
+        name for name in (*listed_workflow, *listed_lsp) if name not in agents
+    ]
+    if missing_plugin:
+        raise CheckError(f"AGENTS.md must name plugin skills {missing_plugin}")
 
 
 def main() -> int:

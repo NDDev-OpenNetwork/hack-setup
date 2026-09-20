@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "hack-agent-lsp",
+  "version": "0.1.0",
+  "description": "Saint Tibo language-server matrix: one pinned LSP per language, wired to the stack pin.",
+  "author": {
+    "name": "Saint Tibo"
+  },
+  "license": "MIT",
+  "keywords": ["codex", "lsp", "saint-tibo", "tooling"]
+}

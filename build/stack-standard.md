@@ -119,6 +119,19 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `quality.pytest` | `9.1.1` | `pytest` |
 | `quality.pytest_asyncio` | `1.4.0` | `pytest-asyncio` |
 | `quality.just` | `1.58.0` | `just` |
+| `lsp.typescript` | `7.0.2 (via runtimes.typescript)` | `tsgo --lsp` |
+| `lsp.web_lint` | `2.5.14 (via quality.biome)` | `biome lsp-proxy` |
+| `lsp.python_types` | `0.0.82 (via quality.ty)` | `ty server` |
+| `lsp.python_lint` | `0.16.8 (via quality.ruff)` | `ruff server` |
+| `lsp.rust` | `1.98.1 (via runtimes.rust)` | `rust-analyzer` |
+| `lsp.dart` | `3.47.5 (via clients.flutter)` | `dart language-server` |
+| `lsp.go` | `v0.23.0` | `golang.org/x/tools/gopls` |
+| `lsp.toml` | `0.10.0` | `taplo-cli` |
+| `lsp.markdown` | `2026-02-08` |  |
+| `lsp.json_html_css` | `4.10.0` | `vscode-langservers-extracted` |
+| `lsp.yaml` | `1.24.0` | `yaml-language-server` |
+| `lsp.shell` | `5.8.1` | `bash-language-server` |
+| `lsp.dockerfile` | `0.15.0` | `dockerfile-language-server-nodejs` |
 
 ## Environments
 

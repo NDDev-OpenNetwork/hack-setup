@@ -60,6 +60,7 @@ SECTION_ORDER = (
     "education",
     "deploy",
     "quality",
+    "lsp",
 )
 REQUIRED_PROBE_IDS = ("codex", "node", "bun", "python", "uv")
 DEFAULT_TIMEOUT = 8.0
@@ -125,14 +126,34 @@ def prepend_pin_path() -> None:
 def collect_version_rows(pin: dict[str, Any]) -> list[tuple[str, str, str]]:
     rows: list[tuple[str, str, str]] = []
 
+    def resolve(path: str) -> str:
+        cur: Any = pin
+        for part in path.split("."):
+            if not isinstance(cur, dict):
+                return ""
+            if part.isdigit() and isinstance(cur, list):
+                cur = cur[int(part)]
+            else:
+                cur = cur.get(part)
+        if isinstance(cur, dict):
+            value = cur.get("version")
+            return value if isinstance(value, str) else ""
+        return ""
+
     def walk(node: Any, prefix: str) -> None:
         if not isinstance(node, dict):
             return
         version = node.get("version")
+        version_from = node.get("version_from")
         if isinstance(version, str) and version.strip():
             package = node.get("package")
             package_name = package if isinstance(package, str) else ""
             rows.append((prefix, version, package_name))
+        elif isinstance(version_from, str) and version_from.strip():
+            resolved = resolve(version_from)
+            package = node.get("server")
+            package_name = package if isinstance(package, str) else ""
+            rows.append((prefix, f"{resolved} (via {version_from})", package_name))
         for key, value in node.items():
             if key in SKIP_WALK or key == "version":
                 continue

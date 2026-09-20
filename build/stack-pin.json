@@ -111,6 +111,17 @@
       "github-flow",
       "agent-handoff"
     ],
+    "lsp_plugin": {
+      "id": "hack-agent-lsp@saint-tibo",
+      "path": "plugins/hack-agent-lsp/plugin.json",
+      "policy": "INSTALLED_BY_DEFAULT",
+      "enabled_in": ".codex/config.toml",
+      "status": "language-server matrix standardisation"
+    },
+    "lsp_plugin_skills": [
+      "lsp-map",
+      "lsp-setup"
+    ],
     "standards_plugin_skills": [
       "apply-agent-standard",
       "core-motion",
@@ -460,6 +471,8 @@
       "mode": "OpenAI-compatible LLM gateway container on :8080/v1; provider keys, failover, and guardrails live in it",
       "not_pypi": true,
       "npm_launcher": "@maximhq/bifrost@1.6.3",
+      "github_repo": "maximhq/bifrost",
+      "github_prefix": "transports/",
       "github_tag": "transports/v2.2.1"
     },
     "openai": {
@@ -522,6 +535,65 @@
     },
     "structlog": { "package": "structlog", "version": "26.1.0" },
     "pipeline": "JSON logs -> Vector -> OpenObserve; traces/metrics OTLP -> OpenObserve"
+  },
+  "lsp": {
+    "rule": "one language server per language; versions come from this pin or the pinned tool itself; agents verify via the pinned CLIs, editors pick the server not the version",
+    "typescript": { "server": "tsgo --lsp", "version_from": "runtimes.typescript" },
+    "web_lint": { "server": "biome lsp-proxy", "version_from": "quality.biome" },
+    "python_types": { "server": "ty server", "version_from": "quality.ty" },
+    "python_lint": { "server": "ruff server", "version_from": "quality.ruff" },
+    "rust": { "server": "rust-analyzer", "version_from": "runtimes.rust", "install": "rustup component add rust-analyzer" },
+    "dart": { "server": "dart language-server", "version_from": "clients.flutter" },
+    "go": {
+      "server": "gopls",
+      "package": "golang.org/x/tools/gopls",
+      "version": "v0.23.0",
+      "install": "go install golang.org/x/tools/gopls@v0.23.0",
+      "github_repo": "golang/tools",
+      "github_prefix": "gopls/",
+      "github_tag": "gopls/v0.23.0"
+    },
+    "toml": {
+      "server": "taplo lsp",
+      "package": "taplo-cli",
+      "version": "0.10.0",
+      "install": "cargo install taplo-cli --locked --version 0.10.0",
+      "github_repo": "tamasfe/taplo",
+      "github_prefix": "",
+      "github_tag": "0.10.0"
+    },
+    "markdown": {
+      "server": "marksman",
+      "version": "2026-02-08",
+      "install": "brew install marksman",
+      "github_repo": "artempyanykh/marksman",
+      "github_prefix": "",
+      "github_tag": "2026-02-08"
+    },
+    "json_html_css": {
+      "server": "vscode-langservers-extracted",
+      "package": "vscode-langservers-extracted",
+      "version": "4.10.0",
+      "install": "npm i -g vscode-langservers-extracted@4.10.0"
+    },
+    "yaml": {
+      "server": "yaml-language-server",
+      "package": "yaml-language-server",
+      "version": "1.24.0",
+      "install": "npm i -g yaml-language-server@1.24.0"
+    },
+    "shell": {
+      "server": "bash-language-server",
+      "package": "bash-language-server",
+      "version": "5.8.1",
+      "install": "npm i -g bash-language-server@5.8.1"
+    },
+    "dockerfile": {
+      "server": "dockerfile-language-server-nodejs",
+      "package": "dockerfile-language-server-nodejs",
+      "version": "0.15.0",
+      "install": "npm i -g dockerfile-language-server-nodejs@0.15.0"
+    }
   },
   "quality": {
     "biome": { "package": "@biomejs/biome", "version": "2.5.14", "role": "JS/TS lint+format; types stay with tsc 7" },

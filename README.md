@@ -40,7 +40,7 @@ brew/npm shims.
 | `.codex/config.toml` | Runtime projection of session + models + features |
 | `build/stack-standard.md` | Generated; refresh with `--write` |
 | `just check` | Proof that pin == config == AGENTS == generated |
-| `docs/adr/0001`–`0010` | Decisions |
+| `docs/adr/0001`–`0011` | Decisions |
 | `justfile` | Project commands (`just gate`, `just check`) |
 | `plugins/hack-agent-standards/standards/` | On-demand frames. `docs/research/` is archive |
 

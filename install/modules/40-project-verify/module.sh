@@ -13,6 +13,7 @@ install_plugins() {
   "$codex_bin" plugin add saint-tibo@saint-tibo >/dev/null
   "$codex_bin" plugin add hack-agent-standards@saint-tibo >/dev/null
   "$codex_bin" plugin add hack-agent-workflow@saint-tibo >/dev/null
+  "$codex_bin" plugin add hack-agent-lsp@saint-tibo >/dev/null
   log "plugins installed and synced with the repo"
 }
 

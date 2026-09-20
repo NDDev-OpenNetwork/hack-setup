@@ -25,3 +25,5 @@ multi_agent = false
 multi_agent_v2 = false
 hooks = true
 memories = false
+[plugins."hack-agent-lsp@saint-tibo"]
+enabled = true

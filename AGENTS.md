@@ -18,7 +18,7 @@ One loop. Do not fork numbers outside the pin.
    → CORE, QUALITY when proving, one area file. Plugin skills are
    `$hack-agent-standards:<skill>` (see Motion). Bare `$name` does
    not match a plugin skill. Pin numbers win.
-5. Why: ADRs 0001–0010.
+5. Why: ADRs 0001–0011.
 
 ## Pin
 
@@ -81,6 +81,11 @@ Workflow skills (plugin `hack-agent-workflow`, invoke
 memories + NEXT-SESSION + issues), `github-flow` (github-first loop:
 named issue → work branch → personal named branch → dev → main),
 `agent-handoff` (agent-first close: memories + plan + quoted proof).
+
+Tooling skills (plugin `hack-agent-lsp`, invoke
+`$hack-agent-lsp:<name>`): `lsp-map` (one pinned language server per
+language, `lsp.*` in the stack pin), `lsp-setup` (install the pinned
+servers on a host).
 
 ## Technology rules
 
