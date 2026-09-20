@@ -1,0 +1,8 @@
+# LF endings everywhere: shell/python/toml break under CRLF when a
+# Windows-side clone is opened through WSL. Binary by default.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.zip binary
+*.tar.gz binary

@@ -1,11 +1,17 @@
 # Detect macOS/Linux and a Codex package triple. POSIX sh.
 
 hack_detect_os() {
+  HACK_WSL=0
   case "$(uname -s)" in
     Darwin) HACK_OS="darwin" ;;
-    Linux) HACK_OS="linux" ;;
+    Linux)
+      HACK_OS="linux"
+      case "$(uname -r)" in
+        *microsoft*|*WSL*) HACK_WSL=1 ;;
+      esac
+      ;;
     *)
-      die "unsupported OS $(uname -s); this bootstrap supports macOS and Linux"
+      die "unsupported OS $(uname -s); supported: macOS, Ubuntu/Linux, and Windows via WSL2 Ubuntu"
       ;;
   esac
 
@@ -43,5 +49,8 @@ hack_detect_os() {
       ;;
   esac
 
-  export HACK_OS HACK_ARCH HACK_PLATFORM HACK_TRIPLE
+  if [ "$HACK_WSL" = "1" ]; then
+    log "detected WSL (Windows) — running the linux-x86_64 path"
+  fi
+  export HACK_OS HACK_ARCH HACK_PLATFORM HACK_TRIPLE HACK_WSL
 }

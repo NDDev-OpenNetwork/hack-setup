@@ -18,7 +18,7 @@ One loop. Do not fork numbers outside the pin.
    → CORE, QUALITY when proving, one area file. Plugin skills are
    `$hack-agent-standards:<skill>` (see Motion). Bare `$name` does
    not match a plugin skill. Pin numbers win.
-5. Why: ADRs 0001–0011.
+5. Why: ADRs 0001–0012.
 
 ## Pin
 
@@ -162,7 +162,8 @@ cd hack-setup
 `./setup` downloads the pinned Codex package tarball, verifies its sha256
 from `build/codex-pin.json` `packages.*` (hashed official `install.sh` is
 the fallback), and runs the numbered modules under `install/modules/`.
-Windows is fail-closed.
+Supported hosts: macOS, Ubuntu/Linux, and Windows via WSL2 Ubuntu;
+native Windows is fail-closed (ADR 0012).
 
 ## Quality gate
 

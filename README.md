@@ -9,7 +9,16 @@ says go.
 
 ## One command after clone
 
-macOS and Linux:
+Supported hosts: macOS (arm64/x86_64), Ubuntu/Linux (x86_64/arm64), and
+Windows x86_64 **via WSL2 Ubuntu** — the whole toolchain runs inside WSL.
+Native Windows is fail-closed (ADR 0012). On Windows:
+
+```powershell
+wsl --install -d Ubuntu
+# restart, open the Ubuntu shell, then clone inside WSL
+```
+
+Then, on any supported host:
 
 ```bash
 git clone git@github.com:NDDev-OpenNetwork/hack-setup.git
@@ -20,7 +29,7 @@ cd hack-setup
 
 `./setup` is the only root entry. Modules: prereqs → official Codex CLI →
 Node/bun/uv/Python 3.14 → project verify. JS installer is bun. Web is
-React + Vite + TypeScript 7.0.2 only, not Next.js. Windows is fail-closed.
+React + Vite + TypeScript 7.0.2 only, not Next.js.
 
 Host prerequisites: `tar`, `git`, `gh` (GitHub CLI, `gh auth login` —
 the workflow is github-first), `curl` or `wget`, `sha256sum` or
@@ -46,7 +55,7 @@ just check          # artifact validator + host doctor
 | `.codex/config.toml` | Runtime projection of session + models + features |
 | `build/stack-standard.md` | Generated; refresh with `--write` |
 | `just check` | Proof that pin == config == AGENTS == generated |
-| `docs/adr/0001`–`0011` | Decisions |
+| `docs/adr/0001`–`0012` | Decisions |
 | `justfile` | Project commands (`just gate`, `just check`) |
 | `plugins/hack-agent-standards/standards/` | On-demand frames. `docs/research/` is archive |
 

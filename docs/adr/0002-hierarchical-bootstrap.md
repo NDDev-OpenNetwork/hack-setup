@@ -43,8 +43,10 @@ The Codex module downloads the pinned
 official `install.sh` (`installer.sha256`) runs only when the host
 platform has no pinned package entry.
 
-Windows is fail-closed. bun/npm/brew copies are not uninstalled; PATH
-order after `. install/env.sh` prefers the pinned binary.
+Windows hosts enter through WSL2 Ubuntu — the same linux-x86_64 path;
+native Windows is fail-closed (ADR 0012). bun/npm/brew copies are not
+uninstalled; PATH order after `. install/env.sh` prefers the pinned
+binary.
 
 ## Consequences
 

@@ -15,7 +15,7 @@ One loop. `build/stack-pin.json` `control` names it.
    `$hack-agent-standards:<layer-skill>`. Router
    `$hack-agent-standards:apply-agent-standard`. Repo alias
    `$apply-stack-rule`. Pin numbers win. Owner turn beats a frame.
-5. Why: ADRs 0001–0011
+5. Why: ADRs 0001–0012
 
 Do not fork numbers into frames, skills, or memories first. Edit pin +
 config together, then `just check`.
@@ -91,6 +91,9 @@ Setup owner stream: Danil.
   (3.13.4, the actual server version); `lsp.markdown` package filled;
   CI artifacts job bootstraps the pinned uv instead of pip; checker
   rejects npm/pip/pnpm in `lsp.*.install`; REVIEW covers all 4 plugins
+- Windows x86_64 support = WSL2 Ubuntu (ADR 0012): os.sh detects WSL,
+  `.gitattributes` pins eol=lf, CI gains a `setup-e2e-windows-wsl` job;
+  checker + module 40 now iterate `marketplace.json` as the plugin SoT
 
 ## Next (blocked on user)
 
