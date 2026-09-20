@@ -94,14 +94,16 @@ Setup owner stream: Danil.
 - Windows x86_64 support = WSL2 Ubuntu (ADR 0012): os.sh detects WSL,
   `.gitattributes` pins eol=lf, CI gains a `setup-e2e-windows-wsl` job;
   checker + module 40 now iterate `marketplace.json` as the plugin SoT
-- ADR 0012 superseded: Windows x86_64 is NATIVE — parallel PowerShell
-  hierarchy (`setup.ps1`, `bootstrap.ps1`, `env.ps1`, `lib/*.ps1`,
-  `module.ps1` per module), `windows-x86_64` packages pinned in
-  codex-pin (`f45c273b…`) + node/bun zips, `installer_ps1` pins for
+- `ac7b1a2`+`2621efe` ADR 0012 superseded: Windows x86_64 is NATIVE —
+  parallel PowerShell hierarchy (`setup.ps1`, `bootstrap.ps1`, `env.ps1`,
+  `lib/*.ps1`, `module.ps1` per module), `windows-x86_64` packages pinned
+  in codex-pin (`f45c273b…`) + node/bun zips, `installer_ps1` pins for
   codex (`ab832ca3…`) and uv (`e08cfe98…`); checker requires the ps1
-  twins + `entry_windows`; CI job is native `setup-e2e-windows`
-  (windows-latest). WSL2 remains an optional POSIX path; Windows arm64
-  fail-closed.
+  twins + `entry_windows`; CI `setup-e2e-windows` (windows-latest) is
+  GREEN — codex-cli 0.155.1, all 4 plugins installed/enabled, both
+  checkers PASS, all 5 required probes OK on a real Windows host. WSL2
+  remains an optional POSIX path; Windows arm64 fail-closed.
+  Strict-mode `.Count` scalar bug fixed via `@(...)` wrap.
 
 ## Next (blocked on user)
 
