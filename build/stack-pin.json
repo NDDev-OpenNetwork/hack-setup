@@ -27,8 +27,8 @@
     "independent Dart upgrades outside Flutter",
     "Tauri 3 alpha",
     "Node.js 26 Current",
-    "openai Python SDK 3.x in the API env",
-    "LiteLLM proxy-runtime extra in the API env",
+    "openai Python SDK 2.x in the API env (the LiteLLM <3 cap is gone; pin is 3.16.2)",
+    "litellm and litellm[proxy-runtime] (the LLM gateway is Bifrost; the API uses the openai SDK against the Bifrost base_url)",
     "opencv-python together with opencv-python-headless",
     "second JS lockfile",
     "typescript@6 or @typescript/typescript6 in the web workspace",
@@ -63,8 +63,8 @@
     "gpu_ml": {
       "isolates": ["faster-whisper", "CTranslate2", "PyTorch", "ONNX Runtime", "FastEmbed"]
     },
-    "litellm_proxy": {
-      "isolates": "optional full proxy-runtime container with its own OTel 1.28.0 pins"
+    "bifrost": {
+      "isolates": "Bifrost gateway container (maximhq/bifrost:v2.2.1); own OTel plugin; holds provider keys and failover"
     }
   },
   "registered": {
@@ -454,12 +454,19 @@
       "source": "https://github.com/router-for-me/CLIProxyAPI",
       "not_pypi": true
     },
-    "litellm": { "package": "litellm", "version": "1.101.0", "mode": "SDK/Router in API; no proxy-runtime extra" },
+    "bifrost": {
+      "package": "maximhq/bifrost",
+      "version": "v2.2.1",
+      "mode": "OpenAI-compatible LLM gateway container on :8080/v1; provider keys, failover, and guardrails live in it",
+      "not_pypi": true,
+      "npm_launcher": "@maximhq/bifrost@1.6.3",
+      "github_tag": "transports/v2.2.1"
+    },
     "openai": {
       "package": "openai",
-      "version": "2.54.0",
-      "reverify": "pinned-compatible",
-      "reason": "litellm 1.101.0 requires openai>=2.20,<3"
+      "version": "3.16.2",
+      "reverify": "latest",
+      "reason": "LiteLLM removed; the openai<3 cap is gone. API calls the Bifrost gateway via base_url"
     },
     "orchestration": "plain Python + Pydantic + explicit steps; no required agent framework",
     "accuracy": "schema validity, subject correctness, and source citation are separate checks"
@@ -511,7 +518,7 @@
     "otel": {
       "api_sdk": "1.44.0",
       "instrumentation": "0.65b0",
-      "not_in_api_with_litellm_proxy_runtime": true
+      "bifrost_gateway_own_otel": true
     },
     "structlog": { "package": "structlog", "version": "26.1.0" },
     "pipeline": "JSON logs -> Vector -> OpenObserve; traces/metrics OTLP -> OpenObserve"
@@ -559,8 +566,8 @@
       "decision": "API/worker redis-py 8.1.0 (taskiq-redis >=8,<9); Telegram env redis-py 7.4.1 (aiogram[redis] requires redis[hiredis]<8,>=6.2.0); one Redis image 8.10.2 as two Compose services (redis-durable + redis-cache)"
     },
     {
-      "id": "litellm-otel",
-      "decision": "API uses LiteLLM SDK only; proxy-runtime stays in its own container"
+      "id": "bifrost-otel",
+      "decision": "Bifrost gateway carries its own OTel plugin line; the API keeps its own otel api_sdk/instrumentation pins. Do not merge the gateway config into the API env"
     },
     {
       "id": "r3f-react-19-3",
@@ -588,11 +595,11 @@
     },
     {
       "id": "openai-sdk-major",
-      "decision": "API env openai 2.54.0 because LiteLLM 1.101.0 requires openai>=2.20,<3; do not put openai 3.x in the API env"
+      "decision": "API env openai 3.16.2 (latest). The LiteLLM openai>=2.20,<3 cap is gone with LiteLLM; do not re-pin 2.x"
     },
     {
-      "id": "litellm-python-lt-315",
-      "decision": "LiteLLM 1.101.0 requires Python >=3.10,<3.15; stay on 3.14.7"
+      "id": "bifrost-gateway-not-sdk",
+      "decision": "LLM access goes through the Bifrost container (maximhq/bifrost:v2.2.1, OpenAI-compatible on :8080/v1). No litellm package in any Python env; the API client is openai 3.16.2 with base_url"
     }
   ],
   "verify": {

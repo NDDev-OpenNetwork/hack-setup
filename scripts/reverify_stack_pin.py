@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Compare selected stack-pin versions to live latest. Network required.
 
-openai is not compared to PyPI latest (3.x is forbidden in the API env).
-The pin must still satisfy LiteLLM 1.101.0: openai>=2.20,<3.
+ai.openai is compared to PyPI latest again — the LiteLLM openai<3 cap
+is gone with LiteLLM. ai.bifrost is checked against the latest
+transports/* release tag on GitHub (the Docker tag tracks it).
 """
 
 from __future__ import annotations
@@ -28,6 +29,7 @@ NPM = [
 ]
 PYPI = [
     ("backend.fastapi", "fastapi"),
+    ("ai.openai", "openai"),
     ("quality.ty", "ty"),
     ("quality.ruff", "ruff"),
     ("quality.pytest", "pytest"),
@@ -62,16 +64,14 @@ def pypi_latest(name: str) -> str:
     return str(payload["info"]["version"])
 
 
-def parse_ver(text: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in text.split(".")[:3])
-
-
-def check_openai_range(pin: dict[str, object]) -> str:
-    version = lookup(pin, "ai.openai")
-    parsed = parse_ver(version)
-    if not (parse_ver("2.20.0") <= parsed < parse_ver("3.0.0")):
-        raise SystemExit(f"ai.openai {version} does not satisfy LiteLLM openai>=2.20,<3")
-    return version
+def github_latest_tag(repo: str, prefix: str) -> str:
+    url = f"https://api.github.com/repos/{repo}/releases?per_page=100"
+    with urllib.request.urlopen(url, timeout=20) as response:
+        releases = json.load(response)
+    tags = [r["tag_name"] for r in releases if r["tag_name"].startswith(prefix)]
+    if not tags:
+        raise SystemExit(f"no {prefix}* releases in {repo}")
+    return tags[0]
 
 
 def node_lts() -> str:
@@ -107,13 +107,17 @@ def main() -> int:
     if mark == "DRIFT":
         drift += 1
     print(f"{mark:5} {'runtimes.node':28} pin={pinned_node:12} latest={latest_node} (newest LTS row)")
-    openai_pin = check_openai_range(pin)
-    print(f"OK    {'ai.openai':28} pin={openai_pin:12} range=openai>=2.20,<3")
+    bifrost = pin.get("ai", {}).get("bifrost", {})
+    pinned_tag = bifrost.get("github_tag", "")
+    latest_tag = github_latest_tag("maximhq/bifrost", "transports/")
+    mark = "OK" if pinned_tag == latest_tag else "DRIFT"
+    if mark == "DRIFT":
+        drift += 1
+    print(f"{mark:5} {'ai.bifrost':28} pin={pinned_tag:12} latest={latest_tag} (transports tag)")
     if drift:
         print(f"DRIFT {drift} entries; update build/stack-pin.json and verified_on")
         return 1
     print("PASS stack pin matches live latest tags for tracked packages")
-    print(f"NOTE openai {openai_pin} is pinned-compatible for LiteLLM (>=2.20,<3), not latest 3.x")
     return 0
 
 

@@ -29,11 +29,13 @@ on purpose.
 - Taskiq uses RedisStreamBroker. Cache Redis and queue Redis may be
   split if eviction is allowed on cache.
 - Isolated Python envs: API/workers (`redis` 8.1.0), Telegram
-  (`redis` 7.4.1), GPU/ML, optional LiteLLM proxy-runtime.
-- OpenAI Python SDK in the API env is `2.54.0` because LiteLLM 1.101.0
-  requires `openai>=2.20,<3`. Do not put openai 3.x in the API env.
-- CLIProxyAPI is `7.3.9`. LiteLLM `1.101.0` requires Python `>=3.10,<3.15`;
-  stay on `3.14.7`.
+  (`redis` 7.4.1), GPU/ML, plus the Bifrost LLM gateway container.
+- LLM access goes through Bifrost `maximhq/bifrost:v2.2.1`
+  (OpenAI-compatible on `:8080/v1`); the API env carries `openai`
+  `3.16.2` pointed at the gateway `base_url`. LiteLLM is removed;
+  the `openai<3` cap is gone (superseded by ADR 0010).
+- CLIProxyAPI is `7.3.9`, an optional sidecar upstream of the
+  gateway.
 - PostgreSQL driver is psycopg 3. Do not add asyncpg.
 - `@hey-api/openapi-ts` `0.99.0` is latest stable (2026-06-22). It
   crashes if it resolves `typescript@7.0.2` (`ts.SyntaxKind`). Keep

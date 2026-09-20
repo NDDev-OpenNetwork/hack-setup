@@ -88,8 +88,8 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `auth.payments_test` | `15.6.1` | `stripe` |
 | `auth.session` | `2.2.1` | `starsessions` |
 | `ai.cliproxyapi` | `7.3.9` |  |
-| `ai.litellm` | `1.101.0` | `litellm` |
-| `ai.openai` | `2.54.0` | `openai` |
+| `ai.bifrost` | `v2.2.1` | `maximhq/bifrost` |
+| `ai.openai` | `3.16.2` | `openai` |
 | `media.docling` | `2.129.0` | `docling` |
 | `media.pypdf` | `6.19.0` | `pypdf` |
 | `media.pillow` | `12.3.0` | `pillow` |
@@ -127,7 +127,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `api_workers` | `8.1.0` | FastAPI API and Taskiq workers may share this env |
 | `telegram` | `7.4.1` | aiogram[redis] 3.31.0 requires redis[hiredis]<8,>=6.2.0; taskiq-redis 1.2.3 requires redis>=8,<9 |
 | `gpu_ml` | `` | faster-whisper, CTranslate2, PyTorch, ONNX Runtime, FastEmbed |
-| `litellm_proxy` | `` | optional full proxy-runtime container with its own OTel 1.28.0 pins |
+| `bifrost` | `` | Bifrost gateway container (maximhq/bifrost:v2.2.1); own OTel plugin; holds provider keys and failover |
 
 ## Host probes
 
@@ -196,8 +196,8 @@ Refresh with `python3 scripts/check_stack.py --write`.
 - independent Dart upgrades outside Flutter
 - Tauri 3 alpha
 - Node.js 26 Current
-- openai Python SDK 3.x in the API env
-- LiteLLM proxy-runtime extra in the API env
+- openai Python SDK 2.x in the API env (the LiteLLM <3 cap is gone; pin is 3.16.2)
+- litellm and litellm[proxy-runtime] (the LLM gateway is Bifrost; the API uses the openai SDK against the Bifrost base_url)
 - opencv-python together with opencv-python-headless
 - second JS lockfile
 - typescript@6 or @typescript/typescript6 in the web workspace
@@ -226,12 +226,12 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `openapi-typescript-ts5` | Do not add openapi-typescript. Intended generator remains @hey-api/openapi-ts. |
 | `hey-api-ts7-runtime` | @hey-api/openapi-ts 0.99.0 is latest stable but crashes next to typescript@7.0.2. Keep it out of the web workspace. Do not take @next (still a dated nightly as of 2026-09-18). Generated .ts is typechecked by tsc 7. Revisit when a stable release has no TypeScript Compiler API dependency. |
 | `aiogram-redis-vs-taskiq` | API/worker redis-py 8.1.0 (taskiq-redis >=8,<9); Telegram env redis-py 7.4.1 (aiogram[redis] requires redis[hiredis]<8,>=6.2.0); one Redis image 8.10.2 as two Compose services (redis-durable + redis-cache) |
-| `litellm-otel` | API uses LiteLLM SDK only; proxy-runtime stays in its own container |
+| `bifrost-otel` | Bifrost gateway carries its own OTel plugin line; the API keeps its own otel api_sdk/instrumentation pins. Do not merge the gateway config into the API env |
 | `r3f-react-19-3` | direct three 0.186.0; @react-three/fiber 9.7 and v10 canary still peer react <19.3 (issue 3915); no R3F/Drei |
 | `docling-opencv-cv2` | opencv-python-headless 5.0.0.93 is the only cv2. Default docling 2.129.0 extra standard pulls rapidocr>=3.9.1 which requires opencv_python. Constrain opencv-python; do not add unconstrained RapidOCR; keep torch from that extra out of the API env. pypdf 6.19.0 is separate from docling pypdfium2. |
 | `shadcn-cli-not-dep` | Install UI with bunx shadcn@4.21.0. Do not bun add shadcn; that package nests zod ^3. |
 | `forms-tanstack-standard-schema` | Web forms use @tanstack/react-form 1.33.5; validation is Standard Schema (zod passed to validators directly). Do not add react-hook-form, @hookform/resolvers, or @tanstack/zod-form-adapter. |
 | `httpx-fastapi-lt-1` | httpx 0.28.1 is latest stable. FastAPI extras require httpx<1.0.0,>=0.23.0. Do not take httpx 1.x. |
 | `flutter-dart` | pin Flutter 3.47.5 and its bundled Dart 3.13.4 |
-| `openai-sdk-major` | API env openai 2.54.0 because LiteLLM 1.101.0 requires openai>=2.20,<3; do not put openai 3.x in the API env |
-| `litellm-python-lt-315` | LiteLLM 1.101.0 requires Python >=3.10,<3.15; stay on 3.14.7 |
+| `openai-sdk-major` | API env openai 3.16.2 (latest). The LiteLLM openai>=2.20,<3 cap is gone with LiteLLM; do not re-pin 2.x |
+| `bifrost-gateway-not-sdk` | LLM access goes through the Bifrost container (maximhq/bifrost:v2.2.1, OpenAI-compatible on :8080/v1). No litellm package in any Python env; the API client is openai 3.16.2 with base_url |

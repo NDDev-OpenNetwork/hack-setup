@@ -120,7 +120,7 @@ API: pin `deploy.otel` (`api_sdk` / `instrumentation`).
 `FastAPIInstrumentor.instrument_app` before lifespan
 (exclude health/docs + receive/send). Batch OTLP/HTTP. No
 `ConsoleSpanExporter` as done. No OTLP-log instrumentor.
-No `litellm[proxy-runtime]` in the API image.
+No `litellm` / `litellm[proxy-runtime]` in the API image; the Bifrost container is separate.
 
 Browser packages are a different version line. No emit
 until Caddy `/otel/v1/traces` exists.

@@ -40,8 +40,9 @@ Do not create `api/` only to hold this file. Telegram `Bot` /
 ### Graphs
 
 API and Taskiq workers share one uv project / one lock /
-`environments.api_workers`. Telegram, GPU/ML, and LiteLLM
-proxy-runtime are sibling projects with their own locks. A workspace
+`environments.api_workers`. Telegram and GPU/ML are sibling projects
+with their own locks; the Bifrost gateway is a container
+(`environments.bifrost`), not a uv project. A workspace
 that members those graphs together is the official uv anti-pattern
 (one resolve, one `.venv`). Shared libraries stay redis-agnostic.
 Serena / ty as tools: `uvx`, not app deps.

@@ -52,15 +52,15 @@ product lockfiles yet; the pin is enough. After product trees exist:
 **One identity.** Prefer one version of a package across the repo.
 Do not open a second version of the same library to ship a slice.
 `environments.*` splits a *graph* when two chosen pins cannot share one
-resolver (the existing redis-py / LiteLLM / cv2 rows). That is a
+resolver (the existing redis-py / cv2 rows). That is a
 recorded conflict, not a habit. Do not add a new isolate because a
 stack is “heavy” if the versions already unify.
 
 **Graphs.** API and Taskiq may share `environments.api_workers`.
 Telegram stays on `environments.telegram` while that redis-py conflict
 holds. GPU/ML extras stay in `environments.gpu_ml` so torch / cv2 /
-RapidOCR do not land in the API env. Optional LiteLLM proxy-runtime
-stays in `environments.litellm_proxy`. Web is one bun graph. Flutter
+RapidOCR do not land in the API env. The Bifrost gateway
+stays in `environments.bifrost` (a container, not a lock). Web is one bun graph. Flutter
 owns Dart; do not bump Dart beside Flutter.
 
 **Provenance.** Official installer / registry / hash already named by

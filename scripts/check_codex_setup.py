@@ -452,7 +452,8 @@ def check_stack_pin() -> None:
     for needed in (
         "openai-sdk-major",
         "hey-api-ts7-runtime",
-        "litellm-python-lt-315",
+        "bifrost-gateway-not-sdk",
+        "bifrost-otel",
         "aiogram-redis-vs-taskiq",
         "docling-opencv-cv2",
         "shadcn-cli-not-dep",

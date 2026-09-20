@@ -61,7 +61,7 @@ Link only files that exist.
 | [CONTRACTS.md](CONTRACTS.md) | OpenAPI, generated TS/Dart clients, SSE, WebSocket | ready |
 | [DATA.md](DATA.md) | PostgreSQL, Qdrant, Redis, RustFS, DuckDB, Polars, Arrow | ready |
 | [CLIENTS.md](CLIENTS.md) | Flutter, Tauri 2, Telegram bot / Mini App | ready |
-| [AI.md](AI.md) | LiteLLM, openai 2.x, embeddings, GPU/ML isolates | ready |
+| [AI.md](AI.md) | Bifrost gateway, openai 3.x, embeddings, GPU/ML isolates | ready |
 | [AUTH.md](AUTH.md) | OIDC/OAuth, sessions, Telegram identity, membership, RLS later, collab/LiveKit mint, Calendar, Stripe test | ready |
 | [FORMATS.md](FORMATS.md) | JSON, YAML, TOML, Markdown, SQL, env, shell | ready |
 | [DOCUMENTS.md](DOCUMENTS.md) | PDF, Office, OCR, media, reports | ready |

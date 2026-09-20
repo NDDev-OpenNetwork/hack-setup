@@ -18,7 +18,7 @@ One loop. Do not fork numbers outside the pin.
    → CORE, QUALITY when proving, one area file. Plugin skills are
    `$hack-agent-standards:<skill>` (see Motion). Bare `$name` does
    not match a plugin skill. Pin numbers win.
-5. Why: ADRs 0001–0009.
+5. Why: ADRs 0001–0010.
 
 ## Pin
 
@@ -33,7 +33,8 @@ One loop. Do not fork numbers outside the pin.
 - API contract is FastAPI OpenAPI; clients are generated, not rewritten.
   `@hey-api/openapi-ts` `0.99.0` is not a web workspace dependency. No `@next`.
 - Isolated Python envs: API/workers (`redis` 8.1.0), Telegram (`redis` 7.4.1),
-  GPU/ML, optional LiteLLM proxy-runtime. Do not merge those lockfiles.
+  GPU/ML, plus the Bifrost LLM gateway container
+  (`maximhq/bifrost:v2.2.1`). Do not merge those lockfiles.
   One `cv2`: `opencv-python-headless` only. Do not `uv add docling` unconstrained.
   Install shadcn with `bunx shadcn@4.21.0`, never `bun add shadcn`.
 - Session law: no OS sandbox, never ask. Pin:
