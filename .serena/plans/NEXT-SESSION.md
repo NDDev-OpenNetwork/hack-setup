@@ -15,7 +15,7 @@ One loop. `build/stack-pin.json` `control` names it.
    `$hack-agent-standards:<layer-skill>`. Router
    `$hack-agent-standards:apply-agent-standard`. Repo alias
    `$apply-stack-rule`. Pin numbers win. Owner turn beats a frame.
-5. Why: ADRs 0001–0010
+5. Why: ADRs 0001–0011
 
 Do not fork numbers into frames, skills, or memories first. Edit pin +
 config together, then `just check`.
@@ -40,8 +40,9 @@ config together, then `just check`.
 - Workflow plugin: `hack-agent-workflow@saint-tibo` (ADR 0009) —
   serena-first `session-boot`, github-first `github-flow`,
   agent-first `agent-handoff`; invoke `$hack-agent-workflow:<name>`
-- Plugin skill sets: `registered.standards_plugin_skills` (15) +
-  `registered.workflow_plugin_skills` (3)
+- LSP plugin: `hack-agent-lsp@saint-tibo` (ADR 0011) — `lsp-map`
+  + `lsp-setup`; the `lsp.*` matrix pins one server per language
+- Plugin skill sets: `registered.{standards,workflow,lsp}_plugin_skills`
 
 Tibo 1M/900k is documented, not runtime. Catalog max is 872000.
 
@@ -73,6 +74,9 @@ Setup owner stream: Danil.
 - `a0dba2e` `ty` `0.0.82` declared as a host tool
 - `bdd614a` `hack-agent-workflow` plugin (ADR 0009): session-boot /
   github-flow / agent-handoff
+- `1222e53`..`a5fa77d` LiteLLM → Bifrost gateway (ADR 0010); CI
+  `check.yml` with artifacts + setup-e2e on ubuntu+macos; `dev` branch
+  live; module 40 installs all plugins
 
 ## Next (blocked on user)
 

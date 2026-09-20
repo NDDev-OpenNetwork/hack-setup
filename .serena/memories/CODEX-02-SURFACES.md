@@ -1,7 +1,7 @@
 <!-- Memory Metadata
 Last updated: 2026-09-20
 Last commit: bc3c4c3 fix(docs+check): document plugin install steps; scope legacy-profile ban to sol
-Scope: .agents/, .codex/, plugins/saint-tibo/, plugins/hack-agent-standards/, plugins/hack-agent-workflow/, AGENTS.md, docs/adr/0005-codex-rule-catalogue.md, docs/adr/0008-agent-standards-plugin.md, docs/adr/0009-agent-workflow-format.md, build/stack-pin.json registered.standards_plugin_skills + registered.workflow_plugin_skills
+Scope: .agents/, .codex/, plugins/saint-tibo/, plugins/hack-agent-standards/, plugins/hack-agent-workflow/, plugins/hack-agent-lsp/, AGENTS.md, docs/adr/0005-codex-rule-catalogue.md, docs/adr/0008-agent-standards-plugin.md, docs/adr/0009-agent-workflow-format.md, docs/adr/0011-lsp-matrix.md, build/stack-pin.json registered.standards_plugin_skills + registered.workflow_plugin_skills + registered.lsp_plugin_skills
 Area: CODEX
 -->
 
@@ -21,11 +21,12 @@ Map native Codex 0.155.1 project surfaces in this repo.
 - Team plugin skill: `plugins/saint-tibo/skills/saint-tibo/SKILL.md` name `saint-tibo`
 - Standards plugin: `plugins/hack-agent-standards/plugin.json` portable Agent Plugins 1.0.0. Skills are DirectChildren `skills/<name>/SKILL.md` only. Pin `registered.standards_plugin_skills` is the skill-set SoT.
 - Workflow plugin: `plugins/hack-agent-workflow/plugin.json` portable 1.0.0. Skills `session-boot`, `github-flow`, `agent-handoff`; pin `registered.workflow_plugin_skills` is their SoT. Format: serena-first open, github-first loop, agent-first close. ADR 0009.
+- LSP plugin: `plugins/hack-agent-lsp/plugin.json` portable 1.0.0. Skills `lsp-map`, `lsp-setup`; pin `registered.lsp_plugin_skills` + `lsp.*` matrix is the SoT. ADR 0011.
 - Config: `.codex/config.toml` is a projection of pin `registered.session` + `models` + `registered.features` (`gpt-6-astra` + `xhigh`, window `872000` / compact `700000`, `agents.enabled=false`). 0.155.1 ignores project-local `profiles` and rejects a legacy `[profiles.sol]` table; module 20 writes `~/.codex/sol.config.toml` (overlay file mechanism) and the checker verifies it.
 
 ## Current Behavior
 
-Repo skills load without plugin install. Three plugins are enabled after trust: `saint-tibo@saint-tibo`, `hack-agent-standards@saint-tibo`, `hack-agent-workflow@saint-tibo`. INDEX links every catalogue file as `ready`. Root `AGENTS.md` has a Motion kernel and names every standards and workflow plugin skill. Codex 0.155.1 matches plugin skills only as `$hack-agent-standards:<name>` / `$hack-agent-workflow:<name>`. Bare `$apply-agent-standard` does not select the plugin skill. Repo alias `$apply-stack-rule` stays unqualified. `./setup` module 40 registers the marketplace and installs all three plugins before the checkers run.
+Repo skills load without plugin install. Four plugins are enabled after trust: `saint-tibo@saint-tibo`, `hack-agent-standards@saint-tibo`, `hack-agent-workflow@saint-tibo`, `hack-agent-lsp@saint-tibo`. INDEX links every catalogue file as `ready`. Root `AGENTS.md` has a Motion kernel and names every standards, workflow, and lsp plugin skill. Codex 0.155.1 matches plugin skills only as `$hack-agent-standards:<name>` / `$hack-agent-workflow:<name>`. Bare `$apply-agent-standard` does not select the plugin skill. Repo alias `$apply-stack-rule` stays unqualified. `./setup` module 40 registers the marketplace and installs all four plugins before the checkers run.
 
 ## Contracts And Data
 
@@ -45,9 +46,9 @@ Repo skills load without plugin install. Three plugins are enabled after trust: 
 
 ## Invariants
 
-- No skill-name collision between `.agents/skills`, `plugins/saint-tibo/skills`, `plugins/hack-agent-standards/skills`, and `plugins/hack-agent-workflow/skills`.
+- No skill-name collision between `.agents/skills`, `plugins/saint-tibo/skills`, `plugins/hack-agent-standards/skills`, `plugins/hack-agent-workflow/skills`, and `plugins/hack-agent-lsp/skills`.
 - Do not copy repo skill names into either plugin.
-- Disk plugin skills must match `registered.standards_plugin_skills` and must include `apply-agent-standard`; workflow skills must match `registered.workflow_plugin_skills`.
+- Disk plugin skills must match `registered.standards_plugin_skills` and must include `apply-agent-standard`; workflow skills must match `registered.workflow_plugin_skills`; lsp skills must match `registered.lsp_plugin_skills`.
 
 ## Change Rules
 
