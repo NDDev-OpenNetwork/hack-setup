@@ -22,14 +22,20 @@ cd hack-setup
 Node/bun/uv/Python 3.14 → project verify. JS installer is bun. Web is
 React + Vite + TypeScript 7.0.2 only, not Next.js. Windows is fail-closed.
 
+Host prerequisites: `tar`, `git`, `gh` (GitHub CLI, `gh auth login` —
+the workflow is github-first), `curl` or `wget`, `sha256sum` or
+`shasum`, `python3 >= 3.11`. Strict doctor (`check_stack.py --strict`)
+also expects the declared tools when you work in their area: rustc, go,
+docker + compose, psql, redis-server, ruff, pytest, just, ty.
+
 ```bash
 ./setup --dry-run   # planned work, no downloads
 ./setup --status    # check without installing
 just check          # artifact validator + host doctor
 ```
 
-`install/env.sh` puts `$REPO/.local/bin` and `~/.local/bin` ahead of
-brew/npm shims.
+`install/env.sh` puts `$REPO/.local/bin`, `~/.local/bin`, and
+`~/.bun/bin` (bun global installs) ahead of brew/npm shims.
 
 ## Pins
 
