@@ -53,6 +53,7 @@ Repo skills load without plugin install. Four plugins are enabled after trust: `
 ## Change Rules
 
 - Author new team workflows as `.agents/skills/<kebab-name>/SKILL.md`.
+- New plugin convention: name `hack-agent-<suffix>` (or the team plugin), marketplace entry in `.agents/plugins/marketplace.json`, `plugins/<name>/plugin.json` + `skills/`, pin `registered.<suffix>_plugin` (id/path) + `registered.<suffix>_plugin_skills` (saint-tibo uses bare `plugin`/`plugin_skills`), `[plugins."<name>@saint-tibo"] enabled` in `.codex/config.toml`, skill names listed in AGENTS.md. Checker and module 40 iterate the marketplace — no code edits needed.
 - Author a new area frame in `plugins/hack-agent-standards/standards/` and link it from INDEX only after the file exists. Add a matching `skills/<name>/SKILL.md` and pin name in the same change.
 - Copy `plugins/hack-agent-standards/nested/<layer>.md` to `<layer>/AGENTS.md` in the same change that creates that product tree.
 - After surface edits run `just check`.
