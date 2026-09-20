@@ -33,7 +33,7 @@ postgres, `redis-durable`, `redis-cache`, rustfs,
 openobserve, vector. Profiles: `search` (qdrant), `jobs`
 (worker), `telegram`, `gpu` (`environments.gpu_ml` encode
 HTTP on an internal net — not Caddy; health; no host
-publish), `ai` (proxy-runtime /
+publish), `ai` (Bifrost gateway /
 CLIProxyAPI), `dev` (Vite behind Caddy), `obs-ui`
 (optional; default is SSH tunnel), `collab` (Hocuspocus;
 joins Caddy `edge` + path to api; persist via API, not a
