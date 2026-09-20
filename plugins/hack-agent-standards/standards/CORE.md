@@ -60,7 +60,7 @@ Think of this as the spine. Modules plug in. They do not fork it.
 | i18n | Separate dictionaries `ru` / `kk` / `en` | Add keys to those dictionaries on the first user-facing change |
 | Look | Design tokens / shell | Use tokens; no one-off palette per module |
 | Data truth | PostgreSQL SoT; Qdrant derived; RustFS objects | Own their tables/collections; do not add a second source of truth |
-| Telemetry | OTel → Vector → OpenObserve (`deploy.*`) | Emit; do not add a second APM |
+| Telemetry | `deploy.pipeline`: logs → Vector → OpenObserve; traces/metrics OTLP → OpenObserve | Emit; do not add a second APM |
 | User-run code | Isolated executor | Never inside the API process |
 
 If a new shared thing appears, put it on the spine first, then use it.
@@ -71,6 +71,9 @@ Do not paste a private copy into the module «to ship faster».
 A module is self-contained enough to change without editing neighbors,
 and complete enough that the next change is an extension, not a rescue.
 Empty product trees are not created only to hold this file.
+Nested `AGENTS.md` templates: `plugins/hack-agent-standards/nested/`.
+Layer skills: `plugins/hack-agent-standards/skills/` (`core-motion`
+loads this file).
 
 ## Done
 
@@ -79,9 +82,9 @@ The owner did not give a shorter stop line. Then all of this is true:
 - The map from step 2 was done before the edit.
 - New work landed in the right layer and the right module.
 - User-visible strings went through i18n dictionaries for `ru`, `kk`,
-  and `en` in the same change.
-- The module emits on the OTel → Vector → OpenObserve path when it
-  runs (or the spine already does and this module joins it).
+  and `en` in the same change (skip when the change has no UI).
+- Runtime work emits on `deploy.pipeline` (logs via Vector; traces
+  / metrics OTLP). Setup-only work has no runtime — skip this.
 - Related callers and the generated contract stayed consistent.
 - Proof ran on what changed. The piece works, not only sits in folders.
 - Git motion matches the owner step (agent branch → named branch;

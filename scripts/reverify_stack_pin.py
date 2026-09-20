@@ -29,6 +29,7 @@ PYPI = [
     ("backend.fastapi", "fastapi"),
     ("quality.ruff", "ruff"),
     ("quality.pytest", "pytest"),
+    ("quality.pytest_asyncio", "pytest-asyncio"),
     ("runtimes.uv", "uv"),
 ]
 

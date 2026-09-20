@@ -9,8 +9,9 @@ in `.agents/skills/` and keep those names (`repo-orientation`,
 
 Agent-standard frames live in the sibling plugin
 `hack-agent-standards@saint-tibo`
-(`plugins/hack-agent-standards/`). Its skill is `apply-agent-standard`.
-Do not copy that name here.
+(`plugins/hack-agent-standards/`). Skills are DirectChildren under
+`skills/` (INDEX router `apply-agent-standard` plus layer skills).
+Invoke `$hack-agent-standards:<name>`. Do not copy those names here.
 
 Do not add plugin skills that reuse repo or standards-plugin names.
 

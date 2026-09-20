@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "hack-agent-standards",
   "version": "0.1.0",
-  "description": "Hackathon agent-standards catalogue and apply skill. Frames, not guards.",
+  "description": "Hackathon agent-standards catalogue and layer skills. Frames, not guards.",
   "author": {
     "name": "Danil Silantyev"
   },

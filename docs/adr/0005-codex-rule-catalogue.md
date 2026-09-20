@@ -20,8 +20,10 @@ turn, and smuggle unpinned topics.
 - Keep root `AGENTS.md` as a router plus non-negotiables.
 - Store frames in `plugins/hack-agent-standards/standards/`. Codex does
   not auto-load them. ADR 0008 is the plugin decision.
-- Load through `$apply-agent-standard` / `$apply-stack-rule` and
-  explicit path reads.
+- Load through `$hack-agent-standards:<layer-skill>`,
+  `$hack-agent-standards:apply-agent-standard`, `$apply-stack-rule`,
+  and explicit path reads. Codex 0.155.1 matches plugin skills only
+  on the namespaced `$plugin:skill` token.
 - Write frames from `build/stack-pin.json` and ADRs 0001–0004, 0006–0008.
   The reviewed pack under `docs/research/` is research, not runtime.
 - Add nested `AGENTS.md` only when a product directory exists.

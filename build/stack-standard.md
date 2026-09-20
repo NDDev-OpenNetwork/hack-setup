@@ -48,6 +48,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `frontend.pwa.vite_plugin_pwa` | `1.3.0` | `vite-plugin-pwa` |
 | `frontend.dexie` | `4.4.6` | `dexie` |
 | `frontend.api_client` | `0.99.0` | `@hey-api/openapi-ts` |
+| `frontend.api_client.client_fetch` | `0.13.1` | `@hey-api/client-fetch` |
 | `frontend.types_react` | `19.3.0` | `@types/react` |
 | `frontend.types_node` | `24.13.6` | `@types/node` |
 | `backend.fastapi` | `0.141.1` | `fastapi` |
@@ -77,11 +78,16 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `clients.flutter.riverpod` | `3.4.3` | `flutter_riverpod` |
 | `clients.flutter.go_router` | `18.0.1` | `go_router` |
 | `clients.flutter.dio` | `5.11.1` | `dio` |
+| `clients.flutter.openapi_generator` | `7.25.0` | `openapi-generator-cli` |
 | `clients.tauri.cli` | `2.11.4` | `@tauri-apps/cli` |
 | `clients.tauri.api` | `2.11.1` | `@tauri-apps/api` |
 | `clients.tauri.crate` | `2.11.5` | `tauri` |
 | `clients.telegram.aiogram` | `3.31.0` | `aiogram` |
 | `auth.authlib` | `1.8.0` | `Authlib` |
+| `auth.google_calendar` | `2.200.0` | `google-api-python-client` |
+| `auth.google_calendar.auth` | `2.58.0` | `google-auth` |
+| `auth.payments_test` | `15.6.1` | `stripe` |
+| `auth.session` | `2.2.1` | `starsessions` |
 | `ai.cliproxyapi` | `7.3.9` |  |
 | `ai.litellm` | `1.101.0` | `litellm` |
 | `ai.openai` | `2.54.0` | `openai` |
@@ -95,7 +101,11 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `media.trafilatura` | `2.2.0` | `trafilatura` |
 | `media.faster_whisper` | `1.2.1` | `faster-whisper` |
 | `media.sympy` | `1.14.0` | `sympy` |
+| `education.excalidraw` | `0.18.1` | `@excalidraw/excalidraw` |
 | `education.xyflow` | `12.11.6` | `@xyflow/react` |
+| `education.echarts` | `6.1.0` | `echarts` |
+| `education.fsrs` | `6.3.2` | `fsrs` |
+| `education.ortools` | `9.15.6755` | `ortools` |
 | `education.three` | `0.186.0` | `three` |
 | `deploy.docker` | `29.8.1` |  |
 | `deploy.compose` | `5.5.1` |  |
@@ -108,6 +118,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `quality.ruff` | `0.16.8` | `ruff` |
 | `quality.ty` | `0.0.82` | `ty` |
 | `quality.pytest` | `9.1.1` | `pytest` |
+| `quality.pytest_asyncio` | `1.4.0` | `pytest-asyncio` |
 | `quality.just` | `1.58.0` | `just` |
 
 ## Environments
@@ -170,6 +181,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 - team: `saint-tibo@saint-tibo`
 - standards: `hack-agent-standards@saint-tibo`
 - frames: `plugins/hack-agent-standards/standards/INDEX.md`
+- standards skills: `apply-agent-standard`, `core-motion`, `quality-proof`, `pin-dependencies`, `web-ui`, `python-api`, `wire-contracts`, `data-stores`, `native-clients`, `ai-models`, `identity-auth`, `text-formats`, `file-documents`, `education-lessons`, `runtime-infra`
 
 ## Do not use
 
@@ -211,7 +223,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `ts7-compiler-api` | Web/desktop have exactly one typescript package: 7.0.2. Do not add typescript@6 or @typescript/typescript6 to web. Lint is Biome, not typescript-eslint. |
 | `openapi-typescript-ts5` | Do not add openapi-typescript. Intended generator remains @hey-api/openapi-ts. |
 | `hey-api-ts7-runtime` | @hey-api/openapi-ts 0.99.0 is latest stable but crashes next to typescript@7.0.2. Keep it out of the web workspace. Do not take @next (still a dated nightly as of 2026-09-18). Generated .ts is typechecked by tsc 7. Revisit when a stable release has no TypeScript Compiler API dependency. |
-| `aiogram-redis-vs-taskiq` | API/worker redis-py 8.1.0 (taskiq-redis >=8,<9); Telegram env redis-py 7.4.1 (aiogram[redis] requires redis[hiredis]<8,>=6.2.0); one Redis server 8.10.2 |
+| `aiogram-redis-vs-taskiq` | API/worker redis-py 8.1.0 (taskiq-redis >=8,<9); Telegram env redis-py 7.4.1 (aiogram[redis] requires redis[hiredis]<8,>=6.2.0); one Redis image 8.10.2 as two Compose services (redis-durable + redis-cache) |
 | `litellm-otel` | API uses LiteLLM SDK only; proxy-runtime stays in its own container |
 | `r3f-react-19-3` | direct three 0.186.0; @react-three/fiber 9.7 and v10 canary still peer react <19.3 (issue 3915); no R3F/Drei |
 | `docling-opencv-cv2` | opencv-python-headless 5.0.0.93 is the only cv2. Default docling 2.129.0 extra standard pulls rapidocr>=3.9.1 which requires opencv_python. Constrain opencv-python; do not add unconstrained RapidOCR; keep torch from that extra out of the API env. pypdf 6.19.0 is separate from docling pypdfium2. |

@@ -15,7 +15,9 @@ One loop. Do not fork numbers outside the pin.
 3. Proof: `just check` (pin == config == this file == generated standard).
    Ready: `just gate`.
 4. Tech detail: `plugins/hack-agent-standards/standards/INDEX.md`
-   → one file. Pin numbers win.
+   → CORE, QUALITY when proving, one area file. Plugin skills are
+   `$hack-agent-standards:<skill>` (see Motion). Bare `$name` does
+   not match a plugin skill. Pin numbers win.
 5. Why: ADRs 0001–0008.
 
 ## Pin
@@ -49,6 +51,26 @@ One loop. Do not fork numbers outside the pin.
 - PostgreSQL is SoT. Qdrant is a derived index. RustFS holds objects.
   DuckDB is analytics only. User code never runs in the API process.
 
+## Motion
+
+Full playbook: `plugins/hack-agent-standards/standards/CORE.md`. Do not
+dump the catalogue into this file.
+
+- Layers first (`web/`, `api/`, workers, clients, `infra/`). DDD modules
+  inside a layer. Implement through the layers the request needs.
+- i18n dictionaries `ru` / `kk` / `en` on the first user-facing string.
+- Logs → Vector → OpenObserve; traces/metrics OTLP → OpenObserve
+  (`deploy.pipeline`).
+- PostgreSQL is SoT. User code never runs in the API process.
+- Owner text this turn wins. Unspecified slices follow the opened frame
+  and the pin.
+
+Layer skills (plugin `hack-agent-standards`): `apply-agent-standard`
+(INDEX), `core-motion`, `quality-proof`, `pin-dependencies`, `web-ui`,
+`python-api`, `wire-contracts`, `data-stores`, `native-clients`,
+`ai-models`, `identity-auth`, `text-formats`, `file-documents`,
+`education-lessons`, `runtime-infra`.
+
 ## Technology rules
 
 Codex 0.155.1 has no glob / `.mdc` / `alwaysApply` loader. Do not dump the
@@ -56,12 +78,16 @@ catalogue into this file. Do not add `plugins/hack-agent-standards/standards/*`
 to `project_doc_fallback_filenames`.
 
 1. Read `plugins/hack-agent-standards/standards/INDEX.md`.
-2. Open only the matching standard.
-3. Prefer `$apply-agent-standard` or `$apply-stack-rule` for a technology
-   or format change.
+2. Open CORE for motion. Open QUALITY when proving. Open one matching
+   area file. Prefer `$hack-agent-standards:<layer-skill>` when the
+   layer is obvious. Do not load the rest of the catalogue.
+3. Prefer `$hack-agent-standards:apply-agent-standard` when the layer
+   is unclear. Repo alias `$apply-stack-rule` still opens INDEX.
 
 If a later product directory has its own `AGENTS.md`, read that file before
 editing that tree. Nested `AGENTS.override.md` wins in that directory.
+Templates: `plugins/hack-agent-standards/nested/`. Copy in the same
+change that creates the tree. Do not create empty product trees.
 
 ## Layout
 
@@ -69,6 +95,8 @@ editing that tree. Nested `AGENTS.override.md` wins in that directory.
 | --- | --- | --- |
 | Instructions | `AGENTS.md` | This file. Nested `AGENTS.override.md` wins in that directory. |
 | Tech rules | `plugins/hack-agent-standards/standards/` | On-demand frames. Router is `INDEX.md`. |
+| Layer skills | `plugins/hack-agent-standards/skills/` | Thin loaders. Names in Motion. |
+| Nested AGENTS templates | `plugins/hack-agent-standards/nested/` | Copy when the product tree is created. |
 | Standards plugin | `plugins/hack-agent-standards/plugin.json` | First setup component. Portable Agent Plugins 1.0.0. |
 | Repo skills | `.agents/skills/<name>/SKILL.md` | Source of truth. Do not copy these names into the plugin. |
 | Marketplace | `.agents/plugins/marketplace.json` | Paths are relative to the repo root. |

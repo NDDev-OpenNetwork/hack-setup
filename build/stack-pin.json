@@ -97,7 +97,23 @@
       "apply-stack-rule"
     ],
     "plugin_skills": ["saint-tibo"],
-    "standards_plugin_skills": ["apply-agent-standard"],
+    "standards_plugin_skills": [
+      "apply-agent-standard",
+      "core-motion",
+      "quality-proof",
+      "pin-dependencies",
+      "web-ui",
+      "python-api",
+      "wire-contracts",
+      "data-stores",
+      "native-clients",
+      "ai-models",
+      "identity-auth",
+      "text-formats",
+      "file-documents",
+      "education-lessons",
+      "runtime-infra"
+    ],
     "features": {
       "multi_agent": false,
       "multi_agent_v2": false,
@@ -290,6 +306,7 @@
     "api_client": {
       "package": "@hey-api/openapi-ts",
       "version": "0.99.0",
+      "client_fetch": { "package": "@hey-api/client-fetch", "version": "0.13.1" },
       "engines": "node >=22.18",
       "contract": "FastAPI OpenAPI is the only API source; clients are generated",
       "workspace": "not-web",
@@ -334,7 +351,10 @@
     "postgresql": { "version": "18.6", "role": "source of truth" },
     "qdrant": { "version": "1.19.1", "role": "derived vector/hybrid index" },
     "qdrant_client": { "package": "qdrant-client", "version": "1.19.1" },
-    "redis_server": { "version": "8.10.2", "role": "sessions, cache, Taskiq streams; split instances if cache may evict" },
+    "redis_server": {
+      "version": "8.10.2",
+      "role": "one image, two Compose services: redis-durable (noeviction) and redis-cache (allkeys-lru)"
+    },
     "redis_py": { "package": "redis", "version": "8.1.0", "env": "api_workers" },
     "rustfs": { "version": "1.0.0", "role": "S3-compatible object store" },
     "boto3": { "package": "boto3", "version": "1.43.98" },
@@ -356,6 +376,12 @@
       "go_router": { "package": "go_router", "version": "18.0.1" },
       "dio": { "package": "dio", "version": "5.11.1" },
       "openapi": "dart-dio from the same FastAPI contract",
+      "openapi_generator": {
+        "package": "openapi-generator-cli",
+        "version": "7.25.0",
+        "generator": "dart-dio",
+        "role": "Dart wire client from contracts/openapi.json; Docker or bunx, never web"
+      },
       "also": ["freezed", "flutter_localizations", "intl", "ARB", "flutter_secure_storage", "app_links"]
     },
     "tauri": {
@@ -381,8 +407,29 @@
     "web": "server session + Redis + HttpOnly cookie + CSRF",
     "native": "system browser + backend callback + one-time return code",
     "identity": "internal PostgreSQL user + linked provider identities",
-    "google_calendar": "google-api-python-client + google-auth, explicit scopes",
-    "payments_test": "Stripe Python SDK + Checkout + Stripe CLI sandbox"
+    "google_calendar": {
+      "package": "google-api-python-client",
+      "version": "2.200.0",
+      "auth": { "package": "google-auth", "version": "2.58.0" },
+      "scopes": "explicit; calendar is a second consent"
+    },
+    "payments_test": {
+      "package": "stripe",
+      "version": "15.6.1",
+      "mode": "test Checkout + Stripe CLI sandbox"
+    },
+    "session": {
+      "package": "starsessions",
+      "version": "2.2.1",
+      "store": "RedisStore on redis-durable"
+    },
+    "telegram_initdata": {
+      "algorithm": "Ed25519",
+      "hmac_forbidden": true,
+      "source": "https://core.telegram.org/bots/webapps",
+      "prod_key_hex": "e7bf03a2fa4602af4580703d88dda5bb59f32ed8b02a56c187fe7d34caed242d",
+      "test_key_hex": "40055058a4ee38156a06562e52eece92a771bcd8346a8c4615cb7376eddf72ec"
+    }
   },
   "ai": {
     "cliproxyapi": {
@@ -418,7 +465,10 @@
     "faster_whisper": { "package": "faster-whisper", "version": "1.2.1", "env": "gpu_ml" },
     "sympy": { "package": "sympy", "version": "1.14.0" },
     "ffmpeg": "system FFmpeg + ffprobe",
-    "livekit": "optional live classroom/voice",
+    "livekit": {
+      "role": "optional live classroom/voice",
+      "compose": "profile live; do not start by default"
+    },
     "reports": "HTML/CSS + Playwright/Chromium"
   },
   "education": {
@@ -426,11 +476,11 @@
     "yjs_hocuspocus": "collaboration process, not a Python replacement",
     "katex": "display",
     "sympy": "compute, never via KaTeX",
-    "excalidraw": "whiteboard",
+    "excalidraw": { "package": "@excalidraw/excalidraw", "version": "0.18.1", "role": "whiteboard" },
     "xyflow": { "package": "@xyflow/react", "version": "12.11.6" },
-    "echarts": "charts",
-    "fsrs": "Python spaced repetition",
-    "ortools": "scheduling",
+    "echarts": { "package": "echarts", "version": "6.1.0", "role": "display only" },
+    "fsrs": { "package": "fsrs", "version": "6.3.2", "optimizer": "gpu_ml extra only" },
+    "ortools": { "package": "ortools", "version": "9.15.6755", "role": "scheduling when named" },
     "pyodide": "in-browser Python",
     "user_code": "isolated executor; gVisor extra isolation; never in the API process",
     "three": { "package": "three", "version": "0.186.0", "no_r3f": true }
@@ -456,6 +506,11 @@
     "ruff": { "package": "ruff", "version": "0.16.8" },
     "ty": { "package": "ty", "version": "0.0.82" },
     "pytest": { "package": "pytest", "version": "9.1.1" },
+    "pytest_asyncio": {
+      "package": "pytest-asyncio",
+      "version": "1.4.0",
+      "role": "API/worker async tests when api/ exists; not a host probe"
+    },
     "just": {
       "package": "just",
       "version": "1.58.0",
@@ -466,7 +521,8 @@
       "TypeScript 7 check",
       "Alembic migrations",
       "frontend + backend build"
-    ]
+    ],
+    "required_gates_when": "product trees exist; not just check"
   },
   "conflicts": [
     {
@@ -483,7 +539,7 @@
     },
     {
       "id": "aiogram-redis-vs-taskiq",
-      "decision": "API/worker redis-py 8.1.0 (taskiq-redis >=8,<9); Telegram env redis-py 7.4.1 (aiogram[redis] requires redis[hiredis]<8,>=6.2.0); one Redis server 8.10.2"
+      "decision": "API/worker redis-py 8.1.0 (taskiq-redis >=8,<9); Telegram env redis-py 7.4.1 (aiogram[redis] requires redis[hiredis]<8,>=6.2.0); one Redis image 8.10.2 as two Compose services (redis-durable + redis-cache)"
     },
     {
       "id": "litellm-otel",

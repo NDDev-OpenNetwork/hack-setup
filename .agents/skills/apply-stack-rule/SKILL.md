@@ -15,14 +15,16 @@ cwd `AGENTS.md` chain (32 KiB). Frames live in
    `build/stack-pin.json` and `.codex/config.toml` together, then
    `just check`. Do not fork those numbers into a frame first.
 3. Read `plugins/hack-agent-standards/standards/INDEX.md`. Open CORE for
-   motion. Open QUALITY when proving. Open one area file when it exists
-   and matches.
+   motion. Open QUALITY when proving. Open one area file. Prefer
+   `$hack-agent-standards:<layer-skill>` when the layer is obvious.
 4. Open `build/stack-pin.json` for the exact version.
 5. Follow the pin and the opened frame. Owner text this turn wins where
    it specifies; the rest stays on the frame.
 6. Do not load the rest of the catalogue. Do not copy
    `docs/research/` into the change.
 
-If INDEX has no file for the topic yet, stay on CORE + the pin.
-Do not invent a new stack to fill the gap. Prefer
-`$apply-agent-standard` when loading the catalogue from the plugin.
+If INDEX has no file for the topic, stay on CORE + the pin.
+Do not invent a new stack to fill the gap. This repo skill is the
+unqualified INDEX alias. Plugin skills need
+`$hack-agent-standards:<name>` (router
+`$hack-agent-standards:apply-agent-standard`).

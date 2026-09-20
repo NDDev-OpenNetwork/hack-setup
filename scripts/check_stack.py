@@ -340,6 +340,11 @@ def render_standard(stack: dict[str, Any], probes: list[Probe]) -> str:
             if isinstance(standards_plugin, dict):
                 lines.append(f"- standards: `{standards_plugin.get('id')}`")
                 lines.append(f"- frames: `{standards_plugin.get('standards')}`")
+            skills = registered.get("standards_plugin_skills")
+            if isinstance(skills, list) and skills:
+                listed = ", ".join(f"`{name}`" for name in skills if isinstance(name, str))
+                if listed:
+                    lines.append(f"- standards skills: {listed}")
 
     if isinstance(banned, list) and banned:
         lines.extend(["", "## Do not use", ""])

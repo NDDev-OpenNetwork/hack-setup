@@ -1,7 +1,7 @@
 # Quality
 
-Universe: `build/stack-pin.json` `quality.*` and `deploy.openobserve`,
-`deploy.vector`, `deploy.otel`.
+Universe: `build/stack-pin.json` `quality.*`, `deploy.pipeline`,
+`deploy.openobserve`, `deploy.vector`, `deploy.otel`.
 
 Unless the owner said otherwise this turn.
 
@@ -14,8 +14,9 @@ the tree, and observable. It does not mean extra product scope.
    behavior is real.
 2. Run that proof. Setup today: `just check` and `just test` when
    pins, plugins, scripts, or tests moved. Do not invent a CI fleet.
-3. Join the OTel → Vector → OpenObserve path. A new running piece
-   emits on the spine. It does not add a second APM, a second log
+3. Join `deploy.pipeline`: JSON logs → Vector → OpenObserve;
+   traces/metrics OTLP → OpenObserve. A new running piece emits
+   on that spine. It does not add a second APM, a second log
    format, or a silent code path.
 4. If proof is red, repair toward the pin. Then re-run the same
    proof. Do not swap in a weaker check to look green.
@@ -24,7 +25,12 @@ the tree, and observable. It does not mean extra product scope.
 
 Checks do not write. A command named check must not format, rewrite
 lockfiles, regenerate clients, or apply migrations. Those are
-separate intentional edits.
+separate intentional edits. When `api/` exists, contract proof is
+a tmp dump of `app.openapi()` compared to committed
+`contracts/openapi.json`, then typecheck of already-generated
+clients. Regen is a write recipe named `generate-clients`
+(add it when `api/` exists). CONTRACTS owns the dump. Do not
+add that recipe in this setup repo.
 
 Report what actually ran: command, tree, pass / fail / skip. Do not
 claim a test, deploy, or host probe that has no output.
@@ -36,7 +42,9 @@ logs → Vector → OpenObserve; traces and metrics OTLP → OpenObserve
 Setup-only work has no product runtime yet. Then quality is: the
 tree stays synchronized (pin, config, generated standard, this
 catalogue), the piece is complete, and the next module can plug into
-the same telemetry spine.
+the same telemetry spine. Pin `quality.required_gates` (OpenAPI
+sync, `tsc` 7, Alembic, frontend + backend build) apply **when
+product trees exist**. They are not `just check` in this repo.
 
 ## Done
 

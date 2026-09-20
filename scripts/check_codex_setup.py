@@ -79,6 +79,16 @@ def skill_name(path: Path) -> str:
     name = name_match.group(1)
     if len(name) > 64:
         raise CheckError(f"{path.relative_to(ROOT)}: name longer than 64 characters")
+    desc_match = re.search(r"^description:\s*(.+?)\s*$", text, re.MULTILINE)
+    if desc_match is None:
+        raise CheckError(f"{path.relative_to(ROOT)}: missing frontmatter description")
+    description = desc_match.group(1).strip()
+    if not description:
+        raise CheckError(f"{path.relative_to(ROOT)}: empty frontmatter description")
+    if len(description) > 1024:
+        raise CheckError(
+            f"{path.relative_to(ROOT)}: description longer than 1024 characters"
+        )
     return name
 
 
@@ -595,12 +605,25 @@ def check_agents_md() -> None:
         raise CheckError("AGENTS.md must not route to stale docs/rules/")
     if "plugins/hack-agent-standards/standards" not in text:
         raise CheckError("AGENTS.md must route to plugins/hack-agent-standards/standards")
+    if "## Motion" not in text:
+        raise CheckError("AGENTS.md must include the Motion kernel")
+    if "$hack-agent-standards:" not in text:
+        raise CheckError(
+            "AGENTS.md must invoke plugin skills as $hack-agent-standards:<name>"
+        )
+    if "plugins/hack-agent-standards/nested" not in text:
+        raise CheckError("AGENTS.md must point at nested AGENTS templates")
     index = ROOT / "plugins" / "hack-agent-standards" / "standards" / "INDEX.md"
     if not index.is_file():
         raise CheckError("standards INDEX.md is missing")
-    for linked in re.findall(r"\]\(([A-Za-z0-9_.-]+\.md)\)", read_text(index)):
+    linked_names = set(re.findall(r"\]\(([A-Za-z0-9_.-]+\.md)\)", read_text(index)))
+    for linked in linked_names:
         if not (index.parent / linked).is_file():
             raise CheckError(f"standards/INDEX.md links to missing {linked}")
+    for orphan in sorted(
+        path.name for path in index.parent.glob("*.md") if path.name not in linked_names
+    ):
+        raise CheckError(f"standards/{orphan} is not linked from INDEX.md")
     if (ROOT / "docs" / "rules").exists():
         raise CheckError("docs/rules/ is stale; frames live in the standards plugin")
     if (ROOT / "docs" / "agent-standards").exists():
@@ -801,6 +824,31 @@ def check_plugin_and_marketplace() -> None:
         check_marketplace_entry(entry, name, dest)
 
 
+NESTED_AGENTS_TEMPLATES = frozenset(
+    {
+        "README.md",
+        "web.md",
+        "api.md",
+        "mobile.md",
+        "desktop.md",
+        "telegram.md",
+        "infra.md",
+    }
+)
+
+
+def check_nested_templates() -> None:
+    nested = ROOT / "plugins" / "hack-agent-standards" / "nested"
+    if not nested.is_dir():
+        raise CheckError("plugins/hack-agent-standards/nested/ is missing")
+    got = {path.name for path in nested.iterdir() if path.is_file()}
+    if got != NESTED_AGENTS_TEMPLATES:
+        raise CheckError(
+            "nested AGENTS templates must be "
+            f"{sorted(NESTED_AGENTS_TEMPLATES)}, got {sorted(got)}"
+        )
+
+
 def check_skills() -> None:
     repo_skills = collect_skill_names(ROOT / ".agents" / "skills")
     plugin_skills = collect_skill_names(ROOT / "plugins" / "saint-tibo" / "skills")
@@ -814,24 +862,10 @@ def check_skills() -> None:
         "apply-stack-rule",
     }
     expected_plugin = {"saint-tibo"}
-    expected_standards = {"apply-agent-standard"}
     if set(repo_skills) != expected_repo:
         raise CheckError(f"repo skills must be {sorted(expected_repo)}, got {sorted(repo_skills)}")
     if set(plugin_skills) != expected_plugin:
         raise CheckError(f"plugin skills must be {sorted(expected_plugin)}, got {sorted(plugin_skills)}")
-    if set(standards_skills) != expected_standards:
-        raise CheckError(
-            f"standards plugin skills must be {sorted(expected_standards)}, "
-            f"got {sorted(standards_skills)}"
-        )
-    seen: dict[str, Path] = {}
-    for group in (repo_skills, plugin_skills, standards_skills):
-        for name, path in group.items():
-            if name in seen:
-                raise CheckError(
-                    f"skill name collision {name}: {seen[name]} and {path}"
-                )
-            seen[name] = path
     pin = load_json(STACK_PIN_PATH)
     if not isinstance(pin, dict):
         raise CheckError("build/stack-pin.json must be an object")
@@ -849,11 +883,35 @@ def check_skills() -> None:
             "stack-pin.registered.plugin_skills must match the saint-tibo skill set"
         )
     listed_standards = registered.get("standards_plugin_skills")
-    if not isinstance(listed_standards, list) or set(listed_standards) != expected_standards:
+    if not isinstance(listed_standards, list) or not listed_standards:
         raise CheckError(
-            "stack-pin.registered.standards_plugin_skills must match "
-            "the standards plugin skill set"
+            "stack-pin.registered.standards_plugin_skills must be a non-empty list"
         )
+    if any(not isinstance(name, str) or not name for name in listed_standards):
+        raise CheckError("standards_plugin_skills must be non-empty strings")
+    if len(listed_standards) != len(set(listed_standards)):
+        raise CheckError("standards_plugin_skills must be unique")
+    if "apply-agent-standard" not in listed_standards:
+        raise CheckError("standards_plugin_skills must include apply-agent-standard")
+    expected_standards = set(listed_standards)
+    if set(standards_skills) != expected_standards:
+        raise CheckError(
+            "standards plugin skills must match "
+            "stack-pin.registered.standards_plugin_skills: "
+            f"expected {sorted(expected_standards)}, got {sorted(standards_skills)}"
+        )
+    seen: dict[str, Path] = {}
+    for group in (repo_skills, plugin_skills, standards_skills):
+        for name, path in group.items():
+            if name in seen:
+                raise CheckError(
+                    f"skill name collision {name}: {seen[name]} and {path}"
+                )
+            seen[name] = path
+    agents = read_text(ROOT / "AGENTS.md")
+    missing = [name for name in listed_standards if name not in agents]
+    if missing:
+        raise CheckError(f"AGENTS.md must name standards skills {missing}")
 
 
 def main() -> int:
@@ -866,6 +924,7 @@ def main() -> int:
         check_custom_agents,
         check_plugin_and_marketplace,
         check_skills,
+        check_nested_templates,
     )
     errors: list[str] = []
     for check in checks:
