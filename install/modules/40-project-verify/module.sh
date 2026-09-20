@@ -10,10 +10,12 @@ install_plugins() {
   [ -x "$codex_bin" ] || codex_bin="$(command -v codex || true)"
   [ -n "$codex_bin" ] || die "codex is required before plugins; run module 20"
   "$codex_bin" plugin marketplace add "$HACK_REPO_ROOT" >/dev/null
-  "$codex_bin" plugin add saint-tibo@saint-tibo >/dev/null
-  "$codex_bin" plugin add hack-agent-standards@saint-tibo >/dev/null
-  "$codex_bin" plugin add hack-agent-workflow@saint-tibo >/dev/null
-  "$codex_bin" plugin add hack-agent-lsp@saint-tibo >/dev/null
+  # Marketplace is the plugin SoT — install whatever it lists.
+  python3 -c 'import json,sys; print("\n".join(p["name"] for p in json.load(open(sys.argv[1]))["plugins"]))' \
+    "$HACK_REPO_ROOT/.agents/plugins/marketplace.json" \
+    | while IFS= read -r name; do
+        "$codex_bin" plugin add "$name@saint-tibo" >/dev/null
+      done
   log "plugins installed and synced with the repo"
 }
 
