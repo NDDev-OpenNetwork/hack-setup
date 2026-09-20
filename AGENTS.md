@@ -116,6 +116,10 @@ root `plugin.json` fields other than the portable schema. Do not mix
 `default_permissions` with `sandbox_mode`. Do not add a root file named
 `install` (it cannot coexist with `install/` on macOS).
 
+Installed plugins are a copy under `~/.codex/plugins/cache/`, not a live
+view of the repo. After editing `plugins/*/`, refresh with
+`codex plugin add <name>@saint-tibo` — `just check` fails on drift.
+
 ## Team rules
 
 - One claimed file owner at a time. Do not edit a file another teammate has open.

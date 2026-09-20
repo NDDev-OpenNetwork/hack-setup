@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -815,6 +816,44 @@ def check_marketplace_entry(entry: object, expected_name: str, dest: str) -> Non
         raise CheckError("marketplace entry needs category")
 
 
+def check_plugin_cache_sync() -> None:
+    codex_bin = Path.home() / ".local" / "bin" / "codex"
+    if not codex_bin.exists():
+        return
+    cache_root = Path.home() / ".codex" / "plugins" / "cache" / "saint-tibo"
+    for name in ("saint-tibo", "hack-agent-standards"):
+        repo_dir = ROOT / "plugins" / name
+        version = load_json(repo_dir / "plugin.json").get("version", "")
+        cache_dir = cache_root / name / str(version)
+        if not cache_dir.is_dir():
+            raise CheckError(
+                f"plugin {name}@{version} not installed; run "
+                f"codex plugin add {name}@saint-tibo"
+            )
+        repo_files = {
+            p.relative_to(repo_dir): p
+            for p in repo_dir.rglob("*")
+            if p.is_file()
+        }
+        cache_files = {
+            p.relative_to(cache_dir) for p in cache_dir.rglob("*") if p.is_file()
+        }
+        if set(repo_files) != cache_files:
+            raise CheckError(
+                f"plugin cache {name}@{version} file set differs from the repo; "
+                f"re-run codex plugin add {name}@saint-tibo"
+            )
+        for rel, src in repo_files.items():
+            cached = cache_dir / rel
+            if hashlib.sha256(src.read_bytes()).digest() != hashlib.sha256(
+                cached.read_bytes()
+            ).digest():
+                raise CheckError(
+                    f"plugin cache {name}@{version} is stale at {rel}; "
+                    f"re-run codex plugin add {name}@saint-tibo"
+                )
+
+
 def check_plugin_and_marketplace() -> None:
     check_portable_plugin("plugins/saint-tibo/plugin.json", "saint-tibo")
     check_portable_plugin("plugins/hack-agent-standards/plugin.json", "hack-agent-standards")
@@ -936,6 +975,7 @@ def main() -> int:
         check_config,
         check_custom_agents,
         check_plugin_and_marketplace,
+        check_plugin_cache_sync,
         check_skills,
         check_nested_templates,
     )
