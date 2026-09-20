@@ -109,7 +109,10 @@
     "workflow_plugin_skills": [
       "session-boot",
       "github-flow",
-      "agent-handoff"
+      "agent-handoff",
+      "hack-mode",
+      "ship-verify",
+      "debt-ledger"
     ],
     "lsp_plugin": {
       "id": "hack-agent-lsp@saint-tibo",

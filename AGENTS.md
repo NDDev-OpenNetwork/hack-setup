@@ -80,7 +80,13 @@ Workflow skills (plugin `hack-agent-workflow`, invoke
 `$hack-agent-workflow:<name>`): `session-boot` (serena-first open:
 memories + NEXT-SESSION + issues), `github-flow` (github-first loop:
 named issue → work branch → personal named branch → dev → main),
-`agent-handoff` (agent-first close: memories + plan + quoted proof).
+`agent-handoff` (agent-first close: memories + plan + quoted proof),
+`hack-mode` (persistent hackathon delivery mode: laziest working
+solution, no review round, no test suite, `hack:` markers on deferred
+corners), `ship-verify` (build on the server, check the live result —
+done means live), `debt-ledger` (harvest `hack:`/`ponytail:` markers
+for post-hackathon cleanup). hack-mode + ship-verify adapted from
+ponytail (MIT), archive at `docs/research/ponytail/`.
 
 Tooling skills (plugin `hack-agent-lsp`, invoke
 `$hack-agent-lsp:<name>`): `lsp-map` (one pinned language server per
