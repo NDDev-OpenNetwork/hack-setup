@@ -11,7 +11,9 @@ Already installed by `./setup` (no action):
 
 - `ty server`, `ruff server` — uv tools (`quality.ty`, `quality.ruff`)
 - `biome lsp-proxy` — per-project `bunx @biomejs/biome`
-- `tsgo --lsp` — ships with the pinned TypeScript package
+- `tsserver` — ships with the pinned `typescript` package; VS
+  Code/Cursor use it built-in. Editors needing stdio:
+  `npm i -g typescript-language-server@6.0.0` next to the pinned TS
 - `dart language-server` — inside the Flutter SDK
 - `rust-analyzer` — `rustup component add rust-analyzer`
 

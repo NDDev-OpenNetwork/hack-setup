@@ -9,7 +9,7 @@ language; do not pick versions outside the pin.
 
 | Language | Server | Version source |
 | --- | --- | --- |
-| TypeScript / TSX | `tsgo --lsp` | `runtimes.typescript` (native tsc 7) |
+| TypeScript / TSX | `tsserver` (bundled) | `runtimes.typescript` 7.0.2; optional stdio wrapper `typescript-language-server` 6.0.0 |
 | JS/TS lint+format | `biome lsp-proxy` | `quality.biome` |
 | Python types | `ty server` | `quality.ty` |
 | Python lint/format | `ruff server` | `quality.ruff` |
@@ -30,8 +30,9 @@ Rules:
 2. Agents prove code with the pinned CLIs (`ty check`, `ruff check`,
    `biome check`, `tsc`), not with editor diagnostics. LSP is for
    editors and for Serena-style symbol navigation.
-3. No pyright/pylsp, no typescript-language-server, no eslint LSP —
-   the matrix rows above are the whole list. A missing language means
+3. No pyright/pylsp, no eslint LSP, no `@typescript/native-preview`
+   (tsgo ships only as dated dev builds — wait for a stable bin). The
+   matrix rows above are the whole list. A missing language means
    "no server", not "pick one".
 4. Editor choice is personal (VS Code / Cursor / Zed); the server and
    its version are not.

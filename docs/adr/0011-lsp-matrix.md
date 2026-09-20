@@ -16,8 +16,10 @@ already pins every other tool; LSP was the gap.
 Ship `plugins/hack-agent-lsp` (portable Agent Plugins 1.0.0) plus an
 `lsp` section in `build/stack-pin.json`:
 
-- One server per language, no alternates: `tsgo --lsp` (typescript
-  7.0.2), `biome lsp-proxy`, `ty server`, `ruff server`,
+- One server per language, no alternates: `tsserver` bundled with
+  `typescript` 7.0.2 (tsgo exists only as `@typescript/native-preview`
+  dev builds — not pinned; `typescript-language-server` 6.0.0 is the
+  optional stdio wrapper), `biome lsp-proxy`, `ty server`, `ruff server`,
   `rust-analyzer` (rustup component), `dart language-server` (Flutter
   SDK), `gopls` v0.23.0, `taplo` 0.10.0, `marksman` 2026-02-08,
   `vscode-langservers-extracted` 4.10.0, `yaml-language-server` 1.24.0,

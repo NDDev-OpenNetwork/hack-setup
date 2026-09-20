@@ -119,7 +119,8 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | `quality.pytest` | `9.1.1` | `pytest` |
 | `quality.pytest_asyncio` | `1.4.0` | `pytest-asyncio` |
 | `quality.just` | `1.58.0` | `just` |
-| `lsp.typescript` | `7.0.2 (via runtimes.typescript)` | `tsgo --lsp` |
+| `lsp.typescript` | `7.0.2 (via runtimes.typescript)` | `tsserver (bundled with the typescript package; editors attach it directly)` |
+| `lsp.typescript_stdio` | `6.0.0` | `typescript-language-server` |
 | `lsp.web_lint` | `2.5.14 (via quality.biome)` | `biome lsp-proxy` |
 | `lsp.python_types` | `0.0.82 (via quality.ty)` | `ty server` |
 | `lsp.python_lint` | `0.16.8 (via quality.ruff)` | `ruff server` |

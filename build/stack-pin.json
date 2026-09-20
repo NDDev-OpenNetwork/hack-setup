@@ -538,7 +538,18 @@
   },
   "lsp": {
     "rule": "one language server per language; versions come from this pin or the pinned tool itself; agents verify via the pinned CLIs, editors pick the server not the version",
-    "typescript": { "server": "tsgo --lsp", "version_from": "runtimes.typescript" },
+    "typescript": {
+      "server": "tsserver (bundled with the typescript package; editors attach it directly)",
+      "version_from": "runtimes.typescript",
+      "note": "typescript@7.0.2 ships bin tsc only; tsgo exists only as @typescript/native-preview dev builds — do not pin those"
+    },
+    "typescript_stdio": {
+      "server": "typescript-language-server (stdio wrapper for editors without built-in tsserver support)",
+      "package": "typescript-language-server",
+      "version": "6.0.0",
+      "install": "npm i -g typescript-language-server@6.0.0",
+      "optional": true
+    },
     "web_lint": { "server": "biome lsp-proxy", "version_from": "quality.biome" },
     "python_types": { "server": "ty server", "version_from": "quality.ty" },
     "python_lint": { "server": "ruff server", "version_from": "quality.ruff" },

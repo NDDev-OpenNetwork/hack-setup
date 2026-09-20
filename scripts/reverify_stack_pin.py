@@ -26,6 +26,7 @@ NPM = [
     ("quality.biome", "@biomejs/biome"),
     ("quality.vitest", "vitest"),
     ("quality.playwright", "@playwright/test"),
+    ("lsp.typescript_stdio", "typescript-language-server"),
     ("lsp.json_html_css", "vscode-langservers-extracted"),
     ("lsp.yaml", "yaml-language-server"),
     ("lsp.shell", "bash-language-server"),
