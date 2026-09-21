@@ -371,6 +371,10 @@ Issue #24 wave (letya999 agent audit, dispositions posted on the issue):
   devin tests now redirect USERPROFILE/APPDATA on nt.
 - Final: commit `ed4c544`, run 35662843426 = 8/8 green incl. native
   Windows pytest steps on both e2e jobs. Python 3.14.7 stays pinned.
+- Issues #24 + #23 closed with `live-verified`; regression test
+  `test_deleted_caller_cwd_does_not_bypass` covers the -C bypass on
+  every platform. Open remainder: #3/#4/#7 (P1 live surfaces — need
+  product repo / real droplet), #20 tracker.
 
 Landed previous pass (hardening sweep, no live-host items):
 - hack_mode.py: `_split_tokens` — posix=False on Windows so

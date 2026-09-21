@@ -105,6 +105,16 @@ def test_git_c_target_authority(repos):
     assert not _denied(f"git -C {orch} push origin dev", worker)
 
 
+def test_deleted_caller_cwd_does_not_bypass(repos, tmp_path):
+    # Regression (issue #24): a caller cwd that no longer exists must not
+    # kill `git -C` resolution — absolute -C targets still deny.
+    worker, _, _, _, _ = repos
+    gone = tmp_path / "gone"
+    gone.mkdir()
+    gone.rmdir()
+    assert _denied(f"git -C {worker} push origin dev", gone)
+
+
 def test_implicit_push_denied_on_protected_head(repos):
     *_, dev_head = repos
     assert _denied("git push", dev_head)
