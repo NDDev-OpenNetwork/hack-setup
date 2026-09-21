@@ -217,42 +217,68 @@ Setup owner stream: Danil.
 Not requested: BAITC remote, Serena/hooks install.
 
 ## Open threads
-### State 2026-09-21 — deep audit landed (2b70788)
+### State 2026-09-21 — external audit pack closed (issues #1–#19 vs a77e2fb)
 
-All review findings closed; `just check/gate/test` green; hook trust
-rewritten (6 handlers) and stable across commits.
+All 19 implementation findings verified against source and fixed;
+`just check`/`gate`/`test` (17 tests) green; `just live` proves the real
+Serena MCP chain. `git-sync` reports dirty because this wave is being
+committed now — check `git log` for the landing SHAs.
 
-Landed this pass:
-- repair_setup.py: full upstream hook-hash normalization port
-  (commandWindows stripped, timeout clamps, canonical JSON), narrow
-  TOML unescape, root-aware TOML-safe notify writer (foreign root
-  notify = WARN, never corrupts), tomllib-validated writes,
-  idempotent managed block.
-- hooks.json: `git rev-parse --show-toplevel` root resolution +
-  commandWindows cmd variants on all six handlers.
-- hack_mode.py: refspec tokenization (feat/12-main-fix allowed,
-  wildcard/all/mirror/delete/HEAD-upstream denied), lanes.json gates
-  hack-mode injection — harness repo gets SETUP:CHECK only.
-- deploy-watch.sh: `.deployed-sha` = last SUCCESSFUL deploy; failed
-  builds retry next tick; bounded healthcheck (12×5s), die on fail.
-- bootstrap PATH before modules; module 40 runs full repair;
-  module.ps1 delegates to repair + exit codes.
-- context7 keyless-by-default (0.155.1 hard-errors on unset env var).
-- Serena pinned to python_ty. Workflow: worktree-first orchestrator
-  spawn + retirement contract, verify-agent role, merge beacons,
-  per-domain serena memories.
-- vibestrap 5c8dffb: fork surface synced, stray hook removed,
-  thin build/stack-pin.json + fork exceptions (RHF over TanStack
-  Form, TanStack Start, better-auth/drizzle=auth schema only),
-  .serena baseline.
+Landed this pass (audit wave):
+- repair_setup.py: `pinned_version()` reads `codex_cli` key (no
+  fallback); `fix_config_cleanup` is the single writer for legacy
+  user-config cleanup — preserves owned headers + ALL `[hooks.state.*]`
+  (local and foreign checkouts) + `[[array-of-tables]]`, converges on
+  re-run; plugin cache prunes non-selected version dirs.
+- module 20/40: `status` is observational only (install repairs then
+  checks); module.ps1 cleanup scoped per-checkout like the POSIX twin.
+- hack_mode.py lane guard: shlex tokenization, `git -C <path>` resolves
+  protected authority from the TARGET repo's lanes.json, quoted paths
+  handled; tested by tests/test_lane_guard.py. Session log rotated at
+  512 KiB. Hook smoke runs with forced `mode=full` env so persisted
+  `off` state can't fail it.
+- Serena: `ls_specific_settings.python_ty.ty_version` pins ty 0.0.82;
+  `powershell` dropped from language_servers (missing pwsh aborted the
+  whole LS manager on POSIX — find_symbol died). NEW
+  `scripts/verify_serena.py` = `[live]` proof: stdio MCP handshake →
+  activate → tools/list (23) → find_symbol via python_ty → memory
+  write/read/delete (arg is `memory_name`; tool errors are isError
+  results). Wired as `just live`.
+- Runtimes: `just` 1.58.0 installed by module 30 from per-platform
+  sha256-pinned GitHub assets (all 5 platforms) — moved to required
+  probes. `./setup` exercised end-to-end on darwin-arm64.
+- deploy-watch.sh: refuses dirty/local-ahead/diverged server checkouts,
+  ff-only from ancestor, `.deployed-sha` = actual HEAD after a
+  SUCCESSFUL deploy+healthcheck. provision-server.sh: non-destructive
+  (no reset --hard, env written only if absent via separate SSH
+  temp+mv), prereq checks incl. compose-plugin/curl, timer starts only
+  with app `.env` or START_TIMER=1, remote values quoted.
+- notify.sh: JSON-safe parse, 120-char bound, `'`→`''` PS escaping,
+  injection-neutral (verified with hostile payload).
+- Workflow skills: brief stays in ORCHESTRATOR checkout (worktree lacks
+  it) with absolute paths; file tools bind to thread cwd; retirement
+  needs inventory before `worktree remove`; sync agent
+  `sync/<user>/<round>` owns memory updates; issue lifecycle
+  implemented→lane-ready→integrated→live-verified→closed; Danil
+  default integrator (Ivan/Artem opt-in); issue threshold = anything
+  implemented or any non-trivia discovery (contracts/other lanes/data/
+  deploy are never trivia); cannot-fake = auth, primary journey,
+  secrets/personal data, deployment; ru/kk/en all core.
+- CI: pinned pytest from the pin, `sh -n` loops every shell file,
+  reverify filters draft/prerelease releases.
+- Proof labels: checkers print `[artifact]`/`[installed]`; live proofs
+  print `[live]`.
 
 Open:
 - ~/.codex/config.toml has foreign root `notify` (Codex Computer Use
   app) — repair warns by design; merge manually only if toast wanted.
 - vibestrap push policy: dev pushes need owner beacon / orchestrator
-  marker (guard is working — it denied my test pushes).
+  marker (guard is working — it denied test pushes).
 - Remaining internet-verify items: remote compaction SessionStart
   behavior, Codex App thread instruction shadowing (#33238 noted in
-  pin), Windows commandWindows golden-vector test on a real host.
+  pin), Windows commandWindows golden-vector test on a real host,
+  Windows Install-Just path (needs a real Windows run).
+- GitHub issues #1–#19 carry per-issue evidence comments; #20 is the
+  integration tracker owned by Danil.
 
 
