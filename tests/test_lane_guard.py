@@ -14,7 +14,10 @@ LANES = json.dumps({"protected_branches": ["dev", "main"]})
 
 def _git(repo: Path, *args: str) -> None:
     subprocess.run(
-        ["git", "-C", str(repo), *args],
+        # -c identity inline: CI runners have no ~/.gitconfig (#lane tests
+        # must not depend on host git config).
+        ["git", "-c", "user.email=t@t", "-c", "user.name=t",
+         "-C", str(repo), *args],
         check=True, capture_output=True, text=True,
     )
 
@@ -137,6 +140,28 @@ def test_relative_git_c_anchors_at_caller_cwd(repos, tmp_path):
     assert worker.is_dir()
     assert _denied("git -C worker push origin dev", tmp_path)
     assert not _denied("git -C free push origin dev", tmp_path)
+
+
+def test_multiline_and_wrapper_pushes_denied(repos):
+    worker, *_ = repos
+    # A second line is a second command; subshells execute pushes too;
+    # sudo/doas run the push for real — all must hit the guard.
+    for cmd in (
+        "git fetch origin\ngit push origin dev",
+        "echo start; sleep 0\n git -C . push origin main",
+        "sudo git push origin dev",
+        "sudo -u root git push origin main",
+        "doas git push origin main",
+        "nice -n 5 git push origin dev",
+        "env FOO=1 git push origin dev",
+        "echo $(git push origin dev)",
+    ):
+        assert _denied(cmd, worker), cmd
+    # commit messages and non-git commands that merely mention pushes
+    # stay allowed
+    assert not _denied('git commit -m "feat: handle push flow"', worker)
+    assert not _denied("echo git push origin dev", worker)
+    assert not _denied("sudo -u root whoami", worker)
 
 
 def test_windows_tokenize_keeps_backslash_paths():
