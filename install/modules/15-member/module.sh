@@ -52,7 +52,9 @@ u = json.load(sys.stdin)
 login = u.get("login") or ""
 name = u.get("name") or login
 uid = u.get("id")
-email = u.get("email") or ("%s+%s@users.noreply.github.com" % (uid, login))
+email = u.get("email")
+if not email:
+    email = ("%s+%s@users.noreply.github.com" % (uid, login)) if uid else ("%s@users.noreply.github.com" % login)
 print(f"{login}\t{name}\t{email}")'
 }
 

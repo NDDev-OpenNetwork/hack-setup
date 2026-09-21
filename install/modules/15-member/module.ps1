@@ -44,7 +44,10 @@ function Get-GhIdentity {
     $u = ($raw -join "`n") | ConvertFrom-Json
     $login = [string]$u.login
     $name = if ($u.name) { [string]$u.name } else { $login }
-    $email = if ($u.email) { [string]$u.email } else { "$($u.id)+$login@users.noreply.github.com" }
+    $email = [string]$u.email
+    if (-not $email) {
+        $email = if ($u.id) { "$($u.id)+$login@users.noreply.github.com" } else { "$login@users.noreply.github.com" }
+    }
     return @{ login = $login; name = $name; email = $email }
 }
 

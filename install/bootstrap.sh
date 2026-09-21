@@ -42,14 +42,20 @@ while [ "$#" -gt 0 ]; do
       HACK_MEMBER="$2"
       shift
       ;;
-    --member=*) HACK_MEMBER="${1#--member=}" ;;
+    --member=*)
+      HACK_MEMBER="${1#--member=}"
+      [ -n "$HACK_MEMBER" ] || die "--member needs a name (danil|ivan|artem)"
+      ;;
     --danil | --ivan | --artem) HACK_MEMBER="${1#--}" ;;
     --os)
       [ "$#" -ge 2 ] || die "--os needs a value (macos|ubuntu|windows)"
       HACK_TARGET_OS="$2"
       shift
       ;;
-    --os=*) HACK_TARGET_OS="${1#--os=}" ;;
+    --os=*)
+      HACK_TARGET_OS="${1#--os=}"
+      [ -n "$HACK_TARGET_OS" ] || die "--os needs a value (macos|ubuntu|windows)"
+      ;;
     --print-env)
       printf 'export PATH="%s:%s:${PATH}"\n' "$HACK_LOCAL_BIN" "${HOME}/.local/bin"
       exit 0

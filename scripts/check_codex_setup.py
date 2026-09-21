@@ -1342,6 +1342,30 @@ def py_compile(script_path: str) -> None:
         raise CheckError(f"{script_path} must compile: {exc}") from exc
 
 
+def check_ps1_ascii() -> None:
+    # Windows PowerShell 5.1 decodes BOM-less ps1 as ANSI: UTF-8
+    # punctuation in executable lines becomes smart quotes that toggle
+    # string state and cascade into parse errors (CI run 35645725406).
+    # Non-ASCII is allowed only after a `#` on the same line (comments).
+    for path in sorted(ROOT.rglob("*.ps1")):
+        if ".git" in path.parts or "node_modules" in path.parts:
+            continue
+        rel = path.relative_to(ROOT)
+        for number, line in enumerate(
+            path.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            for index, char in enumerate(line):
+                if ord(char) > 127:
+                    comment = line.find("#")
+                    if comment == -1 or comment > index:
+                        raise CheckError(
+                            f"{rel}:{number} has non-ASCII outside a comment; "
+                            "PS 5.1 decodes BOM-less ps1 as ANSI and mangled "
+                            "smart quotes break string parsing"
+                        )
+                    break
+
+
 def check_serena_project() -> None:
     """`.serena/project.yml` must stay consistent with the stack pin —
     stdlib-only check (no yaml dep): the pinned `ty_version`, the
@@ -1401,6 +1425,7 @@ def main() -> int:
         check_nested_templates,
         check_hooks,
         check_serena_project,
+        check_ps1_ascii,
     )
     errors: list[str] = []
     for check in checks:
