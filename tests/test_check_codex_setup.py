@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+WIN32 = sys.platform == "win32"
 
 
 def test_check_codex_setup_passes() -> None:
@@ -18,8 +19,17 @@ def test_check_codex_setup_passes() -> None:
 
 
 def test_setup_dry_run_passes() -> None:
+    # Extensionless POSIX entry cannot spawn on native Windows — the ps1
+    # twin prints the same dry-run lines (issue #24).
+    if WIN32:
+        cmd = [
+            "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+            "-File", str(REPO / "setup.ps1"), "--dry-run",
+        ]
+    else:
+        cmd = [str(REPO / "setup"), "--dry-run"]
     result = subprocess.run(
-        [str(REPO / "setup"), "--dry-run"],
+        cmd,
         cwd=REPO,
         capture_output=True,
         text=True,

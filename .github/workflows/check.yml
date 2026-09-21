@@ -98,6 +98,13 @@ jobs:
           # plugin management is auth-gated — informational on CI
           devin plugins list; if ($LASTEXITCODE -ne 0) { Write-Host 'plugins list needs devin auth (expected on CI)' }
           python scripts/check_devin_setup.py
+      - name: Unit tests on native Windows
+        shell: pwsh
+        run: |
+          . .\devin-setup\install\env.ps1
+          cd devin-setup
+          $pytestV = python -c 'import json; print(json.load(open("build/stack-pin.json"))["quality"]["pytest"]["version"])'
+          uvx --from "pytest==$pytestV" pytest -q tests/
 
   setup-e2e:
     strategy:
@@ -135,3 +142,9 @@ jobs:
           codex plugin list
           python scripts/check_codex_setup.py
           python scripts/check_stack.py
+      - name: Unit tests on native Windows
+        shell: pwsh
+        run: |
+          . .\install\env.ps1
+          $pytestV = python -c 'import json; print(json.load(open("build/stack-pin.json"))["quality"]["pytest"]["version"])'
+          uvx --from "pytest==$pytestV" pytest -q tests/

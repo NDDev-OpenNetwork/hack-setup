@@ -131,6 +131,14 @@ def test_hook_bad_input_never_crashes() -> None:
 
 
 def test_bootstrap_member_flag_parsing() -> None:
+    if sys.platform == "win32":
+        proc = subprocess.run(
+            ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+             "-File", str(ROOT / "setup.ps1"), "--member=", "--dry-run"],
+            capture_output=True, text=True, timeout=30, cwd=ROOT,
+        )
+        assert "needs a name" in proc.stderr
+        return
     proc = subprocess.run(
         ["sh", "-c",
          f'cd "{ROOT}" && ./setup --member= --dry-run 2>&1 || true'],

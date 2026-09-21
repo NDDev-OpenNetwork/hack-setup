@@ -4,6 +4,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="env.sh is the POSIX surface; Windows uses env.ps1 (test_env_ps1.py)",
+)
+
 REPO = Path(__file__).resolve().parents[1]
 ENV_SH = REPO / "install" / "env.sh"
 PIN_BIN = REPO / ".local" / "bin"

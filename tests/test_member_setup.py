@@ -1,13 +1,25 @@
 import subprocess
+import sys
 from pathlib import Path
 
+import pytest
+
 REPO = Path(__file__).resolve().parents[1]
-SETUP = REPO / "setup"
+WIN32 = sys.platform == "win32"
 
 
 def _setup(*args: str) -> subprocess.CompletedProcess:
+    # Native Windows cannot CreateProcess an extensionless POSIX script —
+    # route through setup.ps1 (same flag surface, single-dash tolerant).
+    if WIN32:
+        cmd = [
+            "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
+            "-File", str(REPO / "setup.ps1"), *args,
+        ]
+    else:
+        cmd = [str(REPO / "setup"), *args]
     return subprocess.run(
-        [str(SETUP), *args],
+        cmd,
         cwd=REPO,
         capture_output=True,
         text=True,
@@ -44,10 +56,24 @@ def test_unknown_member_fails() -> None:
     assert "unknown member" in result.stderr
 
 
+def test_empty_member_value_fails() -> None:
+    result = _setup("--member=", "--dry-run")
+    assert result.returncode != 0
+    assert "needs a name" in result.stderr
+
+
+@pytest.mark.skipif(WIN32, reason="on Windows --os windows is a real install")
 def test_os_windows_real_install_redirects_to_ps1() -> None:
     result = _setup("--os", "windows")
     assert result.returncode != 0
     assert "setup.ps1" in result.stderr
+
+
+@pytest.mark.skipif(not WIN32, reason="POSIX targets die only on Windows")
+def test_os_posix_real_install_redirects_to_setup() -> None:
+    result = _setup("--os", "ubuntu")
+    assert result.returncode != 0
+    assert "POSIX" in result.stderr
 
 
 def test_os_dry_run_previews_target_platform() -> None:
