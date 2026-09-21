@@ -32,6 +32,71 @@ jobs:
         run: |
           for f in setup install/bootstrap.sh install/env.sh install/lib/*.sh install/modules/*/module.sh install/deploy/*.sh install/notify.sh; do sh -n "$f"; done
 
+  devin-artifacts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+      - name: Devin project artifacts
+        run: |
+          python3 devin-setup/scripts/sync_stack_pin.py
+          python3 devin-setup/scripts/check_devin_setup.py
+      - name: Install pinned uv
+        run: |
+          url="$(python3 -c 'import json; print(json.load(open("build/stack-pin.json"))["runtimes"]["uv"]["installer"]["url"])')"
+          sha="$(python3 -c 'import json; print(json.load(open("build/stack-pin.json"))["runtimes"]["uv"]["installer"]["sha256"])')"
+          curl -fsSL "$url" -o uv-installer.sh
+          echo "$sha  uv-installer.sh" | sha256sum -c -
+          UV_INSTALL_DIR="$HOME/.local/bin" UV_NO_MODIFY_PATH=1 sh uv-installer.sh
+      - name: Devin unit tests
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          pytest_v="$(python3 -c 'import json; print(json.load(open("build/stack-pin.json"))["quality"]["pytest"]["version"])')"
+          uvx --from "pytest==$pytest_v" pytest -q devin-setup/tests/
+      - name: Devin shell syntax
+        run: |
+          cd devin-setup
+          for f in setup install/bootstrap.sh install/env.sh install/lib/*.sh install/modules/*/module.sh; do sh -n "$f"; done
+
+  devin-e2e:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Full install
+        run: |
+          export PATH="$PWD/devin-setup/.local/bin:$HOME/.local/bin:$PATH"
+          cd devin-setup && ./setup
+      - name: Verify installed toolchain and plugin
+        run: |
+          export PATH="$PWD/devin-setup/.local/bin:$HOME/.local/bin:$PATH"
+          cd devin-setup
+          devin --version
+          herdr --version
+          devin plugins list
+          python3 scripts/check_devin_setup.py
+
+  devin-e2e-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Full install
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File .\devin-setup\setup.ps1
+      - name: Verify installed toolchain and plugin
+        shell: pwsh
+        run: |
+          . .\devin-setup\install\env.ps1
+          cd devin-setup
+          devin --version
+          herdr --version
+          devin plugins list
+          python scripts/check_devin_setup.py
+
   setup-e2e:
     strategy:
       matrix:
