@@ -1,0 +1,104 @@
+{
+  "schema": 1,
+  "purpose": "Single law for the Devin CLI setup — the devin-setup/ twin of hack-setup's codex-pin/stack-pin. All Devin-facing versions, session law, hooks, MCP servers and orchestration surfaces are pinned here; check_devin_setup.py enforces the projection.",
+  "verified_on": "2026-09-21",
+
+  "devin_cli": {
+    "version": "3000.10.31",
+    "version_output_prefix": "devin 3000.10.31",
+    "install_sh": "https://static.devin.ai/cli/3000.10.31/setup.sh",
+    "install_ps1": "https://static.devin.ai/cli/3000.10.31/setup.ps1",
+    "install_layout": "installs to ~/.local/share/devin/cli/_versions/<ver> with a 'current' symlink and a ~/.local/bin/devin shim",
+    "notes": "Versioned setup scripts are published per release (static.devin.ai/cli/<ver>/setup.{sh,ps1}). `devin update` would drift the pin — auto_update is pinned off in the managed user config."
+  },
+
+  "herdr": {
+    "version": "0.9.1",
+    "tag": "v0.9.1",
+    "repo": "herdrdev/herdr",
+    "integration": "devin",
+    "install_layout": "single binary on PATH (~/.local/bin/herdr); Windows zip keeps its ConPTY runtime beside herdr.exe",
+    "packages": {
+      "darwin-arm64":  { "asset": "herdr-macos-aarch64",      "sha256": "5fc7a7e7adfaca56fa80aa89dcb025693357268dab8285b9ce2d08a2313c89de" },
+      "darwin-x86_64": { "asset": "herdr-macos-x86_64",       "sha256": "053be0639935fe54ab5efbdb46651054e4f6a753a5b43153c88bd6912bce1e94" },
+      "linux-x86_64":  { "asset": "herdr-linux-x86_64",       "sha256": "2a02fed16beb651ef006e1d43f048f652ca4dc58ad053cd2d44450563d5c54b7" },
+      "linux-arm64":   { "asset": "herdr-linux-aarch64",      "sha256": "f4ccf4de745f2cb9a39a983e9ba3703dad50ec2a58dea83026ceab721bbd8d9e" },
+      "windows-x86_64":{ "asset": "herdr-windows-x86_64.zip", "sha256": "04ce380cac5af27bfcf75d0951ac49b7afe4c984aee8852985806d4f71f93a6e" }
+    },
+    "notes": "Devin CLI is a session-identity integration: `herdr integration install devin` writes herdr-agent-state.{sh,ps1} + hook entries into the devin user config; lifecycle state still comes from herdr's screen manifest. Native restore runs `devin --resume <id>`."
+  },
+
+  "session": {
+    "permission_mode": "bypass",
+    "permission_mode_env": "DEVIN_PERMISSION_MODE",
+    "permission_mode_note": "Bypass = approval_policy never + no OS sandbox, the Devin equivalent of registered.session. There is no config-file key for the default mode — install/env.sh exports DEVIN_PERMISSION_MODE=bypass; `/bypass`, `/yolo`, `/dangerous` and `--permission-mode bypass` are the in-session forms.",
+    "subagents_enabled": false,
+    "subagents_note": "Same law as codex `features.multi_agent=false`: the agent does all work itself; workers are real sessions via herdr, not subagents.",
+    "auto_update": false,
+    "auto_update_note": "Background auto-update would drift the pinned devin_cli.version.",
+    "read_config_from": { "claude": false, "cursor": false, "windsurf": false, "copilot": false, "opencode": false },
+    "read_config_from_note": "Devin defaults import foreign tool config (.claude rules+MCP+commands, .windsurf, .cursor, copilot skills, opencode MCP). The pin's projection disables silent imports — this repo's law is explicit, not inherited."
+  },
+
+  "models": {
+    "primary": "swe-2-max",
+    "selection_note": "agent.model is user-config only (~/.config/devin/config.json); the managed block pins it. `/model` or `devin --model` can override per session."
+  },
+
+  "mcp_servers": {
+    "serena":   { "command": "uvx",  "args": ["--from", "serena-agent==1.7.0", "serena", "start-mcp-server", "--context", "codex", "--open-web-dashboard", "false"] },
+    "shadcn":   { "command": "bunx", "args": ["shadcn@4.21.0", "mcp"] },
+    "context7": { "url": "https://mcp.context7.com/mcp" },
+    "grep":     { "url": "https://mcp.grep.app" },
+    "deepwiki": { "url": "https://mcp.deepwiki.com/mcp" },
+    "keenable": { "url": "https://api.keenable.ai/mcp", "headers": { "X-API-Key": "${KEENABLE_API_KEY}" } }
+  },
+  "mcp_note": "Same six servers as the codex projection (stack-pin registered.mcp_servers) — check_devin_setup.py enforces semantic equality. Devin mcp_config.json uses the Claude layout: stdio {command,args,env}, remote {url,headers}; secrets are ${VAR} references, never literals.",
+
+  "hooks": {
+    "file": ".devin/hooks.v1.json",
+    "script": ".devin/hooks/devin_mode.py",
+    "events": ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PermissionRequest", "Stop", "SessionEnd", "PostCompaction"],
+    "wired": {
+      "SessionStart": "session (ruleset or setup note + STATUS)",
+      "UserPromptSubmit": "prompt (mode commands + STATUS line)",
+      "PreToolUse": "lane guard on the exec tool",
+      "PostToolUse": "ship-verify nudge after git push",
+      "Stop": "session log",
+      "SessionEnd": "session log",
+      "PostCompaction": "ruleset re-injection"
+    },
+    "notes": "Devin hook I/O: stdin JSON {hook_event_name, tool_name, tool_input, session_id, prompt_id}; stdout {decision|reason} or {hookSpecificOutput:{hookEventName, additionalContext}}; exit 2 blocks. DEVIN_PROJECT_DIR carries the repo root. Plugin hooks are best-effort fail-open — guardrails live at project layer, like codex."
+  },
+
+  "orchestration": {
+    "model": "main Devin session talks to the user; workers are real Devin sessions spawned through herdr panes (codex_app thread equivalent)",
+    "commands": {
+      "spawn": "herdr agent start --kind devin --pane <pane> -- <agent-args>",
+      "prompt": "herdr agent prompt <name> <text> [--wait] [--until idle|working|blocked] [--timeout ms]",
+      "read": "herdr agent read <name> [--lines N]",
+      "wait": "herdr agent wait <name> --until idle --timeout ms",
+      "resume": "devin --resume <session-id> / devin -c (herdr native restore uses session references)",
+      "topology": "cmux panes/workspaces host the outer layout on macOS; herdr panes host the agents"
+    },
+    "headless": "devin -p \"<prompt>\" single-turn for scripts"
+  },
+
+  "plugins": [
+    {
+      "name": "hack-devin-workflow",
+      "dir": "plugins/hack-devin-workflow",
+      "install": "devin plugins install --local ./devin-setup/plugins/hack-devin-workflow -y",
+      "invoke": "/hack-devin-workflow:<skill>",
+      "skills": ["session-boot", "github-flow", "herdr-handoff", "hack-mode", "ship-verify", "debt-ledger"]
+    }
+  ],
+
+  "control": {
+    "law": "build/devin-pin.json + build/stack-pin.json (generated copy of ../build/stack-pin.json)",
+    "runtime": ".devin/config.json + .devin/mcp_config.json + .devin/hooks.v1.json + managed block in ~/.config/devin/config.json",
+    "proof": "just check",
+    "gate": "just gate",
+    "orchestrator": "herdr (+ cmux for outer topology)"
+  }
+}

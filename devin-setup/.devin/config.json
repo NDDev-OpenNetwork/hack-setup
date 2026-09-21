@@ -1,0 +1,46 @@
+{
+  // Project config for the Devin CLI setup — a projection of
+  // devin-setup/build/devin-pin.json (session.read_config_from).
+  // Only permissions/read_config_from/hooks are allowed at project
+  // level; model/subagents are user-config (managed block).
+  "read_config_from": {
+    "claude": false,
+    "cursor": false,
+    "windsurf": false,
+    "copilot": false,
+    "opencode": false
+  },
+  "permissions": {
+    // Bypass is the session law (DEVIN_PERMISSION_MODE=bypass via
+    // install/env.sh); these allows document the routine surface for
+    // sessions started outside the sourced env.
+    "allow": [
+      "Read(**)",
+      "Exec(git)",
+      "Exec(gh)",
+      "Exec(just)",
+      "Exec(bun)",
+      "Exec(bunx)",
+      "Exec(uv)",
+      "Exec(uvx)",
+      "Exec(python)",
+      "Exec(python3)",
+      "Exec(node)",
+      "Exec(devin)",
+      "Exec(herdr)",
+      "Exec(cmux)",
+      "Fetch(domain:github.com)",
+      "Fetch(domain:raw.githubusercontent.com)",
+      "Fetch(domain:objects.githubusercontent.com)",
+      "Fetch(domain:herdr.dev)",
+      "Fetch(domain:static.devin.ai)",
+      "Fetch(domain:cli.devin.ai)",
+      "Fetch(domain:docs.devin.ai)"
+    ],
+    "deny": [
+      "Exec(sudo)",
+      "Exec(doas)",
+      "Write(.env*)"
+    ]
+  }
+}

@@ -1,0 +1,3 @@
+#!/bin/sh
+# macOS/Linux entry for the Devin CLI setup. Mirrors ../setup.
+exec "$(CDPATH= cd -- "$(dirname "$0")" && pwd)/install/bootstrap.sh" "$@"

@@ -1,0 +1,32 @@
+# Snapshot of install/modules/<nn>-*. Bootstrap globs those directories.
+# Skip a module with a `disabled` file. check_devin_setup.py requires
+# this list to match the numbered dirs exactly. `enabled` is documentary.
+
+schema_version = 1
+entry = "./setup"
+entry_windows = "./setup.ps1"
+
+[[modules]]
+id = "prereqs"
+dir = "modules/10-prereqs"
+enabled = true
+
+[[modules]]
+id = "member"
+dir = "modules/15-member"
+enabled = true
+
+[[modules]]
+id = "devin-cli"
+dir = "modules/20-devin-cli"
+enabled = true
+
+[[modules]]
+id = "runtimes"
+dir = "modules/30-runtimes"
+enabled = true
+
+[[modules]]
+id = "devin-verify"
+dir = "modules/40-devin-verify"
+enabled = true

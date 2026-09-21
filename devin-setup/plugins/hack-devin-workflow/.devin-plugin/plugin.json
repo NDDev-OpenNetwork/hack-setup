@@ -1,0 +1,8 @@
+{
+  "name": "hack-devin-workflow",
+  "version": "0.1.0",
+  "description": "Saint Tibo Devin workflow: serena-first session boot, GitHub-first lane loop, herdr-based worker orchestration, hack-mode delivery law.",
+  "author": "Saint Tibo",
+  "license": "MIT",
+  "keywords": ["devin", "herdr", "workflow", "saint-tibo", "github"]
+}

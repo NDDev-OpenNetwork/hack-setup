@@ -1,0 +1,53 @@
+{
+  "SessionStart": [
+    {
+      "hooks": [
+        { "type": "command", "command": "python3 \"$DEVIN_PROJECT_DIR/.devin/hooks/devin_mode.py\" session", "timeout": 10 }
+      ]
+    }
+  ],
+  "UserPromptSubmit": [
+    {
+      "hooks": [
+        { "type": "command", "command": "python3 \"$DEVIN_PROJECT_DIR/.devin/hooks/devin_mode.py\" prompt", "timeout": 10 }
+      ]
+    }
+  ],
+  "PreToolUse": [
+    {
+      "matcher": "exec",
+      "hooks": [
+        { "type": "command", "command": "python3 \"$DEVIN_PROJECT_DIR/.devin/hooks/devin_mode.py\" pretooluse", "timeout": 10 }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "exec",
+      "hooks": [
+        { "type": "command", "command": "python3 \"$DEVIN_PROJECT_DIR/.devin/hooks/devin_mode.py\" posttooluse", "timeout": 10 }
+      ]
+    }
+  ],
+  "PostCompaction": [
+    {
+      "hooks": [
+        { "type": "command", "command": "python3 \"$DEVIN_PROJECT_DIR/.devin/hooks/devin_mode.py\" compact", "timeout": 10 }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "hooks": [
+        { "type": "command", "command": "python3 \"$DEVIN_PROJECT_DIR/.devin/hooks/devin_mode.py\" sessionend", "timeout": 5 }
+      ]
+    }
+  ],
+  "SessionEnd": [
+    {
+      "hooks": [
+        { "type": "command", "command": "python3 \"$DEVIN_PROJECT_DIR/.devin/hooks/devin_mode.py\" sessionend", "timeout": 5 }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+# Shared helpers for install/bootstrap.sh and modules. POSIX sh.
+
+die() {
+  printf 'ERROR: %s\n' "$1" >&2
+  exit 1
+}
+
+log() {
+  printf '==> %s\n' "$1"
+}
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || die "$1 is required"
+}
+
+abs_path() {
+  CDPATH= cd -- "$1" && pwd
+}
+
+hack_pin_get() {
+  python3 -c 'import json,sys; from functools import reduce; print(reduce(lambda a,b: a[b], sys.argv[2].split("."), json.load(open(sys.argv[1]))))' "$1" "$2"
+}
