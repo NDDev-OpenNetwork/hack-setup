@@ -472,3 +472,19 @@ Open:
   as codex installer fallback). Unauthenticated `devin plugins` ops in
   CI degrade to WARN — auth is a cannot-fake boundary, module 40 still
   installs the plugin on a logged-in host.
+
+### State 2026-09-21 — finalization (head 2c04bf1)
+
+- All 8 Serena memories resynced to current code (INFRA-01: module 15,
+  HACK_USER_BIN, staged uv, .exe-only; TEST-01: devin checker, 9-job CI,
+  deploy-e2e; CORE-01: ADRs 0001-0016, all issues closed; CODEX-02:
+  7 workflow skills, 5 plugins; CODEX-03: journald fix + e2e proof;
+  DEVIN-01: Windows proven + hook hardening; CODEX-01/STACK-01:
+  metadata + member-pin note). Owner ASCII tweak to download.ps1
+  confirmed identical in both trees and already committed at 908891d.
+- Repo docs verified live: AGENTS.md, README, devin-setup twins, ADRs —
+  no stale claims found outside the memory set.
+- Final state: `just gate` PASS (4/4), 39 tests + 3 skipped locally,
+  0 open issues, tree clean, main = dev = 2c04bf1.
+- Deferred live gaps (reopen when surfaces exist): product-repo
+  orchestrator spawn/retire, real-droplet provision.
