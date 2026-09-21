@@ -77,7 +77,8 @@ jobs:
           cd devin-setup
           devin --version
           herdr --version
-          devin plugins list
+          # plugin management is auth-gated — informational on CI
+          devin plugins list || true
           python3 scripts/check_devin_setup.py
 
   devin-e2e-windows:
@@ -94,7 +95,8 @@ jobs:
           cd devin-setup
           devin --version
           herdr --version
-          devin plugins list
+          # plugin management is auth-gated — informational on CI
+          devin plugins list; if ($LASTEXITCODE -ne 0) { Write-Host 'plugins list needs devin auth (expected on CI)' }
           python scripts/check_devin_setup.py
 
   setup-e2e:

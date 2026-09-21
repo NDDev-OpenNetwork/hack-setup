@@ -5,9 +5,11 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $env:HACK_LIB 'common.ps1')
 
 function Find-Devin {
+    $localAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME 'AppData\Local' }
     $candidates = @(
         (Join-Path $env:HACK_LOCAL_BIN 'devin.exe'),
-        (Join-Path $HOME '.local\bin\devin.exe')
+        (Join-Path $HOME '.local\bin\devin.exe'),
+        (Join-Path $localAppData 'devin\cli\bin\devin.exe')
     )
     $cmd = Get-Command devin -ErrorAction SilentlyContinue
     if ($cmd) { $candidates += $cmd.Source }

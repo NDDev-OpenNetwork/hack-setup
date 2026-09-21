@@ -9,6 +9,8 @@ $ErrorActionPreference = 'Stop'
 $PinPath = Join-Path $env:HACK_REPO_ROOT 'build\devin-pin.json'
 $LocalAppData = if ($env:LOCALAPPDATA) { $env:LOCALAPPDATA } else { Join-Path $HOME 'AppData\Local' }
 $HerdrDir = Join-Path $LocalAppData 'Programs\herdr'
+# Windows installer layout: %LOCALAPPDATA%\devin\cli\bin\devin.exe
+$DevinBinDir = Join-Path $LocalAppData 'devin\cli\bin'
 
 function Get-DevinVersion { return Get-HackPin $PinPath 'devin_cli.version' }
 function Get-HerdrVersion { return Get-HackPin $PinPath 'herdr.version' }
@@ -28,6 +30,7 @@ function Find-PinnedBinary([string]$Name, [string]$Wanted) {
         (Join-Path $HOME ".local\bin\$Name.exe")
     )
     if ($Name -eq 'herdr') { $candidates += (Join-Path $HerdrDir 'herdr.exe') }
+    if ($Name -eq 'devin') { $candidates += (Join-Path $DevinBinDir 'devin.exe') }
     $cmd = Get-Command $Name -ErrorAction SilentlyContinue
     if ($cmd) { $candidates += $cmd.Source }
     foreach ($candidate in $candidates) {
@@ -78,7 +81,7 @@ function Ensure-Devin {
     ))
     & powershell -NoProfile -ExecutionPolicy Bypass -File $filtered
     if ($LASTEXITCODE -ne 0) { Die 'Devin installer failed' }
-    $devinBin = Join-Path $HOME '.local\bin\devin.exe'
+    $devinBin = Join-Path $DevinBinDir 'devin.exe'
     $got = Get-BinaryVersion $devinBin
     if ($got -ne $wanted) { Die "installed Devin reported $got, expected $wanted" }
     Link-Bin $devinBin $env:HACK_LOCAL_BIN
