@@ -9,6 +9,8 @@ from DEVIN_PROJECT_DIR (the hook script may run outside the checkout).
 Lane authority: .devin/lanes.json OR .codex/lanes.json — a product repo
 guarded for one agent is guarded for both.
 """
+from __future__ import annotations
+
 import hashlib
 import json
 import os
@@ -16,6 +18,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -26,12 +29,22 @@ ROOT = Path(
 )
 
 # Devin config home — same resolver herdr uses: XDG_CONFIG_HOME wins,
-# else ~/.config/devin (%APPDATA%\devin on Windows).
+# else ~/.config/devin (%APPDATA%\devin on Windows). Module-level code:
+# must survive a stripped environment (Path.home() raises on Windows
+# without USERPROFILE/HOMEDRIVE), so fall back to the temp dir.
 def _devin_home() -> Path:
-    if os.name == "nt":
-        return Path(os.environ.get("APPDATA") or Path.home() / "AppData/Roaming") / "devin"
-    xdg = os.environ.get("XDG_CONFIG_HOME")
-    return (Path(xdg) if xdg else Path.home() / ".config") / "devin"
+    try:
+        if os.name == "nt":
+            appdata = os.environ.get("APPDATA")
+            if appdata:
+                return Path(appdata) / "devin"
+            return Path.home() / "AppData" / "Roaming" / "devin"
+        xdg = os.environ.get("XDG_CONFIG_HOME")
+        if xdg:
+            return Path(xdg) / "devin"
+        return Path.home() / ".config" / "devin"
+    except Exception:
+        return Path(tempfile.gettempdir()) / "devin"
 
 _DEVIN_HOME = _devin_home()
 STATE = _DEVIN_HOME / f"hack-devin-mode-{ROOT.name}.json"

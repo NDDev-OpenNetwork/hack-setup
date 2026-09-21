@@ -9,6 +9,7 @@ have not drifted. Host/installation checks live in repair_devin_setup.py.
 
 from __future__ import annotations
 
+import os
 import py_compile
 import re
 import sys
@@ -321,11 +322,17 @@ def check_devin_mode_smoke() -> None:
     script = ROOT / ".devin" / "hooks" / "devin_mode.py"
     if not script.is_file():
         return
+    # Keep the host env (Windows needs SystemRoot/USERPROFILE for Python
+    # and Path.home()) but neuter PATH so git/gh calls inside the hook
+    # fail fast — the run stays offline-hermetic.
+    env = dict(os.environ)
+    env["PATH"] = str(ROOT / "tests")
+    env["DEVIN_PROJECT_DIR"] = str(ROOT)
     for event in ("session", "prompt", "compact"):
         proc = subprocess.run(
             [sys.executable, str(script), event],
             capture_output=True, text=True, timeout=10,
-            env={"PATH": "/usr/bin:/bin", "DEVIN_PROJECT_DIR": str(ROOT)},
+            env=env,
             input="",
         )
         if proc.returncode != 0:
