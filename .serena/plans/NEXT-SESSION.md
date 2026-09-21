@@ -278,7 +278,27 @@ Landed this pass (audit wave):
 - Proof labels: checkers print `[artifact]`/`[installed]`; live proofs
   print `[live]`.
 
-Landed this pass (hardening sweep, no live-host items):
+Landed this pass (deep re-audit + CI-green wave):
+- CI was RED on every push — two real failures found and fixed:
+  unit tests needed inline `git -c user.email/user.name` (clean
+  runners carry no gitconfig), and `setup-e2e-windows` proved the
+  official install.ps1 exits 0 with NO binary. module.ps1 is now
+  package-first like module.sh (sha256-verified archive, version
+  post-condition); install.ps1 is only the no-package fallback.
+- hack_mode.py: transparent-prefix scan — sudo/doas plus
+  wrapper flag+arg combos (`sudo -u root`, `nice -n 5`) denied;
+  `echo git push` / commit-message mentions stay allowed.
+- module.sh/ps1 sol-profile + standalone dirs honor CODEX_HOME
+  (same resolver as checkers/repair); mise.toml gains just 1.58.0
+  and check_stack_pin enforces it; Install-Uv prefers pwsh.
+- Issues: #9 + #11 closed `live-verified` (CI windows job is the
+  real Windows proof — Install-Just, package path, .cmd shims,
+  both checkers all ran green on windows-latest).
+- CI now green on main AND dev (all 4 jobs incl. windows).
+- Remaining open: #3/#4 (live orchestrator→worker run on the
+  product repo), #7 (real droplet re-provision), #20 tracker.
+
+Landed previous pass (hardening sweep, no live-host items):
 - hack_mode.py: `_split_tokens` — posix=False on Windows so
   `C:\repo` keeps backslashes, outer quotes stripped manually; `git -C`
   relative dirs resolve against payload cwd (was hook process cwd —
@@ -305,8 +325,7 @@ Open:
   marker (guard is working — it denied test pushes).
 - Remaining internet-verify items: remote compaction SessionStart
   behavior, Codex App thread instruction shadowing (#33238 noted in
-  pin), Windows commandWindows golden-vector test on a real host,
-  Windows Install-Just path (needs a real Windows run).
+  pin). Windows items are now covered by CI `setup-e2e-windows`.
 - GitHub issues #1–#19 carry per-issue evidence comments; #20 is the
   integration tracker owned by Danil.
 
