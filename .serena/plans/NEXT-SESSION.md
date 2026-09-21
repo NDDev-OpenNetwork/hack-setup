@@ -298,6 +298,35 @@ Landed this pass (deep re-audit + CI-green wave):
 - Remaining open: #3/#4 (live orchestrator→worker run on the
   product repo), #7 (real droplet re-provision), #20 tracker.
 
+Landed this pass (per-member installs + OS targeting, #23):
+- `team` block in stack-pin: members danil/ivan/artem -> github logins
+  (rldyourmnd/r3flector/letya999), shared `git_defaults` (ff-only,
+  prune+pruneTags, rerere, autoStash, zdiff3, lf, no autocrlf) and
+  `windows_git_defaults` (core.longpaths).
+- modules/15-member (sh+ps1): `gh api user` login must equal the
+  member's pinned login; git identity = profile name + email or
+  `id+login@users.noreply.github.com` (no personal mail in repo);
+  `gh auth setup-git`, `ssh -T` probe, `.agent/member` marker.
+  No `--member` -> git defaults still applied, identity skipped with
+  WARN (install) / note (status) — never fatal without a selection.
+- bootstrap.sh/ps1: `--member <name>` + `--danil/--ivan/--artem`
+  shorthands; `--os <macos|ubuntu|windows>` — real installs must match
+  host family (POSIX rejects windows target -> `.\setup.ps1` hint and
+  vice versa); `--dry-run` previews another OS. HACK_MEMBER /
+  HACK_TARGET_OS env equivalents.
+- hack_mode.py STATUS line shows `member=<name>` from the marker.
+- Checker: catalog expects 5 modules incl. member; team block, git
+  defaults and flag surface (`--member`, `--os`, shorthands in both
+  bootstraps) enforced.
+- PS5.1 gotcha (CI run 35645725406): BOM-less ps1 decodes as ANSI —
+  em-dashes become smart quotes that toggle string state. module.ps1
+  is pure ASCII in executable lines; `gh api` multi-line JSON joined
+  before ConvertFrom-Json.
+- 27 tests pass incl. 7 member/flag cases; `--member danil` ran live
+  on this host (identity from gh profile, ssh ok, marker written).
+- Remaining: Ivan/Artem run `./setup --member ivan|artem` on their
+  hosts (module dies on a wrong gh login — intended guard).
+
 Landed previous pass (hardening sweep, no live-host items):
 - hack_mode.py: `_split_tokens` — posix=False on Windows so
   `C:\repo` keeps backslashes, outer quotes stripped manually; `git -C`
