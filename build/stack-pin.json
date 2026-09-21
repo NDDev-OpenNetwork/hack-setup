@@ -215,8 +215,7 @@
       },
       "context7": {
         "url": "https://mcp.context7.com/mcp",
-        "bearer_token_env_var": "CONTEXT7_API_KEY",
-        "note": "keyless free tier; export CONTEXT7_API_KEY for higher limits"
+        "note": "keyless by default — Codex 0.155.1 hard-errors when a bearer_token_env_var is unset (rmcp_client.rs), so no env ref is declared; hosts wanting higher limits export CONTEXT7_API_KEY and add bearer_token_env_var in their USER config layer"
       },
       "grep": {
         "url": "https://mcp.grep.app",

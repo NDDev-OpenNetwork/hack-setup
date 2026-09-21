@@ -27,14 +27,29 @@ Loop per change:
 5. **Report**: one line — what is live, the URL or endpoint checked,
    and any `hack:` corners still standing.
 
+## Two verification roles
+
+- **Worker** verifies its own change in its own checkout — build, run,
+  hit the local surface. That unblocks the merge into `<user>`.
+- **Verify agent** (separate thread, spawned by the orchestrator after
+  `<user>` → `dev`) proves the integrated lane on the live dev
+  deployment: the changed surface, deploy logs, OpenObserve
+  alerts/traces for the window. It is read-only — `LIVE-OK <sha> <url>`
+  or `LIVE-FAIL <sha>` + the failing signal; fixes route back to a
+  worker. Do not let the verify agent edit code.
+
 ## Rules
 
 - Verify the thing that changed, not a proxy for it: a 200 on `/` does
   not prove the new button renders.
 - Check logs even on success the first time — silent warnings on a fresh
-  deploy become 3am pages at demo time.
-- Migrations and destructive operations on the server still need the
-  owner's explicit go — speed never waives that.
+  deploy become 3am pages at demo time. The verify agent's checklist:
+  deploy log tail, OpenObserve alert panel, trace for the request you
+  just made.
+- Migrations: non-destructive ones the agent runs itself on `dev`
+  (additive column/table, `alembic upgrade head`). Destructive or prod
+  migrations still need the owner's explicit go — speed never waives
+  that.
 - If the live check is impossible (no deploy yet, DNS pending), say so
   and state exactly what is unverified. Never claim live-verified from
   a local screenshot.

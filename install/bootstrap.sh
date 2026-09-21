@@ -46,6 +46,10 @@ while [ "$#" -gt 0 ]; do
 done
 
 export HACK_INSTALL_HOME HACK_REPO_ROOT HACK_LIB HACK_CACHE HACK_LOCAL_BIN HACK_DRY_RUN HACK_ACTION
+# Modules install into repo/.local/bin, ~/.local/bin, ~/.bun/bin — put them
+# on PATH *before* the module loop so module 30/40 see what earlier
+# modules installed (fresh-host order; HS-04).
+export PATH="$HACK_LOCAL_BIN:${HOME}/.local/bin:${HOME}/.bun/bin:$PATH"
 
 hack_detect_os
 log "platform $HACK_PLATFORM ($HACK_TRIPLE)"

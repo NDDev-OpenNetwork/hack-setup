@@ -29,9 +29,10 @@ product trees to hold a standard.
    branch. Setup on this public repo may land on `main` when Danil
    asked for that.
 6. When the piece is ready, merge it into the owner's named branch.
-7. Owner says merge to dev / «можем вливать»: update the named
-   branch from `dev`, resolve conflicts on our side, keep the piece
-   working, merge that named branch into `dev`.
+7. Owner merge beacons — «слить», «лить», «залить», «закинуть»,
+   «отправить в дев», «можем вливать»: update the named branch from
+   `dev`, resolve conflicts on our side, keep the piece working,
+   merge that named branch into `dev`.
 8. Owner says ship / «в прод»: treat current `dev` as the candidate.
    Read GitHub history on `dev`, verify the candidate, merge `dev`
    into `main`. Deploy is from `main` only.

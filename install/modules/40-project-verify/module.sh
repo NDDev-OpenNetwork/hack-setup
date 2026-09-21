@@ -22,6 +22,10 @@ install_plugins() {
 run_verify() {
   require_cmd python3
   install_plugins
+  # Full repair AFTER runtimes land: module 20 may have skipped
+  # notify/hook-trust on a cold host without python3 (HS-05). repair is
+  # idempotent — a re-run here is the convergence point.
+  python3 "$HACK_REPO_ROOT/scripts/repair_setup.py" || true
   python3 "$HACK_REPO_ROOT/scripts/check_codex_setup.py"
   python3 "$HACK_REPO_ROOT/scripts/check_stack.py"
 }

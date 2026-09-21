@@ -6,7 +6,12 @@
 #   HACK_DEPLOY_BRANCH  branch to follow, e.g. dev|main    (required)
 #   HACK_DEPLOY_CMD     deploy command                     (default: docker compose up -d --build)
 #   HACK_DEPLOY_HEALTH  URL to curl after deploy           (optional)
+#   HACK_DEPLOY_HEALTH_TRIES  readiness attempts ×5s       (default: 12)
 #   HACK_DEPLOY_LOG     log file                           (default: stderr/journald)
+#
+# State: $HACK_DEPLOY_DIR/.deployed-sha records the SHA whose deploy
+# SUCCEEDED (checkout HEAD is not proof — a fresh clone has the desired
+# HEAD but nothing deployed, and a failed build must be retried).
 set -eu
 
 log() { printf '%s deploy-watch: %s\n' "$(date -u +%H:%M:%S)" "$*" >> "${HACK_DEPLOY_LOG:-/dev/stderr}"; }
@@ -24,18 +29,29 @@ fi
 
 git fetch --quiet origin "$HACK_DEPLOY_BRANCH" || die "git fetch failed"
 remote=$(git rev-parse "origin/$HACK_DEPLOY_BRANCH")
+deployed=$(cat .deployed-sha 2>/dev/null || echo none)
+[ "$remote" = "$deployed" ] && exit 0
+
 local=$(git rev-parse HEAD)
-[ "$remote" = "$local" ] && exit 0
+if [ "$remote" != "$local" ]; then
+  log "checkout $local -> $remote ($HACK_DEPLOY_BRANCH)"
+  git merge --ff-only "$remote" || die "ff-only pull failed; reset manually"
+fi
 
-log "deploying $local -> $remote ($HACK_DEPLOY_BRANCH)"
-git merge --ff-only "$remote" || die "ff-only pull failed; reset manually"
-
+log "deploying $remote ($HACK_DEPLOY_BRANCH)"
 ${HACK_DEPLOY_CMD:-docker compose up -d --build} >> "${HACK_DEPLOY_LOG:-/dev/stderr}" 2>&1 \
-  || die "deploy command failed"
+  || die "deploy command failed for $remote — will retry next tick"
 
 if [ -n "${HACK_DEPLOY_HEALTH:-}" ]; then
-  sleep "${HACK_DEPLOY_HEALTH_DELAY:-5}"
-  curl -fsS --max-time 10 -o /dev/null "$HACK_DEPLOY_HEALTH" \
-    && log "healthy at $HACK_DEPLOY_HEALTH" \
-    || log "WARN health check failed: $HACK_DEPLOY_HEALTH"
+  tries=${HACK_DEPLOY_HEALTH_TRIES:-12}
+  i=0
+  until curl -fsS --max-time 10 -o /dev/null "$HACK_DEPLOY_HEALTH"; do
+    i=$((i + 1))
+    [ "$i" -ge "$tries" ] && die "health check failed for $remote after ${tries} tries — will retry next tick"
+    sleep 5
+  done
+  log "healthy at $HACK_DEPLOY_HEALTH"
 fi
+
+echo "$remote" > .deployed-sha
+log "deployed $remote"

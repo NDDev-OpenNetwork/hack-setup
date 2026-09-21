@@ -8,6 +8,7 @@ mode is on. Never blocks the session: stdin is read on a thread with a
 timeout (upstream issue #443 — PowerShell can swallow EOF), every
 failure path exits silently.
 """
+import hashlib
 import json
 import os
 import re
@@ -53,7 +54,11 @@ OFF_COMMANDS = {"normal mode", "stop hack mode", "stop hack-mode", "hack off"}
 ON_COMMANDS = {"hack mode", "hack-mode", "hack on", "hack full"}
 ULTRA_COMMANDS = {"hack ultra", "hack-mode ultra"}
 
-GH_CACHE = Path.home() / ".codex" / f"hack-issues-{ROOT.name}.json"
+GH_CACHE = Path.home() / ".codex" / (
+    f"hack-issues-{ROOT.name}-"
+    + hashlib.sha256(str(ROOT).encode()).hexdigest()[:6]
+    + ".json"
+)
 GH_TTL = 60
 
 
@@ -102,6 +107,10 @@ def issues_status() -> str:
             )
         except Exception:
             pass
+    # Never claim a state we cannot prove: a missing/foreign-root cache is
+    # `?`, not `none`.
+    if cache.get("root") != str(ROOT):
+        return "issues:@me=?"
     issues = cache.get("issues") or []
     if not issues:
         return "issues:@me=none"
@@ -112,10 +121,11 @@ def status_line() -> str:
     branch = _git("branch", "--show-current") or "?"
     dirty = _git("status", "--porcelain")
     n_dirty = len([l for l in dirty.splitlines() if l.strip()])
-    last = _git("log", "-1", "--format=%h %s")[:60]
+    # SHA only — commit subjects are untrusted text injected into prompts.
+    last = _git("log", "-1", "--format=%h")
     return (
         f"STATUS repo={ROOT.name} branch={branch} dirty={n_dirty} "
-        f"last={last!r} {issues_status()}"
+        f"last={last} {issues_status()}"
     )
 
 
@@ -178,10 +188,32 @@ def emit(context: str = "", message: str = "", event: str = "") -> None:
         sys.stdout.write(json.dumps(out))
 
 
+LANES_FILE = ".codex/lanes.json"
+ORCH_MARKER = ".agent/orchestrator"
+
+
+def _is_product_checkout() -> bool:
+    """The full hack-mode ruleset (no tests, done=live) governs only
+    lane-guarded product checkouts. The setup repo keeps its own proof
+    contract (`just gate`) — the ruleset must not leak into harness work."""
+    return (ROOT / LANES_FILE).is_file()
+
+
+SETUP_NOTE = (
+    "SETUP CHECKOUT — this is the harness repo, not the product. Proof is "
+    "`just gate` / `just check` / `just test`; the hack-mode ruleset "
+    "(no review round, done=live) applies only inside lane-guarded "
+    "checkouts carrying .codex/lanes.json."
+)
+
+
 def session() -> None:
     level = mode()
     if level == "off":
         emit(message="HACK-MODE:OFF")
+        return
+    if not _is_product_checkout():
+        emit(context=f"{SETUP_NOTE}\n{status_line()}", message="SETUP:CHECK")
         return
     emit(ruleset(level), f"HACK-MODE:{level.upper()}")
 
@@ -203,11 +235,10 @@ def prompt(payload: dict) -> None:
         emit(message="HACK-MODE:FULL", context=ruleset("full"))
         return
     if mode() != "off":
-        emit(context=f"{REMINDER}\n{status_line()}")
-
-
-LANES_FILE = ".codex/lanes.json"
-ORCH_MARKER = ".agent/orchestrator"
+        if _is_product_checkout():
+            emit(context=f"{REMINDER}\n{status_line()}")
+        else:
+            emit(context=status_line())
 
 
 def _tool_command(payload: dict) -> str:
@@ -233,8 +264,18 @@ _GIT_FLAGS = (
 )
 
 
+def _protected_ref(token: str, protected: list[str]) -> bool:
+    """A refspec token hits a protected branch when its destination side
+    (after `:`) or the ref itself equals it — `feat/12-main-fix` does NOT
+    match `main` (token-level compare, not substring)."""
+    if "*" in token:
+        return True  # wildcard refspec can fan out to protected branches
+    dst = token.split(":")[-1].lstrip("+")
+    return dst.removeprefix("refs/heads/") in protected
+
+
 def _push_to(
-    command: str, guard: str, root: Path | None, protected: list[str]
+    command: str, root: Path | None, protected: list[str]
 ) -> bool:
     # `git <global-flags> push <tail>` inside one |;& segment. Guard rail,
     # not a security boundary: aliases/wrappers are out of scope, workers
@@ -243,12 +284,16 @@ def _push_to(
         rf"\bgit\s+(?:{_GIT_FLAGS})*push\b([^|;&]*)", command
     ):
         tail = match.group(1)
-        if re.search(rf"\b({guard})\b", tail):
-            return True
         if re.search(r"--all\b|--mirror\b", tail):
             return True
         words = [w for w in tail.split() if not w.startswith("-")]
         refspecs = words[1:] if words else []
+        if any(_protected_ref(t, protected) for t in refspecs):
+            return True
+        if re.search(r"(?:^|\s)(?:-d|--delete)\b", tail) and any(
+            _protected_ref(t, protected) for t in words
+        ):
+            return True
         if not refspecs or all(w == "HEAD" for w in refspecs):
             # `git push`, `git push origin`, `git push origin HEAD` — target
             # is upstream of HEAD: deny only when HEAD itself is protected.
@@ -312,8 +357,7 @@ def pretooluse(payload: dict) -> None:
     protected = _protected_branches(root)
     if not protected or (root / ORCH_MARKER).is_file():
         return
-    guard = "|".join(re.escape(b) for b in protected)
-    if not _push_to(command, guard, root, protected):
+    if not _push_to(command, root, protected):
         return
     emit_pre(
         {
@@ -321,8 +365,8 @@ def pretooluse(payload: dict) -> None:
             "permissionDecision": "deny",
             "permissionDecisionReason": (
                 f"lane law: workers push only their personal lane "
-                f"(feat/<issue> -> <user>). {guard} pushes and PR merges "
-                f"run from the orchestrator checkout "
+                f"(feat/<issue> -> <user>). {'|'.join(protected)} pushes "
+                f"and PR merges run from the orchestrator checkout "
                 f"(mkdir -p .agent && touch .agent/orchestrator there)."
             ),
         }

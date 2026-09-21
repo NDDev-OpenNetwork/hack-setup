@@ -85,19 +85,14 @@ function Ensure-SolProfile {
 }
 
 function Ensure-Notify {
-    # Twin of the POSIX ensure_notify: user-level `notify` block in
-    # ~/.codex/config.toml pointing at the repo script (ps1 twin on
-    # Windows). '# hack-setup' markers make it removable by the scrubber.
-    $cfg = Join-Path $HOME '.codex\config.toml'
-    New-Item -ItemType Directory -Force -Path (Join-Path $HOME '.codex') | Out-Null
-    if (-not (Test-Path -LiteralPath $cfg -PathType Leaf)) {
-        [System.IO.File]::WriteAllText($cfg, '')
-    }
-    if (([System.IO.File]::ReadAllText($cfg)) -match 'hack-setup: notify') { return }
-    $script = Join-Path $env:HACK_REPO_ROOT 'install\notify.ps1'
-    $block = "`n# hack-setup: notify`nnotify = ['powershell', '-NoProfile', '-File', '$script']  # hack-setup`n"
-    [System.IO.File]::AppendAllText($cfg, $block)
-    Log "wired turn-complete notify -> install/notify.ps1"
+    # Twin of the POSIX ensure_notify: `notify` is a ROOT key — the
+    # TOML-aware writer lives in repair_setup.py (single writer for
+    # installer + repair). Without python this is a no-op; module 40
+    # re-runs full repair after runtimes land (HS-01/HS-03/HS-05).
+    $py = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $py) { $py = Get-Command python3 -ErrorAction SilentlyContinue }
+    if (-not $py) { return }
+    & $py.Source (Join-Path $env:HACK_REPO_ROOT 'scripts\repair_setup.py') --only notify-block | Out-Null
 }
 
 function Run-Status {

@@ -1197,7 +1197,7 @@ def check_hooks() -> None:
         for group in groups:
             for hook in (group or {}).get("hooks", []):
                 command = str(hook.get("command", ""))
-                match = re.search(r"(\.codex/hooks/\S+)", command)
+                match = re.search(r"(\.codex/hooks/[^\"'\s)]+)", command)
                 if not match:
                     raise CheckError(
                         f"hooks.{event} command must reference .codex/hooks/: {command}"

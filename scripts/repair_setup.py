@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 def _arg_value(flag: str) -> str | None:
@@ -117,18 +118,28 @@ def fix_plugin_cache() -> None:
 
 def fix_notify_block() -> None:
     """Ensure the managed '# hack-setup: notify' block exists in
-    ~/.codex/config.toml. Never clobber a foreign `notify` key — a duplicate
-    top-level key would make the whole user config invalid TOML."""
+    ~/.codex/config.toml. `notify` is a ROOT key — it must be written
+    before the first table header, not appended at EOF (appending lands
+    it inside the last table). A foreign root-level `notify` is reported,
+    never clobbered: a duplicate key would invalidate the whole config."""
     cfg = Path.home() / ".codex" / "config.toml"
     cfg.parent.mkdir(parents=True, exist_ok=True)
     src = cfg.read_text(encoding="utf-8") if cfg.is_file() else ""
     if "hack-setup: notify" in src:
         report("OK", "notify-block")
         return
-    if re.search(r"(?m)^\s*notify\s*=", src):
+    lines = src.splitlines(keepends=True)
+    # Root keyspace ends at the first table header.
+    root_end = next(
+        (i for i, l in enumerate(lines) if l.lstrip().startswith("[")),
+        len(lines),
+    )
+    if any(
+        re.match(r"\s*notify\s*=", l) for l in lines[:root_end]
+    ):
         report(
             "WARN", "notify-block",
-            "foreign `notify` already set in ~/.codex/config.toml — "
+            "foreign `notify` already set at root of ~/.codex/config.toml — "
             "merge install/notify.sh manually (duplicate key = invalid TOML)",
         )
         return
@@ -138,11 +149,16 @@ def fix_notify_block() -> None:
     else:
         script = str(ROOT / "install" / "notify.sh")
         entry = f'notify = ["{script}"]  # hack-setup'
-    block = f"\n# hack-setup: notify\n{entry}\n"
+    block = f"# hack-setup: notify\n{entry}\n"
+    new_src = "".join(lines[:root_end]) + block + "".join(lines[root_end:])
+    try:
+        tomllib.loads(new_src)
+    except Exception as exc:
+        report("FAIL", "notify-block", f"would produce invalid TOML: {exc}")
+        return
     if not DRY_RUN:
-        with cfg.open("a", encoding="utf-8") as fh:
-            fh.write(block)
-    report("FIX", "notify-block", f"{'would append' if DRY_RUN else 'appended'} managed block to {cfg}")
+        cfg.write_text(new_src, encoding="utf-8")
+    report("FIX", "notify-block", f"{'would insert' if DRY_RUN else 'inserted'} managed root block in {cfg}")
 
 
 def fix_sol_profile() -> None:
@@ -215,21 +231,36 @@ HOOK_EVENT_LABELS = {
 def _hook_hash(event_label: str, matcher: str | None, handler: dict) -> str:
     """Port of codex-rs hooks::engine::discovery::hook_hash +
     config::fingerprint::version_for_toml (0.155.1, be2951ea):
-    sha256 over the canonical JSON of the normalized TOML identity."""
-    h: dict = {"type": handler.get("type", "command"), "async": bool(handler.get("async", False))}
-    for key in ("command", "commandWindows"):
-        if handler.get(key):
-            h[key] = handler[key]
-    if handler.get("timeout") is not None:
-        h["timeout"] = int(handler["timeout"])
+    sha256 over the canonical JSON of the NORMALIZED identity —
+    platform-resolved command (commandWindows never reaches the hash),
+    normalized timeout (SessionEnd/Interrupt: default 1s, clamp 1-3;
+    others: default 600, min 1), additionalContextLimit dropped when
+    it equals the 2500 default."""
+    command = handler.get("command")
+    if os.name == "nt" and handler.get("commandWindows"):
+        command = handler["commandWindows"]
+    timeout = handler.get("timeout")
+    if event_label in ("session_end", "interrupt"):
+        timeout = min(max(int(timeout), 1), 3) if timeout is not None else 1
+    else:
+        timeout = max(int(timeout), 1) if timeout is not None else 600
+    h: dict = {
+        "type": handler.get("type", "command"),
+        "async": bool(handler.get("async", False)),
+        "command": command,
+        "timeout": timeout,
+    }
     if handler.get("statusMessage"):
         h["statusMessage"] = handler["statusMessage"]
-    if handler.get("additionalContextLimit") is not None:
-        h["additionalContextLimit"] = int(handler["additionalContextLimit"])
+    acl = handler.get("additionalContextLimit")
+    if acl is not None and int(acl) != 2500:
+        h["additionalContextLimit"] = int(acl)
     ident: dict = {"event_name": event_label, "hooks": [h]}
     if matcher:
         ident["matcher"] = matcher
-    blob = json.dumps(ident, sort_keys=True, separators=(",", ":")).encode()
+    blob = json.dumps(
+        ident, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode()
     return "sha256:" + hashlib.sha256(blob).hexdigest()
 
 
@@ -268,7 +299,9 @@ def fix_hook_trust() -> None:
     for line in src.splitlines():
         m = re.match(r'\[hooks\.state\."((?:[^"\\]|\\.)*)"\]', line.strip())
         if m:
-            key = m.group(1).encode().decode("unicode_escape")
+            # TOML basic-string unescape: our writer emits only \\ and \".
+            # (unicode_escape would mangle non-ASCII paths — HS-02.)
+            key = m.group(1).replace('\\"', '"').replace("\\\\", "\\")
             skip = key.startswith(prefix)
         elif line.strip().startswith("[") and not line.strip().startswith("[["):
             skip = False
@@ -284,6 +317,11 @@ def fix_hook_trust() -> None:
     new_src = src + "\n".join(block_lines) + "\n"
     if new_src == (cfg.read_text(encoding="utf-8") if cfg.is_file() else ""):
         report("OK", "hook-trust", f"{len(entries)} handlers trusted")
+        return
+    try:
+        tomllib.loads(new_src)
+    except Exception as exc:
+        report("FAIL", "hook-trust", f"would produce invalid TOML: {exc}")
         return
     if not DRY_RUN:
         cfg.write_text(new_src, encoding="utf-8")

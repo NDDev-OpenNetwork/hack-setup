@@ -1,13 +1,13 @@
 {
-  "description": "hack-mode lifecycle: ruleset at session start (all sources incl. fork/compact), reminder + git/issues STATUS per prompt, lane-law push guard (PreToolUse), ship-verify nudge after git push (PostToolUse), session log on exit/interrupt (SessionEnd/Interrupt). Law: build/stack-pin.json registered.hooks.",
+  "description": "hack-mode lifecycle: ruleset at session start (all sources incl. fork/compact), reminder + git/issues STATUS per prompt, lane-law push guard (PreToolUse), ship-verify nudge after git push (PostToolUse), session log on exit/interrupt (SessionEnd/Interrupt). Commands resolve the repo root via `git rev-parse --show-toplevel` because Codex runs hooks with cwd = session cwd, which can be a subdirectory (HS-07). Law: build/stack-pin.json registered.hooks.",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .codex/hooks/hack_mode.py session",
-            "commandWindows": "python .codex/hooks/hack_mode.py session",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/hack_mode.py\" session",
+            "commandWindows": "for /f \"delims=\" %i in ('git rev-parse --show-toplevel 2^>nul') do python \"%i/.codex/hooks/hack_mode.py\" session",
             "timeout": 5,
             "statusMessage": "Loading hack mode",
             "additionalContextLimit": 12000
@@ -20,8 +20,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .codex/hooks/hack_mode.py prompt",
-            "commandWindows": "python .codex/hooks/hack_mode.py prompt",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/hack_mode.py\" prompt",
+            "commandWindows": "for /f \"delims=\" %i in ('git rev-parse --show-toplevel 2^>nul') do python \"%i/.codex/hooks/hack_mode.py\" prompt",
             "timeout": 5,
             "statusMessage": "hack mode"
           }
@@ -34,8 +34,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .codex/hooks/hack_mode.py pretooluse",
-            "commandWindows": "python .codex/hooks/hack_mode.py pretooluse",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/hack_mode.py\" pretooluse",
+            "commandWindows": "for /f \"delims=\" %i in ('git rev-parse --show-toplevel 2^>nul') do python \"%i/.codex/hooks/hack_mode.py\" pretooluse",
             "timeout": 5
           }
         ]
@@ -47,8 +47,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .codex/hooks/hack_mode.py posttooluse",
-            "commandWindows": "python .codex/hooks/hack_mode.py posttooluse",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/hack_mode.py\" posttooluse",
+            "commandWindows": "for /f \"delims=\" %i in ('git rev-parse --show-toplevel 2^>nul') do python \"%i/.codex/hooks/hack_mode.py\" posttooluse",
             "timeout": 5
           }
         ]
@@ -59,8 +59,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .codex/hooks/hack_mode.py interrupt",
-            "commandWindows": "python .codex/hooks/hack_mode.py interrupt",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/hack_mode.py\" interrupt",
+            "commandWindows": "for /f \"delims=\" %i in ('git rev-parse --show-toplevel 2^>nul') do python \"%i/.codex/hooks/hack_mode.py\" interrupt",
             "timeout": 3
           }
         ]
@@ -71,8 +71,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .codex/hooks/hack_mode.py sessionend",
-            "commandWindows": "python .codex/hooks/hack_mode.py sessionend",
+            "command": "python3 \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.codex/hooks/hack_mode.py\" sessionend",
+            "commandWindows": "for /f \"delims=\" %i in ('git rev-parse --show-toplevel 2^>nul') do python \"%i/.codex/hooks/hack_mode.py\" sessionend",
             "timeout": 3
           }
         ]

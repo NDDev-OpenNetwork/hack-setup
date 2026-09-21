@@ -101,7 +101,9 @@ v1 speaks Standard Schema, no resolver adapter. Wire types are the
 generated client.
 
 - `useForm({ defaultValues, validators: { onChange: schema } })`;
-  the editable shape is `z.input`, submit `value` is `z.output`.
+  editable and submitted `value` stay `z.input` — TanStack Form
+  validates but does not transform. Call `schema.parse(value)` in
+  `onSubmit` to get `z.output` (that parse is the DTO boundary).
 - `<form.Field>` render props: `field.state.value` /
   `handleChange` / `handleBlur`. No `register` / `Controller`.
 - `formToDto(output)` is assignable to the generated request type.

@@ -140,8 +140,11 @@ ls_additional_workspace_folders: []
 # When using multiple language servers, the first language server that supports a given file will be used for that file.
 # The first language server is the default language and the respective language server will be used as a fallback.
 # Note that when using the JetBrains backend, language servers are not used and this list is correspondingly ignored.
+# Pinned analyzer ids (Serena 1.7.0 LanguageServerId): python_ty = our
+# pinned `ty` (not default pyright); powershell/bash/markdown/json/yaml/
+# toml match the surfaces this repo actually ships.
 language_servers:
-- python
+- python_ty
 - bash
 - powershell
 - markdown

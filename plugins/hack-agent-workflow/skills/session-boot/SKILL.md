@@ -21,5 +21,16 @@ State lives in the repo, not in chat. Before touching code:
 5. Report: current state, task, claimed files, which gate proves done
    (`just check` / `just gate` / `just test`).
 
+## Domain memories (write side)
+
+Memories are per-domain, not per-session: name them
+`.serena/memories/<DOMAIN>-<NN>-<TOPIC>.md` — `API`, `WEB`, `DB`,
+`AUTH`, `INFRA`, `MODELS`, `CODEX`, `STACK`, `TEST`. After a feature
+lands, write or refresh the note for each domain it touched: the
+decision, the file paths that carry it, the migration/convention it
+added. `DB-*` covers migrations and schema shape — the next worker
+reads it before touching models. Keep each note under ~60 lines; the
+index of what exists lives in `NEXT-SESSION.md`.
+
 Never resume from chat memory alone — if NEXT-SESSION disagrees with
 `git status`, the repo wins and the plan file gets fixed.

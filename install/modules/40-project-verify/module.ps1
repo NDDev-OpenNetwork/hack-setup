@@ -26,16 +26,22 @@ function Find-Python {
 
 function Install-Plugins([string]$CodexBin) {
     & $CodexBin plugin marketplace add $env:HACK_REPO_ROOT | Out-Null
+    if ($LASTEXITCODE -ne 0) { Die "codex plugin marketplace add failed (exit $LASTEXITCODE)" }
     # Marketplace is the plugin SoT - install whatever it lists.
     $marketplace = Get-Content -Raw -LiteralPath (Join-Path $env:HACK_REPO_ROOT '.agents\plugins\marketplace.json') | ConvertFrom-Json
     foreach ($plugin in $marketplace.plugins) {
         & $CodexBin plugin add "$($plugin.name)@saint-tibo" | Out-Null
+        if ($LASTEXITCODE -ne 0) { Die "codex plugin add $($plugin.name) failed (exit $LASTEXITCODE)" }
     }
     Log "plugins installed and synced with the repo"
 }
 
 function Run-Checkers {
     $python = Find-Python
+    # Full repair AFTER runtimes land: module 20 may have skipped
+    # notify/hook-trust on a cold host without python (HS-05). repair is
+    # idempotent — a re-run here is the convergence point.
+    & $python (Join-Path $env:HACK_REPO_ROOT 'scripts\repair_setup.py')
     & $python (Join-Path $env:HACK_REPO_ROOT 'scripts\check_codex_setup.py')
     if ($LASTEXITCODE -ne 0) { Die "check_codex_setup.py failed" }
     & $python (Join-Path $env:HACK_REPO_ROOT 'scripts\check_stack.py')

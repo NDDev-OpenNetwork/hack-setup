@@ -65,7 +65,6 @@ startup_timeout_sec = 20
 
 [mcp_servers.context7]
 url = "https://mcp.context7.com/mcp"
-bearer_token_env_var = "CONTEXT7_API_KEY"
 
 [mcp_servers.grep]
 url = "https://mcp.grep.app"

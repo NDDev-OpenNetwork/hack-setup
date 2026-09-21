@@ -113,21 +113,14 @@ PY
 }
 
 ensure_notify() {
-  # User-level only (project config ignores `notify`): append a managed
-  # block to ~/.codex/config.toml pointing at the repo script. The
-  # '# hack-setup' markers make it removable by the scrubber above.
-  cfg="${HOME}/.codex/config.toml"
-  mkdir -p "${HOME}/.codex"
-  [ -f "$cfg" ] || : > "$cfg"
-  if grep -q 'hack-setup: notify' "$cfg"; then
-    return 0
-  fi
-  cat >> "$cfg" <<EOF
-
-# hack-setup: notify
-notify = ["${HACK_REPO_ROOT}/install/notify.sh"]  # hack-setup
-EOF
-  log "wired turn-complete notify -> install/notify.sh"
+  # `notify` is a ROOT key in ~/.codex/config.toml and a foreign value
+  # must never be duplicated — the TOML-aware writer lives in
+  # repair_setup.py (single writer for installer + repair, HS-01/HS-03).
+  # Without python3 this is a no-op; module 40 re-runs full repair after
+  # runtimes land.
+  command -v python3 >/dev/null 2>&1 || return 0
+  python3 "${HACK_REPO_ROOT}/scripts/repair_setup.py" --only notify-block \
+    >/dev/null 2>&1 || true
 }
 
 ensure_hook_trust() {

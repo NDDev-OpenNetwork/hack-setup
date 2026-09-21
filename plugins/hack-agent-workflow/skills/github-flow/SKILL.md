@@ -41,6 +41,13 @@ unaffected.
 `dev` → `main` only when the owner says deploy. The prod server pulls
 `main` itself; then verify prod live and report.
 
+## Merge beacons
+
+Owner words that mean "integrate `<user>` into `dev` now": **«слить»,
+«лить», «залить», «закинуть», «отправить», «влить», "merge to dev"**.
+Hearing one → run the merge gate above. They do NOT mean `dev` →
+`main`; that still waits for an explicit deploy call.
+
 ## Rules
 
 - Status lives in issues and PRs, not in chat.

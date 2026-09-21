@@ -3,7 +3,7 @@
 # ~/.codex/config.toml `notify = ["<repo>/install/notify.sh"]` with one
 # JSON arg. Silent no-op on any failure.
 set -eu
-payload=${1:-{}}
+payload=${1:-"{}"}
 case "$payload" in *agent-turn-complete*) ;; *) exit 0 ;; esac
 title="Codex"
 body=$(printf '%s' "$payload" | python3 -c 'import json,sys; d=json.load(sys.stdin); print((d.get("last-assistant-message") or "turn complete")[:120])' 2>/dev/null | tr '"\\' '  ' || echo "turn complete")

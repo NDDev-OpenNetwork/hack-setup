@@ -201,7 +201,7 @@ change that creates the tree.
 | Plugin | `plugins/saint-tibo/plugin.json` | Portable Agent Plugins 1.0.0. |
 | Workflow plugin | `plugins/hack-agent-workflow/plugin.json` | serena-first / github-first / agent-first. ADR 0009. |
 | MCP plugin | `plugins/hack-agent-mcp/plugin.json` | MCP workflow skills. Wiring: `registered.mcp_servers`. ADR 0013. |
-| Hooks | `.codex/hooks.json` + `.codex/hooks/` | Five-event lifecycle. Law: `registered.hooks`. |
+| Hooks | `.codex/hooks.json` + `.codex/hooks/` | Six-event lifecycle. Law: `registered.hooks`. |
 | Deploy kit | `install/deploy/` | Server-side pull watcher + provision script. ADR 0014. |
 | Notify | `install/notify.sh` / `notify.ps1` | Turn-complete toast, wired into user config by module 20. |
 | Project config | `.codex/config.toml` | Projection of the pin; loads after trust. |

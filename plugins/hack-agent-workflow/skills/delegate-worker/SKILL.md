@@ -29,19 +29,24 @@ Hard limits that shape the flow:
   fit. Write a brief file; the prompt is a pointer plus the mission.
 - `send_message_to_thread` takes `{threadId, prompt, model?}`.
 
-## Spawn
+## Spawn (orchestrator creates the worktree first)
 
-1. Write the brief to `.agent/briefs/<user>-<round>.md` (gitignored) in
-   the repo: issues with numbers, claimed files, lane name, ruleset,
-   loop, DONE report format.
-2. `create_thread`:
+The thread inherits your cwd, so the worktree must exist **before**
+`create_thread` — the worker starts inside a directory you control:
+
+1. `git fetch origin && git worktree add ../<repo>-w<N> -b
+   feat/<issue>-<slug> origin/dev` — one worktree per feature,
+   off the latest dev.
+2. Write the brief to `.agent/briefs/<user>-<round>.md` (gitignored) in
+   the repo: issues with numbers, claimed files, lane name, worktree
+   path, ruleset, loop, DONE report format.
+3. `create_thread`:
    - `title`: `worker/<user>/<round>`
-   - `prompt` (≤1000 B): one-line mission + "First read
-     `.agent/briefs/<user>-<round>.md`, then `git worktree add
-     ../<repo>-w<N> -b feat/<issue>-<slug> origin/dev` and `cd` into it.
-     All work happens inside that worktree."
+   - `prompt` (≤1000 B): one-line mission + "First `cd
+     <absolute worktree path>` — ALL work happens inside that
+     worktree — then read `.agent/briefs/<user>-<round>.md`."
    - omit `model` unless the user asked for an override.
-3. Record the returned `threadId` in the brief file and your notes.
+4. Record the returned `threadId` in the brief file and your notes.
 
 ## Brief template (the file, not the prompt)
 
@@ -52,7 +57,9 @@ Issues (SoT — `gh issue view <n>` before starting): #12, #15
 Lane: merge into `<user>` only. Never push dev or main — the
 PreToolUse hook denies it anyway; never create `.agent/orchestrator`
 in your worktree (that marker is the orchestrator's).
-Worktree: `git worktree add ../<repo>-w<N> -b feat/<issue>-<slug> origin/dev`; cd in.
+Worktree: already created for you at `../<repo>-w<N>`; `cd` in and
+verify `pwd` + `git branch --show-current` == `feat/<issue>-<slug>`
+before the first edit. Activate serena on the worktree root.
 
 Live rules (already injected by hooks; recap):
 - hack-mode: laziest working solution, no review round, no test suite,
@@ -62,10 +69,13 @@ Live rules (already injected by hooks; recap):
 - Claim files on each issue (comment) before editing.
 
 Loop per issue: implement → build+run → verify live → commit → merge
-into `<user>` → comment `done: <sha>` on the issue → next issue.
+into `<user>` → comment `done: <sha>` on the issue → write/refresh the
+`.serena/memories/<DOMAIN>-*.md` note for what you touched (domain:
+API / WEB / DB / AUTH / INFRA / MODELS) → next issue.
 
 Finish with: DONE <user> — merged to <user> @ <sha>; verified live at
-<url>; hack: markers left: <n>.
+<url>; hack: markers left: <n>; worktree left at <path> for the
+orchestrator to retire.
 Blockers: report immediately, do not improvise scope.
 ```
 
@@ -86,6 +96,30 @@ Blockers: report immediately, do not improvise scope.
 2. `git fetch`; `dev..<user>` diff must not touch files another lane
    claimed on open issues.
 3. `git merge --no-ff <user>` into `dev`, push — the dev server pulls.
-4. Verify live on the dev deployment (`ship-verify`), then report.
+4. Spawn the verify agent on dev (`ship-verify`), then report.
+
+## Worktree retirement (main chat, after the lane merged)
+
+Clean git is part of done — a finished feature leaves no debris:
+
+1. The feature branch is merged into `<user>` (check `git branch
+   --merged <user>`).
+2. `git worktree remove ../<repo>-w<N>` (add `--force` only if the
+   worker left uncommitted junk — report that, don't keep it).
+3. `git branch -d feat/<issue>-<slug>` and `git worktree prune`.
+4. `git remote prune origin` when remote tracking went stale.
+5. `set_thread_archived {threadId, archived: true}` — the thread, the
+   worktree and the branch all close together.
+
+## Verify agent (separate thread, after `<user>` → `dev`)
+
+Workers verify in their own checkout; the **verify agent** proves the
+integrated lane on the live dev deployment. Spawn it after the merge
+gate push: `create_thread` titled `verify/<user>/<round>`, prompt
+points at the dev URL and the merged SHA. Its loop: hit the changed
+surface live, read deploy logs (`docker compose logs`, journalctl),
+check OpenObserve alerts/traces for the window, report `LIVE-OK <sha>
+<url>` or `LIVE-FAIL <sha>` + the failing signal. It changes nothing —
+read-only verification; fixes go back through a worker.
 
 `dev` → `main` happens only on the owner's word after dev verifies.
