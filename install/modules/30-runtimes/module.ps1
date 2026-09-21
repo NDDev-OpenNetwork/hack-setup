@@ -40,8 +40,8 @@ function Install-Uv {
         $env:UV_INSTALL_DIR = $UserBin
         $env:UV_NO_MODIFY_PATH = '1'
         $env:UV_PYTHON_BIN_DIR = $UserBin
-        $psHost = Get-Command powershell -ErrorAction SilentlyContinue
-        if (-not $psHost) { $psHost = Get-Command pwsh -ErrorAction SilentlyContinue }
+        $psHost = Get-Command pwsh -ErrorAction SilentlyContinue
+        if (-not $psHost) { $psHost = Get-Command powershell -ErrorAction SilentlyContinue }
         if (-not $psHost) { Die "powershell/pwsh is required to run uv-installer.ps1" }
         & $psHost.Source -NoProfile -ExecutionPolicy Bypass -File $installer
         if ($LASTEXITCODE -ne 0) { Die "uv-installer.ps1 failed (exit $LASTEXITCODE)" }

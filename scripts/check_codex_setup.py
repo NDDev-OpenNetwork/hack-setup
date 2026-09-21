@@ -535,6 +535,7 @@ def check_stack_pin() -> None:
             "python": python["version"],
             "bun": runtimes["bun"]["version"],
             "uv": runtimes["uv"]["version"],
+            "just": (pin.get("quality") or {}).get("just", {}).get("version"),
         }
         for key, version in expected_tools.items():
             if tools.get(key) != version:

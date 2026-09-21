@@ -1,7 +1,7 @@
 # Codex CLI, native Windows. Twin of module.sh: same pinned version, same
-# standalone layout (~/.codex/packages/standalone), same sol profile file.
-# Uses the pinned official install.ps1 — it manages the visible bin dir at
-# %LOCALAPPDATA%\Programs\OpenAI\Codex\bin, junctions, and the user PATH.
+# sol profile file. Package-first like POSIX — the pinned release archive
+# is sha256-verified and deterministic; official install.ps1 is only the
+# fallback for triples without a package (#11).
 $ErrorActionPreference = 'Stop'
 . (Join-Path $env:HACK_LIB 'common.ps1')
 . (Join-Path $env:HACK_LIB 'download.ps1')
@@ -44,7 +44,8 @@ function Ensure-SolProfile {
     $effort = Get-HackPin $StackPinPath 'models.reasoning_effort'
     $ctx = Get-HackPin $StackPinPath 'models.requested_context_window'
     $compact = Get-HackPin $StackPinPath 'models.requested_auto_compact'
-    $codexHome = Join-Path $HOME '.codex'
+    # CODEX_HOME wins, same resolver as the checkers (#11).
+    $codexHome = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $HOME '.codex' }
     New-Item -ItemType Directory -Force -Path $codexHome | Out-Null
     $lines = @(
         '# hack-setup managed: secondary model profile for `codex --profile sol`.',
@@ -65,7 +66,7 @@ function Ensure-SolProfile {
         & $py.Source (Join-Path $env:HACK_REPO_ROOT 'scripts\repair_setup.py') --only config-cleanup | Out-Null
         if ($LASTEXITCODE -ne 0) { Log "WARN: config-cleanup repair failed (exit $LASTEXITCODE)" }
     }
-    Log "installed user profile ~/.codex/sol.config.toml ($secondary)"
+    Log "installed user profile $codexHome\sol.config.toml ($secondary)"
 }
 
 function Ensure-Notify {
@@ -110,46 +111,47 @@ function Run-Install {
         return
     }
     New-Item -ItemType Directory -Force -Path $env:HACK_CACHE | Out-Null
+    # Package-first, same contract as module.sh: the pinned release
+    # archive is sha256-verified and deterministic; install.ps1 is the
+    # fallback when no package exists for this triple (#11 — the
+    # official installer can exit 0 without producing a binary).
+    $pkg = Get-CodexPackage $PinPath $env:HACK_TRIPLE
+    if ($pkg) {
+        Install-FromPackage $wanted $pkg
+        return
+    }
     $installer = Join-Path $env:HACK_CACHE 'codex-official-install.ps1'
-    Log "downloading pinned official install.ps1 for $wanted"
+    Log "no pinned package for $env:HACK_TRIPLE; downloading official install.ps1"
     Save-HackFile (Get-HackPin $PinPath 'installer_ps1.url') $installer
     Assert-HackSha256 $installer (Get-HackPin $PinPath 'installer_ps1.sha256')
     Log "running official installer (CODEX_RELEASE=$wanted)"
     $env:CODEX_RELEASE = $wanted
     $env:CODEX_NON_INTERACTIVE = '1'
     $env:CODEX_INSTALLER_USE_RELEASES_OPENAI_COM = 'false'
-    $psHost = Get-Command powershell -ErrorAction SilentlyContinue
-    if (-not $psHost) { $psHost = Get-Command pwsh -ErrorAction SilentlyContinue }
-    if (-not $psHost) {
-        Log "no powershell/pwsh for install.ps1 — recovering via pinned package"
-        Install-FromPackage $wanted
-        return
-    }
+    $env:CODEX_INSTALL_DIR = $CodexBinDir
+    # pwsh first — the installer targets modern PowerShell; Windows
+    # PowerShell 5.1 is the fallback, not the default.
+    $psHost = Get-Command pwsh -ErrorAction SilentlyContinue
+    if (-not $psHost) { $psHost = Get-Command powershell -ErrorAction SilentlyContinue }
+    if (-not $psHost) { Die "no pwsh/powershell for install.ps1 and no pinned package for $env:HACK_TRIPLE" }
     & $psHost.Source -NoProfile -ExecutionPolicy Bypass -File $installer
-    if ($LASTEXITCODE -ne 0) {
-        Log "official install.ps1 failed (exit $LASTEXITCODE) — recovering via pinned package"
-        Install-FromPackage $wanted
-        return
-    }
     $installed = Join-Path $CodexBinDir 'codex.exe'
     if ((Get-BinaryVersion $installed) -ne $wanted) {
-        Die "installed Codex reported $(Get-BinaryVersion $installed), expected $wanted"
+        Die "official install.ps1 left no working codex.exe at $CodexBinDir (exit $LASTEXITCODE)"
     }
     Link-Bin $installed $env:HACK_LOCAL_BIN | Out-Null
     Log "Codex CLI $wanted installed"
 }
 
 function Install-FromPackage {
-    # Recovery path when the metadata installer cannot run (#11): the
-    # pinned per-platform release package, sha256-verified, same contract
-    # as module.sh.
-    param([string]$Wanted)
-    $platform = $env:HACK_PLATFORM
-    $name = Get-HackPin $PinPath "packages.$platform.name"
+    # Pinned per-platform release package, sha256-verified — same
+    # contract as module.sh (#11).
+    param([string]$Wanted, $Pkg)
+    $name = $Pkg.name
     $archive = Join-Path $env:HACK_CACHE $name
     Log "downloading pinned package $name"
-    Save-HackFile (Get-HackPin $PinPath "packages.$platform.url") $archive
-    Assert-HackSha256 $archive (Get-HackPin $PinPath "packages.$platform.sha256")
+    Save-HackFile $Pkg.url $archive
+    Assert-HackSha256 $archive $Pkg.sha256
     $extract = Join-Path $env:HACK_CACHE "codex-pkg-$Wanted"
     if (Test-Path $extract) { Remove-Item -Recurse -Force $extract }
     New-Item -ItemType Directory -Force -Path $extract | Out-Null
@@ -164,15 +166,21 @@ function Install-FromPackage {
         Die "package Codex reported $(Get-BinaryVersion $installed), expected $Wanted"
     }
     Link-Bin $installed $env:HACK_LOCAL_BIN | Out-Null
-    Log "Codex CLI $Wanted installed from package (installer fallback)"
+    Log "Codex CLI $Wanted installed from pinned package"
 }
 
 function Run-DryRun {
     $wanted = Get-CliVersion
-    Log "would verify $(Get-HackPin $PinPath 'installer_ps1.url')"
-    Log "would require sha256 $(Get-HackPin $PinPath 'installer_ps1.sha256')"
-    Log "would run official install.ps1 with CODEX_RELEASE=$wanted on $env:HACK_PLATFORM"
-    Log "fallback: packages.$env:HACK_PLATFORM package (sha256-verified) if the installer fails"
+    $pkg = Get-CodexPackage $PinPath $env:HACK_TRIPLE
+    if ($pkg) {
+        Log "would verify $($pkg.url)"
+        Log "would require sha256 $($pkg.sha256)"
+        Log "would extract the pinned package into $CodexBinDir on $env:HACK_PLATFORM"
+    } else {
+        Log "would verify $(Get-HackPin $PinPath 'installer_ps1.url')"
+        Log "would require sha256 $(Get-HackPin $PinPath 'installer_ps1.sha256')"
+        Log "would run official install.ps1 with CODEX_RELEASE=$wanted on $env:HACK_PLATFORM"
+    }
 }
 
 $Action = if ($args.Count -gt 0) { $args[0] } else { 'status' }

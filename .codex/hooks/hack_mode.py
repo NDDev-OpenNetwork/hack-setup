@@ -337,13 +337,25 @@ def _git_pushes(segment: str):
     words = _split_tokens(segment)
     if not words:
         return
+    # `git` is the command only when every preceding word is transparent:
+    # a wrapper (sudo/doas/env/command/time/nice — they execute the push
+    # for real), a VAR=… assignment, a -flag, or a bare word that is a
+    # flag's argument (sudo -u root, nice -n 5). A first non-transparent
+    # word that isn't git (echo, xargs, grep) means git is merely an
+    # argument — the segment does not execute it.
     i = 0
-    # skip VAR=… env assignments and bare command wrappers
-    while i < len(words) and (
-        re.match(r"^\w+=", words[i])
-        or words[i] in ("env", "command", "time", "nice")
-    ):
-        i += 1
+    prev_was_flag = False
+    while i < len(words):
+        w = words[i]
+        if w == "git":
+            break
+        if re.match(r"^\w+=", w) or w in (
+            "env", "command", "time", "nice", "sudo", "doas"
+        ) or w.startswith("-") or prev_was_flag:
+            prev_was_flag = w.startswith("-")
+            i += 1
+            continue
+        return
     if i >= len(words) or words[i] != "git":
         return
     j = i + 1
@@ -409,7 +421,11 @@ def _push_to(command: str, cwd_root: Path | None,
     the caller's cwd; a relative dir resolves against `caller_cwd`) and
     quoting is stripped by _split_tokens (#5). Guard rail, not a security
     boundary: aliases/wrappers are out of scope."""
-    for segment in re.split(r"[|;&]+", command):
+    # Split on every command boundary: pipes, separators, &&/||,
+    # NEWLINES (a second line is a second command — splitting only on
+    # |;& let `git fetch\ngit push` slip the guard), and subshell
+    # markers ( ) ` — $(git push …) executes a real push too.
+    for segment in re.split(r"[|;&\n\r`()]+", command):
         for args, git_cwd in _git_pushes(segment):
             if git_cwd:
                 target = _repo_root(git_cwd, base=caller_cwd)

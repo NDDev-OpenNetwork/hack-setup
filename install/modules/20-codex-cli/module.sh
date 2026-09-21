@@ -71,8 +71,10 @@ ensure_sol_profile() {
   effort="$(hack_pin_get "$STACK_PIN_PATH" models.reasoning_effort)"
   ctx="$(hack_pin_get "$STACK_PIN_PATH" models.requested_context_window)"
   compact="$(hack_pin_get "$STACK_PIN_PATH" models.requested_auto_compact)"
-  mkdir -p "${HOME}/.codex"
-  cat > "${HOME}/.codex/sol.config.toml" <<EOF
+  # CODEX_HOME wins, same resolver as the checkers (#11).
+  codex_home="${CODEX_HOME:-${HOME}/.codex}"
+  mkdir -p "$codex_home"
+  cat > "$codex_home/sol.config.toml" <<EOF
 # hack-setup managed: secondary model profile for \`codex --profile sol\`.
 # Values come from build/stack-pin.json models.* — edit the pin, not this file.
 model = "$secondary"
@@ -87,7 +89,7 @@ EOF
     python3 "${HACK_REPO_ROOT}/scripts/repair_setup.py" --only config-cleanup \
       || log "WARN: config-cleanup repair failed"
   fi
-  log "installed user profile ~/.codex/sol.config.toml ($secondary)"
+  log "installed user profile $codex_home/sol.config.toml ($secondary)"
 }
 
 ensure_notify() {
@@ -135,7 +137,7 @@ run_install() {
     log "downloading pinned package $pkg_name for $wanted"
     hack_download "$pkg_url" "$tarball"
     hack_verify_sha256 "$tarball" "$pkg_sha"
-    standalone="${HOME}/.codex/packages/standalone"
+    standalone="${CODEX_HOME:-${HOME}/.codex}/packages/standalone"
     release_dir="$standalone/releases/${wanted}-${HACK_TRIPLE}"
     stage_dir="${release_dir}.tmp.$$"
     rm -rf "$stage_dir"
