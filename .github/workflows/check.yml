@@ -103,7 +103,7 @@ jobs:
         run: |
           . .\devin-setup\install\env.ps1
           cd devin-setup
-          $pytestV = python -c 'import json; print(json.load(open("build/stack-pin.json"))["quality"]["pytest"]["version"])'
+          $pytestV = (Get-Content -Raw build\stack-pin.json | ConvertFrom-Json).quality.pytest.version
           uvx --from "pytest==$pytestV" pytest -q tests/
 
   setup-e2e:
@@ -146,5 +146,5 @@ jobs:
         shell: pwsh
         run: |
           . .\install\env.ps1
-          $pytestV = python -c 'import json; print(json.load(open("build/stack-pin.json"))["quality"]["pytest"]["version"])'
+          $pytestV = (Get-Content -Raw build\stack-pin.json | ConvertFrom-Json).quality.pytest.version
           uvx --from "pytest==$pytestV" pytest -q tests/
