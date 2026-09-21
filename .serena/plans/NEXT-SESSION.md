@@ -327,6 +327,20 @@ Landed this pass (per-member installs + OS targeting, #23):
 - Remaining: Ivan/Artem run `./setup --member ivan|artem` on their
   hosts (module dies on a wrong gh login — intended guard).
 
+Audit wave on top (all pushed, CI green):
+- `check_ps1_ascii` in check_codex_setup: non-ASCII allowed only in
+  comments of *.ps1 — static guard for the PS5.1 ANSI-decode bug class.
+- noreply fallback without `id`: `login@users.noreply.github.com`
+  (old GitHub format) instead of `None+login@`/`+login@`.
+- `--member=`/`--os=` empty values die in bootstrap.sh (ps1 parity).
+- bootstrap.ps1 accepts single-dash PowerShell forms (-Member, -Status,
+  -Dry-Run, -Os; case-insensitive) alongside --flags; setup.ps1 header
+  + usage updated.
+- justfile `setup *args` forwards flags (`just setup --member ivan`);
+  checker accepts parameterized recipe.
+- README quickstart is member-first; AGENTS.md documents both flag
+  styles.
+
 Landed previous pass (hardening sweep, no live-host items):
 - hack_mode.py: `_split_tokens` — posix=False on Windows so
   `C:\repo` keeps backslashes, outer quotes stripped manually; `git -C`
