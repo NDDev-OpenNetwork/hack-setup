@@ -97,43 +97,62 @@ def node_lts() -> str:
     raise SystemExit("no Node LTS in index.json")
 
 
+def row(latest_fn) -> tuple[str | None, str | None]:
+    """One lookup — a failure is an ERR row, never a silent skip or an
+    abort that hides the remaining rows (#19). Returns (latest, err)."""
+    try:
+        return latest_fn(), None
+    except SystemExit as exc:  # "no stable releases" style lookups
+        return None, str(exc)
+    except Exception as exc:
+        return None, str(exc)
+
+
+def mark(pinned: str, latest: str | None, err: str | None) -> str:
+    if err is not None or latest is None:
+        return "ERR"
+    return "OK" if latest == pinned else "DRIFT"
+
+
 def main() -> int:
     pin = json.loads(PIN_PATH.read_text(encoding="utf-8"))
     print(f"pin verified_on={pin.get('verified_on')} schema={pin.get('schema_version')}")
     drift = 0
-    for label, package in NPM:
+    errors = 0
+    registry_rows = [(label, pkg, npm_latest) for label, pkg in NPM] + [
+        (label, pkg, pypi_latest) for label, pkg in PYPI
+    ]
+    for label, package, fn in registry_rows:
         pinned = lookup(pin, label)
-        latest = npm_latest(package)
-        mark = "OK" if pinned == latest else "DRIFT"
-        if mark == "DRIFT":
-            drift += 1
-        print(f"{mark:5} {label:28} pin={pinned:12} latest={latest}")
-    for label, package in PYPI:
-        pinned = lookup(pin, label)
-        latest = pypi_latest(package)
-        mark = "OK" if pinned == latest else "DRIFT"
-        if mark == "DRIFT":
-            drift += 1
-        print(f"{mark:5} {label:28} pin={pinned:12} latest={latest}")
+        latest, err = row(lambda f=fn, p=package: f(p))
+        m = mark(pinned, latest, err)
+        drift += m == "DRIFT"
+        errors += m == "ERR"
+        print(f"{m:5} {label:28} pin={pinned:12} latest={latest or err}")
     pinned_node = lookup(pin, "runtimes.node")
-    latest_node = node_lts()
-    mark = "OK" if pinned_node == latest_node else "DRIFT"
-    if mark == "DRIFT":
-        drift += 1
-    print(f"{mark:5} {'runtimes.node':28} pin={pinned_node:12} latest={latest_node} (newest LTS row)")
+    latest_node, err = row(node_lts)
+    m = mark(pinned_node, latest_node, err)
+    drift += m == "DRIFT"
+    errors += m == "ERR"
+    print(f"{m:5} {'runtimes.node':28} pin={pinned_node:12} latest={latest_node or err} (newest LTS row)")
     github_rows = [("ai.bifrost", pin.get("ai", {}).get("bifrost", {}))]
     for name, entry in pin.get("lsp", {}).items():
         if isinstance(entry, dict) and entry.get("github_tag"):
             github_rows.append((f"lsp.{name}", entry))
     for label, entry in github_rows:
         pinned_tag = entry.get("github_tag", "")
-        latest_tag = github_latest_tag(
-            entry.get("github_repo", ""), entry.get("github_prefix", "")
+        latest_tag, err = row(
+            lambda e=entry: github_latest_tag(
+                e.get("github_repo", ""), e.get("github_prefix", "")
+            )
         )
-        mark = "OK" if pinned_tag == latest_tag else "DRIFT"
-        if mark == "DRIFT":
-            drift += 1
-        print(f"{mark:5} {label:28} pin={pinned_tag:22} latest={latest_tag}")
+        m = mark(pinned_tag, latest_tag, err)
+        drift += m == "DRIFT"
+        errors += m == "ERR"
+        print(f"{m:5} {label:28} pin={pinned_tag:22} latest={latest_tag or err}")
+    if errors:
+        print(f"ERR {errors} lookups failed — pin state unknown, not verified")
+        return 2
     if drift:
         print(f"DRIFT {drift} entries; update build/stack-pin.json and verified_on")
         return 1

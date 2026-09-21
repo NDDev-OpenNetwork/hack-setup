@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "verified_on": "2026-09-20",
+  "verified_on": "2026-09-21",
   "reverify_on_hackathon": true,
   "policy": "latest-compatible-stable; freeze after prep; hackathon bumps are explicit",
   "codex_pin": "build/codex-pin.json",

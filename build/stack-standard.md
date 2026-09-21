@@ -3,7 +3,7 @@
 Generated from `build/stack-pin.json`. Do not edit by hand.
 Refresh with `python3 scripts/check_stack.py --write`.
 
-- verified_on: `2026-09-20`
+- verified_on: `2026-09-21`
 - schema_version: `2`
 - package_manager: `bun`
 - locales: `ru, kk, en`

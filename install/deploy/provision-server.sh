@@ -13,11 +13,14 @@
 # the configured branch — NEVER reset --hard, a diverged/dirty checkout
 # stops the run (issue #7), write /etc/default/hack-deploy only when
 # missing (existing env is preserved), install the deploy-watch systemd
-# units, and start the timer ONLY when the app config ($dir/.env) exists
-# or START_TIMER=1 is passed.
+# units, and start the timer unconditionally — the watcher self-gates on
+# $dir/.env, so deploys begin on the next tick after config lands.
 set -eu
 
 host=${1:?usage: provision-server.sh <host> <branch> <repo-url> [app-dir]}
+# <host> may carry a user (deploy@1.2.3.4); default to root.
+target=$host
+case "$host" in *@*) ;; *) target="root@$host" ;; esac
 branch=${2:?branch required}
 repo=${3:?repo-url required}
 dir=${4:-/opt/app}
@@ -29,7 +32,7 @@ sq() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
 remote_env="HACK_DIR=$(sq "$dir") HACK_BRANCH=$(sq "$branch") HACK_REPO=$(sq "$repo")"
 
 # --- Phase 1: prerequisites + repo checkout -------------------------------
-ssh "root@$host" "$remote_env sh -s" <<'EOF'
+ssh "$target" "$remote_env sh -s" <<'EOF'
 set -eu
 export DEBIAN_FRONTEND=noninteractive
 if ! command -v git >/dev/null || ! command -v docker >/dev/null; then
@@ -67,9 +70,9 @@ EOF
 
 # --- Phase 2: watcher install ---------------------------------------------
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-scp "$script_dir/deploy-watch.sh" "root@$host:/usr/local/bin/deploy-watch.sh"
+scp "$script_dir/deploy-watch.sh" "$target:/usr/local/bin/deploy-watch.sh"
 scp "$script_dir/deploy-watch.service" "$script_dir/deploy-watch.timer" \
-  "root@$host:/etc/systemd/system/"
+  "$target:/etc/systemd/system/"
 
 # Render the env file locally; scp only when absent (existing HACK_DEPLOY_*
 # config — health URL, custom cmd, log path — is preserved, issue #7).
@@ -83,7 +86,7 @@ trap 'rm -f "$tmp_env"' EXIT
   printf '# HACK_DEPLOY_LOG=/var/log/deploy-watch.log\n'
 } > "$tmp_env"
 
-ssh "root@$host" "$remote_env sh -s" <<'EOF'
+ssh "$target" "$remote_env sh -s" <<'EOF'
 set -eu
 chmod +x /usr/local/bin/deploy-watch.sh
 if [ -f /etc/default/hack-deploy ]; then
@@ -91,22 +94,16 @@ if [ -f /etc/default/hack-deploy ]; then
 fi
 EOF
 # Write the rendered env only when absent; stdin carries the file.
-ssh "root@$host" "test -f /etc/default/hack-deploy || { cat > /etc/default/hack-deploy.new && chmod 0644 /etc/default/hack-deploy.new && mv /etc/default/hack-deploy.new /etc/default/hack-deploy; }" < "$tmp_env"
+ssh "$target" "test -f /etc/default/hack-deploy || { cat > /etc/default/hack-deploy.new && chmod 0644 /etc/default/hack-deploy.new && mv /etc/default/hack-deploy.new /etc/default/hack-deploy; }" < "$tmp_env"
 
-# --- Phase 3: enable; start only when the app is configured ---------------
-start_flag=$(ssh "root@$host" "$remote_env sh -s" <<'EOF'
+# --- Phase 3: enable + start — the watcher self-gates on $dir/.env -----
+# deploy-watch.sh exits 0 without deploying until the app .env exists
+# (and a first deploy has happened), so the timer is always safe to run;
+# dropping .env later is picked up on the next tick (issue #7).
+ssh "$target" <<'EOF'
 set -eu
 systemctl daemon-reload
-systemctl enable deploy-watch.timer >/dev/null 2>&1
-if [ -f "$HACK_DIR/.env" ]; then echo ready; else echo pending; fi
+systemctl enable --now deploy-watch.timer
+systemctl status deploy-watch.timer --no-pager | head -5
 EOF
-)
-
-if [ "$start_flag" = ready ] || [ "${START_TIMER:-0}" = 1 ]; then
-  ssh "root@$host" "systemctl start deploy-watch.timer && systemctl status deploy-watch.timer --no-pager | head -5"
-  echo "provisioned $host: watches $branch in $dir every 30s (timer RUNNING)"
-else
-  echo "provisioned $host: watches $branch in $dir every 30s (timer enabled, NOT started)"
-  echo "next: put the app .env in $dir on the server, then"
-  echo "  ssh root@$host systemctl start deploy-watch.timer"
-fi
+echo "provisioned $host: watches $branch in $dir every 30s (timer running; deploys start once $dir/.env exists)"

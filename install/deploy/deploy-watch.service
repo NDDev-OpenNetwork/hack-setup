@@ -1,9 +1,9 @@
 [Unit]
-Description=deploy-watch: pull %E{HACK_DEPLOY_BRANCH} and redeploy on change
+Description=deploy-watch: pull the configured branch and redeploy on change
 After=network-online.target docker.service
 Wants=network-online.target
 
 [Service]
 Type=oneshot
-EnvironmentFile=/etc/default/hack-deploy
+EnvironmentFile=-/etc/default/hack-deploy
 ExecStart=/usr/local/bin/deploy-watch.sh

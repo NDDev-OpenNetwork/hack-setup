@@ -1216,20 +1216,27 @@ def check_hooks() -> None:
             raise CheckError(f"hooks.{event} must be a non-empty list")
         for group in groups:
             for hook in (group or {}).get("hooks", []):
-                command = str(hook.get("command", ""))
-                match = re.search(r"(\.codex/hooks/[^\"'\s)]+)", command)
-                if not match:
-                    raise CheckError(
-                        f"hooks.{event} command must reference .codex/hooks/: {command}"
-                    )
-                script = match.group(1)
-                if script not in scripts:
-                    raise CheckError(f"hook script {script} not in registered.hooks.scripts")
-                seen_scripts.add(script)
-                script_path = ROOT / script
-                if not script_path.is_file():
-                    raise CheckError(f"hook script {script} is missing")
-                py_compile(str(script_path))
+                for key in ("command", "commandWindows"):
+                    command = str(hook.get(key, ""))
+                    if not command:
+                        if key == "command":
+                            raise CheckError(
+                                f"hooks.{event} must carry a command"
+                            )
+                        continue
+                    match = re.search(r"(\.codex/hooks/[^\"'\s)]+)", command)
+                    if not match:
+                        raise CheckError(
+                            f"hooks.{event} {key} must reference .codex/hooks/: {command}"
+                        )
+                    script = match.group(1)
+                    if script not in scripts:
+                        raise CheckError(f"hook script {script} not in registered.hooks.scripts")
+                    seen_scripts.add(script)
+                    script_path = ROOT / script
+                    if not script_path.is_file():
+                        raise CheckError(f"hook script {script} is missing")
+                    py_compile(str(script_path))
     if seen_scripts != scripts:
         raise CheckError(
             f"registered.hooks.scripts unused: {sorted(scripts - seen_scripts)}"
@@ -1287,6 +1294,51 @@ def py_compile(script_path: str) -> None:
         raise CheckError(f"{script_path} must compile: {exc}") from exc
 
 
+def check_serena_project() -> None:
+    """`.serena/project.yml` must stay consistent with the stack pin —
+    stdlib-only check (no yaml dep): the pinned `ty_version`, the
+    `python_ty` analyzer, a workspace folder of `.`, and no `powershell`
+    LS (missing pwsh on POSIX aborts the whole LS manager, issue #2)."""
+    yml = ROOT / ".serena" / "project.yml"
+    if not yml.is_file():
+        raise CheckError(".serena/project.yml missing")
+    text = yml.read_text(encoding="utf-8")
+    stack = load_json(STACK_PIN_PATH)
+    ty_want = (
+        stack.get("quality", {}).get("ty", {}).get("version")
+        if isinstance(stack, dict)
+        else None
+    )
+    m = re.search(r"(?m)^\s*ty_version:\s*[\"']?([\w.\-]+)", text)
+    if not m:
+        raise CheckError(
+            ".serena/project.yml must pin ls_specific_settings.python_ty.ty_version"
+        )
+    if ty_want and m.group(1) != str(ty_want):
+        raise CheckError(
+            f"serena ty_version {m.group(1)} != quality.ty.version {ty_want}"
+        )
+    lang_block = re.search(
+        r"(?ms)^language_servers:\s*\n((?:\s*-\s*\w+\s*\n?)+)", text
+    )
+    if not lang_block:
+        raise CheckError(".serena/project.yml must list language_servers")
+    langs = re.findall(r"(?m)^\s*-\s*(\w+)\s*$", lang_block.group(1))
+    if "python_ty" not in langs:
+        raise CheckError("language_servers must include python_ty (the pinned analyzer)")
+    if "powershell" in langs:
+        raise CheckError(
+            "language_servers must not include powershell — missing pwsh on "
+            "POSIX aborts the whole Serena LS manager (find_symbol dies)"
+        )
+    ws = re.search(
+        r"(?ms)^ls_workspace_folders:\s*\n((?:\s*-\s*\S+\s*\n?)+)", text
+    )
+    folders = re.findall(r"(?m)^\s*-\s*[\"']?(\S+?)[\"']?\s*$", ws.group(1)) if ws else []
+    if "." not in folders:
+        raise CheckError("serena ls_workspace_folders must contain `.`")
+
+
 def main() -> int:
     checks = (
         check_pin,
@@ -1300,6 +1352,7 @@ def main() -> int:
         check_skills,
         check_nested_templates,
         check_hooks,
+        check_serena_project,
     )
     errors: list[str] = []
     for check in checks:

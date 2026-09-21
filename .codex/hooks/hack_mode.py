@@ -20,7 +20,10 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-STATE = Path.home() / ".codex" / f"hack-mode-{ROOT.name}.json"
+# One home resolver, same policy as scripts/repair_setup.py (#11):
+# CODEX_HOME wins so a dedicated hackathon home keeps mode state too.
+_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+STATE = _CODEX_HOME / f"hack-mode-{ROOT.name}.json"
 
 
 def _semver_key(v: str) -> tuple:
@@ -37,7 +40,7 @@ def _skill_path() -> Path:
     local = plugin_dir / "skills" / "hack-mode" / "SKILL.md"
     if local.is_file():
         return local
-    cache = Path.home() / ".codex" / "plugins" / "cache"
+    cache = _CODEX_HOME / "plugins" / "cache"
     hits = []
     try:
         hits = list(
@@ -80,7 +83,7 @@ OFF_COMMANDS = {"normal mode", "stop hack mode", "stop hack-mode", "hack off"}
 ON_COMMANDS = {"hack mode", "hack-mode", "hack on", "hack full"}
 ULTRA_COMMANDS = {"hack ultra", "hack-mode ultra"}
 
-GH_CACHE = Path.home() / ".codex" / (
+GH_CACHE = _CODEX_HOME / (
     f"hack-issues-{ROOT.name}-"
     + hashlib.sha256(str(ROOT).encode()).hexdigest()[:6]
     + ".json"
@@ -308,13 +311,31 @@ def _protected_ref(token: str, protected: list[str]) -> bool:
     return dst.removeprefix("refs/heads/") in protected
 
 
+_POSIX_SHLEX = os.name != "nt"
+
+
+def _split_tokens(segment: str) -> list[str]:
+    """Shell-aware tokenize. POSIX mode strips quoting but treats `\\` as
+    an escape — on Windows that eats `C:\\repo` into `C:repo`, so Windows
+    uses posix=False and strips the outer quote pair manually instead."""
+    try:
+        words = shlex.split(segment, posix=_POSIX_SHLEX)
+    except ValueError:
+        return []
+    if not _POSIX_SHLEX:
+        words = [
+            w[1:-1] if len(w) >= 2 and w[0] == w[-1] and w[0] in "\"'" else w
+            for w in words
+        ]
+    return words
+
+
 def _git_pushes(segment: str):
     """Yield (push_argv, -C_dir|None) for each `git … push` in one shell
-    segment. shlex strips quoting, so `"dev"` and `'/p a t h'` tokenize
-    correctly where the old regex split broke (#5)."""
-    try:
-        words = shlex.split(segment, posix=True)
-    except ValueError:
+    segment. Quoting is stripped (`"dev"` == `dev`) on both POSIX and
+    Windows shells (#5)."""
+    words = _split_tokens(segment)
+    if not words:
         return
     i = 0
     # skip VAR=… env assignments and bare command wrappers
@@ -381,15 +402,17 @@ def _push_args_hit(
     return False
 
 
-def _push_to(command: str, cwd_root: Path) -> bool:
+def _push_to(command: str, cwd_root: Path | None,
+             caller_cwd: Path | None = None) -> bool:
     """True when any `git push` in the command hits a protected branch.
     Lane authority comes from the TARGET repo (`git -C <dir>` wins over
-    the caller's cwd) and shlex tokenization strips quoting (#5). Guard
-    rail, not a security boundary: aliases/wrappers are out of scope."""
+    the caller's cwd; a relative dir resolves against `caller_cwd`) and
+    quoting is stripped by _split_tokens (#5). Guard rail, not a security
+    boundary: aliases/wrappers are out of scope."""
     for segment in re.split(r"[|;&]+", command):
         for args, git_cwd in _git_pushes(segment):
             if git_cwd:
-                target = _repo_root(git_cwd)
+                target = _repo_root(git_cwd, base=caller_cwd)
             else:
                 target = cwd_root
             if target is None:
@@ -413,11 +436,14 @@ def _current_branch(root: Path) -> str:
         return ""
 
 
-def _repo_root(cwd: str) -> Path | None:
+def _repo_root(cwd: str, base: Path | None = None) -> Path | None:
+    """`git -C <cwd>` — `base` is the CALLER's cwd so a relative -C dir
+    resolves against where the user typed, not the hook process (#5)."""
     try:
         out = subprocess.run(
             ["git", "-C", cwd, "rev-parse", "--show-toplevel"],
             capture_output=True, text=True, timeout=2,
+            cwd=str(base) if base else None,
         )
         return Path(out.stdout.strip()) if out.returncode == 0 else None
     except Exception:
@@ -445,10 +471,12 @@ def pretooluse(payload: dict) -> None:
     command = _tool_command(payload)
     if not command:
         return
-    root = _repo_root(str(payload.get("cwd") or "."))
-    # _push_to resolves lane authority per push target (`git -C <dir>`);
-    # it runs even when cwd is outside a repo (#5).
-    hit = _push_to(command, root)
+    caller_cwd = Path(str(payload.get("cwd") or "."))
+    root = _repo_root(str(caller_cwd))
+    # _push_to resolves lane authority per push target (`git -C <dir>`,
+    # relative dirs anchored at the caller's cwd); it runs even when cwd
+    # is outside a repo (#5).
+    hit = _push_to(command, root, caller_cwd)
     if not hit and root:
         # `gh pr merge` / `gh api …/merge` have no -C: the cwd repo is
         # the authority.

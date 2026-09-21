@@ -22,6 +22,16 @@ die() { log "FAIL $*"; exit 1; }
 [ -n "${HACK_DEPLOY_BRANCH:-}" ] || die "HACK_DEPLOY_BRANCH unset"
 cd "$HACK_DEPLOY_DIR" || die "cannot cd $HACK_DEPLOY_DIR"
 
+# Config gate: never deploy before the app has its .env — but once a
+# deploy has succeeded the watcher keeps working even if .env is later
+# removed (an intentional cleanup shouldn't stall redeploys). This lets
+# the systemd timer run unconditionally; provisioning needs no manual
+# start step (issue #7).
+if [ ! -f .env ] && [ ! -f .deployed-sha ]; then
+  log "no .env and never deployed — waiting for app config"
+  exit 0
+fi
+
 # Server never owns local commits: ff-only. A dirty tree pauses the watch.
 if ! git diff --quiet || ! git diff --cached --quiet; then
   log "dirty tree on server, skipping tick"
