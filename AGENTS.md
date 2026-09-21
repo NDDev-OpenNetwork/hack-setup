@@ -259,7 +259,8 @@ the toolchain refuses outright:
 ```bash
 git clone git@github.com:NDDev-OpenNetwork/hack-setup.git
 cd hack-setup
-./setup
+./setup --member <danil|ivan|artem>          # macOS / Ubuntu / WSL2
+.\setup.ps1 --member <danil|ivan|artem>     # native Windows x86_64
 . install/env.sh
 ```
 
@@ -269,6 +270,18 @@ sha256 from `build/codex-pin.json` `packages.*` (hashed official
 `install/modules/`. Supported hosts: macOS, Ubuntu/Linux, and Windows
 x86_64 natively via `.\setup.ps1` → `install/bootstrap.ps1` (ADR 0012).
 WSL2 Ubuntu also works as a POSIX path; Windows arm64 is fail-closed.
+
+Flags: `--member <name>` (or bare `--danil`/`--ivan`/`--artem`) selects
+the team member — module `15-member` verifies `gh` is authenticated as
+that member's pinned GitHub login (`stack-pin.json` `team.members`),
+then writes git identity from `gh api user` (profile name + email or
+`id+login@users.noreply.github.com` — personal mail never enters this
+public repo) plus the shared conflict-free git defaults
+(`team.git_defaults`: ff-only pulls, prune, rerere, zdiff3, lf).
+`.agent/member` marks the checkout; the prompt STATUS line shows it.
+`--os <macos|ubuntu|windows>` declares the target family — mismatch
+fails with the right entry point; under `--dry-run` it previews that
+platform's plan. `HACK_MEMBER`/`HACK_TARGET_OS` env vars are equivalent.
 
 ## Quality gate
 
