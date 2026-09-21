@@ -361,6 +361,16 @@ Issue #24 wave (letya999 agent audit, dispositions posted on the issue):
   setup.ps1 routing on win32, test_env_ps1.py twin, per-platform
   --os assertions; bootstrap.ps1 dies on --member=/--os= empties.
 - CI: pinned pytest now runs on setup-e2e-windows + devin-e2e-windows.
+- The new Windows pytest surface caught two latent hook bypasses:
+  (a) `_repo_root` passed caller cwd as subprocess cwd — a missing
+  caller dir (deleted session cwd, `\tmp` on Windows) killed every
+  `git -C` resolution → lane guard silently bypassed; fixed by joining
+  relative -C dirs textually. (b) `Path.home()` at module scope
+  (`_skill_path` fallback, `_codex_home`) raised RuntimeError under a
+  stripped env (no USERPROFILE/HOMEDRIVE) — tempdir fallback added;
+  devin tests now redirect USERPROFILE/APPDATA on nt.
+- Final: commit `ed4c544`, run 35662843426 = 8/8 green incl. native
+  Windows pytest steps on both e2e jobs. Python 3.14.7 stays pinned.
 
 Landed previous pass (hardening sweep, no live-host items):
 - hack_mode.py: `_split_tokens` — posix=False on Windows so
