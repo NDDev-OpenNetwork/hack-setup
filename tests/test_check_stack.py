@@ -108,7 +108,7 @@ def test_check_stack_doctor_passes() -> None:
         check=False,
     )
     assert result.returncode == 0, result.stderr or result.stdout
-    assert "PASS required host tools match the pin" in result.stdout
+    assert "PASS [installed] required host tools match the pin" in result.stdout
     assert "node" in result.stdout
     assert "24.21.0" in result.stdout
 
@@ -124,7 +124,7 @@ def test_doctor_decision_required_and_strict() -> None:
     declared_missing = _probe("declared", "docker", "MISSING", "29.8.1")
     code, messages = check_stack.doctor_decision([required_ok, declared_drift], strict=False)
     assert code == 0
-    assert any("PASS required" in item for item in messages)
+    assert any("PASS [installed] required" in item for item in messages)
     code, messages = check_stack.doctor_decision([required_ok, declared_drift], strict=True)
     assert code == 1
     assert any("FAIL --strict" in item for item in messages)
