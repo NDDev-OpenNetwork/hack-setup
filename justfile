@@ -76,6 +76,11 @@ stack:
 reverify:
     python3 scripts/reverify_stack_pin.py
 
+# Live proof: real Serena MCP handshake + activation + symbol + memory.
+# Needs uvx + network; slower than check — not part of `gate`.
+live:
+    python3 scripts/verify_serena.py
+
 # Repo tests
 test:
     pytest -q

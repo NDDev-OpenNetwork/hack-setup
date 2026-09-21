@@ -154,6 +154,7 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | required | `bun` | `bun` | `runtimes.bun.version` | `1.4.2` |
 | required | `python` | `python3` | `runtimes.python.version` | `3.14.7` |
 | required | `uv` | `uv` | `runtimes.uv.version` | `0.12.17` |
+| required | `just` | `just` | `quality.just.version` | `1.58.0` |
 | declared | `rustc` | `rustc` | `runtimes.rust.version` | `1.98.1` |
 | declared | `go` | `go` | `runtimes.go.version` | `1.27.1` |
 | declared | `docker` | `docker` | `deploy.docker.version` | `29.8.1` |
@@ -162,7 +163,6 @@ Refresh with `python3 scripts/check_stack.py --write`.
 | declared | `redis-server` | `redis-server` | `data.redis_server.version` | `8.10.2` |
 | declared | `ruff` | `ruff` | `quality.ruff.version` | `0.16.8` |
 | declared | `pytest` | `pytest` | `quality.pytest.version` | `9.1.1` |
-| declared | `just` | `just` | `quality.just.version` | `1.58.0` |
 | declared | `ty` | `ty` | `quality.ty.version` | `0.0.82` |
 
 ## Codex models

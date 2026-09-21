@@ -36,12 +36,19 @@ function Install-Plugins([string]$CodexBin) {
     Log "plugins installed and synced with the repo"
 }
 
-function Run-Checkers {
+function Run-Repair {
     $python = Find-Python
     # Full repair AFTER runtimes land: module 20 may have skipped
     # notify/hook-trust on a cold host without python (HS-05). repair is
-    # idempotent — a re-run here is the convergence point.
+    # idempotent — a re-run here is the convergence point. Its FAIL exit
+    # must propagate: check it before the checkers (#8).
     & $python (Join-Path $env:HACK_REPO_ROOT 'scripts\repair_setup.py')
+    if ($LASTEXITCODE -ne 0) { Die "repair_setup.py failed (exit $LASTEXITCODE)" }
+}
+
+function Run-Checkers {
+    # Observational only — status never mutates user state (#8).
+    $python = Find-Python
     & $python (Join-Path $env:HACK_REPO_ROOT 'scripts\check_codex_setup.py')
     if ($LASTEXITCODE -ne 0) { Die "check_codex_setup.py failed" }
     & $python (Join-Path $env:HACK_REPO_ROOT 'scripts\check_stack.py')
@@ -50,7 +57,7 @@ function Run-Checkers {
 
 $Action = if ($args.Count -gt 0) { $args[0] } else { 'status' }
 switch ($Action) {
-    'install' { Install-Plugins (Find-Codex); Run-Checkers }
+    'install' { Install-Plugins (Find-Codex); Run-Repair; Run-Checkers }
     { $_ -in 'status' } { Run-Checkers }
     'dry-run' { Log "would install marketplace plugins and run the checkers" }
     default { Die "unknown action: $Action" }

@@ -81,34 +81,12 @@ review_model = "$secondary"
 model_context_window = $ctx
 model_auto_compact_token_limit = $compact
 EOF
-  python3 - "${HOME}/.codex/config.toml" <<'PY'
-import pathlib, re, sys
-p = pathlib.Path(sys.argv[1])
-if not p.exists():
-    sys.exit(0)
-src = p.read_text()
-lines = src.splitlines(keepends=True)
-out, i, n = [], 0, len(lines)
-while i < n:
-    line = lines[i]
-    if line.lstrip().startswith("# hack-setup:"):
-        while i < n and lines[i].lstrip().startswith("#"):
-            i += 1
-        continue
-    if "# hack-setup" in line and "=" in line:
-        i += 1
-        continue
-    if re.fullmatch(r"\[profiles\.sol\]", line.strip()):
-        i += 1
-        while i < n and not lines[i].strip().startswith("["):
-            i += 1
-        continue
-    out.append(line)
-    i += 1
-res = "".join(out)
-if res != src:
-    p.write_text(res)
-PY
+  # Legacy managed-line cleanup (foreign [hooks.state] tables are
+  # preserved — issue #1) lives in repair_setup.py as the single writer.
+  if command -v python3 >/dev/null 2>&1; then
+    python3 "${HACK_REPO_ROOT}/scripts/repair_setup.py" --only config-cleanup \
+      || log "WARN: config-cleanup repair failed"
+  fi
   log "installed user profile ~/.codex/sol.config.toml ($secondary)"
 }
 
@@ -120,7 +98,7 @@ ensure_notify() {
   # runtimes land.
   command -v python3 >/dev/null 2>&1 || return 0
   python3 "${HACK_REPO_ROOT}/scripts/repair_setup.py" --only notify-block \
-    >/dev/null 2>&1 || true
+    || log "WARN: notify-block repair failed"
 }
 
 ensure_hook_trust() {
@@ -131,7 +109,7 @@ ensure_hook_trust() {
   # live from the first session without a manual `/hooks` review.
   command -v python3 >/dev/null 2>&1 || return 0
   python3 "${HACK_REPO_ROOT}/scripts/repair_setup.py" --only hook-trust \
-    >/dev/null 2>&1 || true
+    || log "WARN: hook-trust repair failed"
 }
 
 run_install() {

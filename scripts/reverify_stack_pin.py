@@ -74,9 +74,17 @@ def github_latest_tag(repo: str, prefix: str) -> str:
     url = f"https://api.github.com/repos/{repo}/releases?per_page=100"
     with urllib.request.urlopen(url, timeout=20) as response:
         releases = json.load(response)
-    tags = [r["tag_name"] for r in releases if r["tag_name"].startswith(prefix)]
+    # Stable releases only — a prerelease/draft tag must never read as
+    # "latest" and trigger a false DRIFT (#19).
+    tags = [
+        r["tag_name"]
+        for r in releases
+        if r["tag_name"].startswith(prefix)
+        and not r.get("prerelease")
+        and not r.get("draft")
+    ]
     if not tags:
-        raise SystemExit(f"no {prefix}* releases in {repo}")
+        raise SystemExit(f"no stable {prefix}* releases in {repo}")
     return tags[0]
 
 

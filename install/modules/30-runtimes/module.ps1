@@ -156,6 +156,34 @@ function Install-Node {
     Log "node $wanted installed"
 }
 
+function Install-Just {
+    # The documented command runner (`just gate` etc.) — installed, not
+    # assumed on the host (#9). Windows asset is a zip with just.exe.
+    $wanted = Pin-Get 'quality.just.version'
+    $local = Join-Path $env:HACK_LOCAL_BIN 'just.exe'
+    if ((Get-BinVersion $local '--version') -eq $wanted) {
+        Log "just $wanted already at $local"
+        return
+    }
+    New-Item -ItemType Directory -Force -Path $env:HACK_CACHE, (Join-Path $RuntimeRoot 'just') | Out-Null
+    $name = Pin-Get "quality.just.packages.$env:HACK_PLATFORM.name"
+    $archive = Join-Path $env:HACK_CACHE $name
+    Log "downloading $name"
+    Save-HackFile (Pin-Get "quality.just.packages.$env:HACK_PLATFORM.url") $archive
+    Assert-HackSha256 $archive (Pin-Get "quality.just.packages.$env:HACK_PLATFORM.sha256")
+    $extractDir = Join-Path $RuntimeRoot "just\$wanted"
+    Remove-Item -LiteralPath $extractDir -Recurse -Force -ErrorAction SilentlyContinue
+    Expand-Archive -LiteralPath $archive -DestinationPath $extractDir -Force
+    $justBin = Get-ChildItem -LiteralPath $extractDir -Recurse -Filter 'just.exe' | Select-Object -First 1
+    if (-not $justBin) { Die "just.exe missing from $name" }
+    if ((Get-BinVersion $justBin.FullName '--version') -ne $wanted) {
+        Die "just reported $(Get-BinVersion $justBin.FullName '--version'), expected $wanted"
+    }
+    Link-Bin $justBin.FullName $UserBin | Out-Null
+    Link-Bin $justBin.FullName $env:HACK_LOCAL_BIN | Out-Null
+    Log "just $wanted installed"
+}
+
 function Invoke-McpWarm {
     $serenaV = Pin-Get 'mcp.serena.version'
     $shadcnV = Pin-Get 'frontend.shadcn.version'
@@ -177,6 +205,7 @@ function Run-Install {
     Install-Python
     Install-Bun
     Install-Node
+    Install-Just
     Invoke-McpWarm
 }
 
@@ -191,7 +220,9 @@ function Run-Status {
     if (-not $pyOk) { Die "python $pyV missing; run .\setup.ps1" }
     if ((Get-BinVersion (Join-Path $env:HACK_LOCAL_BIN 'bun.exe') '--version') -ne $bunV) { Die "bun $bunV missing; run .\setup.ps1" }
     if ((Get-BinVersion (Join-Path $env:HACK_LOCAL_BIN 'node.exe') '--version') -ne $nodeV) { Die "node $nodeV missing; run .\setup.ps1" }
-    Log "runtimes ok (node $nodeV, bun $bunV, python $pyV, uv $uvV)"
+    $justV = Pin-Get 'quality.just.version'
+    if ((Get-BinVersion (Join-Path $env:HACK_LOCAL_BIN 'just.exe') '--version') -ne $justV) { Die "just $justV missing; run .\setup.ps1" }
+    Log "runtimes ok (node $nodeV, bun $bunV, python $pyV, uv $uvV, just $justV)"
 }
 
 function Run-DryRun {
@@ -199,6 +230,7 @@ function Run-DryRun {
     Log "would uv python install $(Pin-Get 'runtimes.python.version') --default"
     Log "would install bun $(Pin-Get 'runtimes.bun.version') ($env:HACK_PLATFORM)"
     Log "would install node $(Pin-Get 'runtimes.node.version') ($env:HACK_PLATFORM)"
+    Log "would install just $(Pin-Get 'quality.just.version') ($env:HACK_PLATFORM)"
     Log "would warm MCP caches: serena-agent $(Pin-Get 'mcp.serena.version'), shadcn $(Pin-Get 'frontend.shadcn.version')"
 }
 

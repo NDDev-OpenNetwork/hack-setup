@@ -26,11 +26,11 @@ jobs:
       - name: Unit tests
         run: |
           export PATH="$HOME/.local/bin:$PATH"
-          uvx --from pytest pytest -q
+          pytest_v="$(python3 -c 'import json; print(json.load(open("build/stack-pin.json"))["quality"]["pytest"]["version"])')"
+          uvx --from "pytest==$pytest_v" pytest -q
       - name: Shell syntax
         run: |
-          sh -n setup install/bootstrap.sh install/env.sh
-          for f in install/lib/*.sh install/modules/*/module.sh; do sh -n "$f"; done
+          for f in setup install/bootstrap.sh install/env.sh install/lib/*.sh install/modules/*/module.sh install/deploy/*.sh install/notify.sh; do sh -n "$f"; done
 
   setup-e2e:
     strategy:
