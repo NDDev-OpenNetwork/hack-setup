@@ -373,8 +373,28 @@ Issue #24 wave (letya999 agent audit, dispositions posted on the issue):
   Windows pytest steps on both e2e jobs. Python 3.14.7 stays pinned.
 - Issues #24 + #23 closed with `live-verified`; regression test
   `test_deleted_caller_cwd_does_not_bypass` covers the -C bypass on
-  every platform. Open remainder: #3/#4/#7 (P1 live surfaces — need
-  product repo / real droplet), #20 tracker.
+  every platform.
+
+Issue-closure wave (all issues now closed, head 908891d, run
+35664586275 = 9/9 green):
+- NEW job `deploy-e2e` on ubuntu-latest: self-SSH root@localhost,
+  provision-server.sh twice (env preserved), tracked-dirty refusal,
+  systemd timer drives a REAL deploy tick (ff-only pull + stub
+  HACK_DEPLOY_CMD + .deployed-sha == remote). Caught a real bug:
+  `>> /dev/stderr` dies under systemd oneshot (ENXIO on journald
+  socket) — deploy-watch.sh now logs to fd 2 when no HACK_DEPLOY_LOG;
+  same split for the deploy command. download.ps1 got 3-attempt retry
+  (schannel CRYPT_E_REVOCATION_OFFLINE flake on Windows runner).
+  Dirty-refusal semantics: only TRACKED modifications/diverged HEAD
+  refuse — untracked .env/.deployed-sha is legitimate state.
+- #7 closed live-verified (CI VM systemd proof; real droplet remains
+  a noted gap, not a claimed pass). #3/#4 closed `integrated` —
+  code fixes verified, live orchestrator->worker spawn/retire
+  deferred to product-repo day. #20 tracker closed with the gaps
+  recorded in its body.
+- Remaining deferred live items (reopen when surfaces exist):
+  orchestrator->worker spawn + retire on the product repo (needs
+  BAITC checkout + Codex App), provision on a real droplet.
 
 Landed previous pass (hardening sweep, no live-host items):
 - hack_mode.py: `_split_tokens` — posix=False on Windows so
