@@ -1,5 +1,5 @@
 {
-  "description": "hack-mode lifecycle: ruleset at session start (all sources incl. fork/compact), reminder + git/issues STATUS per prompt, lane-law push guard (PreToolUse), ship-verify nudge after git push (PostToolUse), session log on exit/interrupt (SessionEnd/Interrupt). Commands resolve the repo root via `git rev-parse --show-toplevel` because Codex runs hooks with cwd = session cwd, which can be a subdirectory (HS-07). Law: build/stack-pin.json registered.hooks.",
+  "description": "hack-mode lifecycle: ruleset at session start (all sources: startup|resume|clear|compact (a forked thread re-fires startup)), reminder + git/issues STATUS per prompt, lane-law push guard (PreToolUse), ship-verify nudge after git push (PostToolUse), session log on exit/interrupt (SessionEnd/Interrupt). Commands resolve the repo root via `git rev-parse --show-toplevel` because Codex runs hooks with cwd = session cwd, which can be a subdirectory (HS-07). Law: build/stack-pin.json registered.hooks.",
   "hooks": {
     "SessionStart": [
       {

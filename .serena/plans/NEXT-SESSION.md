@@ -15,7 +15,7 @@ One loop. `build/stack-pin.json` `control` names it.
    `$hack-agent-standards:<layer-skill>`. Router
    `$hack-agent-standards:apply-agent-standard`. Repo alias
    `$apply-stack-rule`. Pin numbers win. Owner turn beats a frame.
-5. Why: ADRs 0001–0012
+5. Why: ADRs 0001–0016
 
 Do not fork numbers into frames, skills, or memories first. Edit pin +
 config together, then `just check`.
@@ -215,3 +215,44 @@ Setup owner stream: Danil.
   when that code is authored. Copy from `nested/` in the same change.
 
 Not requested: BAITC remote, Serena/hooks install.
+
+## Open threads
+### State 2026-09-21 — deep audit landed (2b70788)
+
+All review findings closed; `just check/gate/test` green; hook trust
+rewritten (6 handlers) and stable across commits.
+
+Landed this pass:
+- repair_setup.py: full upstream hook-hash normalization port
+  (commandWindows stripped, timeout clamps, canonical JSON), narrow
+  TOML unescape, root-aware TOML-safe notify writer (foreign root
+  notify = WARN, never corrupts), tomllib-validated writes,
+  idempotent managed block.
+- hooks.json: `git rev-parse --show-toplevel` root resolution +
+  commandWindows cmd variants on all six handlers.
+- hack_mode.py: refspec tokenization (feat/12-main-fix allowed,
+  wildcard/all/mirror/delete/HEAD-upstream denied), lanes.json gates
+  hack-mode injection — harness repo gets SETUP:CHECK only.
+- deploy-watch.sh: `.deployed-sha` = last SUCCESSFUL deploy; failed
+  builds retry next tick; bounded healthcheck (12×5s), die on fail.
+- bootstrap PATH before modules; module 40 runs full repair;
+  module.ps1 delegates to repair + exit codes.
+- context7 keyless-by-default (0.155.1 hard-errors on unset env var).
+- Serena pinned to python_ty. Workflow: worktree-first orchestrator
+  spawn + retirement contract, verify-agent role, merge beacons,
+  per-domain serena memories.
+- vibestrap 5c8dffb: fork surface synced, stray hook removed,
+  thin build/stack-pin.json + fork exceptions (RHF over TanStack
+  Form, TanStack Start, better-auth/drizzle=auth schema only),
+  .serena baseline.
+
+Open:
+- ~/.codex/config.toml has foreign root `notify` (Codex Computer Use
+  app) — repair warns by design; merge manually only if toast wanted.
+- vibestrap push policy: dev pushes need owner beacon / orchestrator
+  marker (guard is working — it denied my test pushes).
+- Remaining internet-verify items: remote compaction SessionStart
+  behavior, Codex App thread instruction shadowing (#33238 noted in
+  pin), Windows commandWindows golden-vector test on a real host.
+
+

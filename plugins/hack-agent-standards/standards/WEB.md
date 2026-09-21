@@ -96,6 +96,11 @@ mutations. Clear that cache on logout / account change.
 
 ### Forms
 
+The vibestrap product template ships `react-hook-form` + `zodResolver`
+already wired into the shadcn `Field` primitives — inside that tree
+follow `frontend/AGENTS.md` + `docs/conventions.md`, not this section
+(recorded fork exception). For greenfield surfaces:
+
 Form UX is a local Zod schema passed straight to TanStack Form —
 v1 speaks Standard Schema, no resolver adapter. Wire types are the
 generated client.
