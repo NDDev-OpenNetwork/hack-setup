@@ -31,17 +31,23 @@ function Install-Plugins([string]$DevinBin) {
     # devin-pin plugins[] is the SoT - local install links the repo tree.
     $pin = Get-Content -Raw -LiteralPath (Join-Path $env:HACK_REPO_ROOT 'build\devin-pin.json') | ConvertFrom-Json
     $ok = $true
-    # pwsh 7.5+ turns native stderr into NativeCommandError under
-    # $ErrorActionPreference=Stop before $LASTEXITCODE is readable —
-    # native commands report failure by exit code here, not by stderr.
+    # PS5.1 + pwsh7.5: native stderr becomes NativeCommandError under
+    # EAP=Stop before $LASTEXITCODE is readable. Loosen EAP around the
+    # call so exit codes, not stderr records, drive the decision.
     $PSNativeCommandUseErrorActionPreference = $false
-    foreach ($plugin in $pin.plugins) {
-        $dir = Join-Path $env:HACK_REPO_ROOT ($plugin.dir -replace '/', '\')
-        $err = (& $DevinBin plugins install --local $dir -y 2>&1 | Out-String)
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host $err
-            $ok = $false
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        foreach ($plugin in $pin.plugins) {
+            $dir = Join-Path $env:HACK_REPO_ROOT ($plugin.dir -replace '/', '\')
+            $err = (& $DevinBin plugins install --local $dir -y 2>&1 | Out-String)
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host $err
+                $ok = $false
+            }
         }
+    } finally {
+        $ErrorActionPreference = $prevEap
     }
     if (-not $ok) {
         # Auth-gated on a fresh host; the checker still proves the repo side.

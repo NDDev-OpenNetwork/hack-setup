@@ -128,8 +128,15 @@ function Ensure-Integration {
     # exist (Ensure-UserConfig creates it). Idempotent.
     $herdr = Get-Command herdr -ErrorAction SilentlyContinue
     if (-not $herdr) { Log 'WARN: herdr not on PATH; run herdr integration install devin manually'; return }
-    & herdr integration install devin *> $null
-    if ($LASTEXITCODE -ne 0) { Log 'WARN: herdr integration install devin failed; run it manually' }
+    $prevEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        & herdr integration install devin *> $null
+        $code = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $prevEap
+    }
+    if ($code -ne 0) { Log 'WARN: herdr integration install devin failed; run it manually' }
 }
 
 function Run-Status {
