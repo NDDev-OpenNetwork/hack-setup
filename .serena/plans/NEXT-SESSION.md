@@ -221,8 +221,13 @@ Not requested: BAITC remote, Serena/hooks install.
 
 All 19 implementation findings verified against source and fixed;
 `just check`/`gate`/`test` (17 tests) green; `just live` proves the real
-Serena MCP chain. `git-sync` reports dirty because this wave is being
-committed now — check `git log` for the landing SHAs.
+Serena MCP chain. Landed as `4b3b243` (impl) + `a923dd9` (tests) +
+`6c692c0` (workflow docs) + `002d843` (serena sync) + `122ebfd`
+(resolver/package-recovery/plugin-summary). Mid-wave PR #22 added
+`product/vibestrap` submodule + `.gds/` — audit commits were rebased on
+it; dev carries a merge commit for the pre-rebase SHAs. main==dev at
+`122ebfd`. Per-issue evidence comments are on GitHub #1–#19; tracker #20
+has the roll-up.
 
 Landed this pass (audit wave):
 - repair_setup.py: `pinned_version()` reads `codex_cli` key (no
