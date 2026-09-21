@@ -341,6 +341,27 @@ Audit wave on top (all pushed, CI green):
 - README quickstart is member-first; AGENTS.md documents both flag
   styles.
 
+Issue #24 wave (letya999 agent audit, dispositions posted on the issue):
+- Python pin REJECTED the proposed downgrade: cpython-3.14.7 is the
+  latest 3.14 (endoflife 2026-08-05) and pinned uv 0.12.17 resolves it.
+  Artem's "No download found" was a stale host uv 0.9.26 + a Win32
+  file lock on ~/.local/bin/uv.exe.
+- module 30 (both setups): uv installs into
+  HACK_RUNTIME_ROOT/uv/<ver> — never in-place over the user bin;
+  HACK_LOCAL_BIN is authoritative, user-bin link is best-effort WARN.
+  Legacy user<->local symlink layouts migrate through realpath+copy
+  (an ELOOP was caught live on this host). HACK_USER_BIN overrides
+  the user bin dir (module 30 + env.sh/env.ps1 + --print-env).
+- module 20 ps1 + devin Find-PinnedBinary: PATH candidates must end
+  in .exe — npm codex.ps1/codex.cmd wrappers version-match but break
+  outside their prefix.
+- git config --global kept by design (member law; GIT_CONFIG_GLOBAL
+  remains the isolation escape hatch).
+- Tests Windows-aware: conftest GetShortPathNameW tempdir redirect,
+  setup.ps1 routing on win32, test_env_ps1.py twin, per-platform
+  --os assertions; bootstrap.ps1 dies on --member=/--os= empties.
+- CI: pinned pytest now runs on setup-e2e-windows + devin-e2e-windows.
+
 Landed previous pass (hardening sweep, no live-host items):
 - hack_mode.py: `_split_tokens` — posix=False on Windows so
   `C:\repo` keeps backslashes, outer quotes stripped manually; `git -C`
