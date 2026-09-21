@@ -85,7 +85,7 @@
       "name": "saint-tibo",
       "path": ".agents/plugins/marketplace.json",
       "cli": "codex plugin marketplace add .",
-      "status": "in-repo; ./setup does not run marketplace add"
+      "status": "in-repo; module 40 runs marketplace add + plugin add during ./setup"
     },
     "plugin": {
       "id": "saint-tibo@saint-tibo",
@@ -93,7 +93,7 @@
       "policy": "INSTALLED_BY_DEFAULT",
       "enabled_in": ".codex/config.toml",
       "cli": "codex plugin add saint-tibo@saint-tibo",
-      "status": "enabled in project config after trust; plugin add not run by ./setup"
+      "status": "enabled in project config after trust; module 40 runs plugin add during ./setup"
     },
     "standards_plugin": {
       "id": "hack-agent-standards@saint-tibo",

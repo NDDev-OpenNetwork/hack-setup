@@ -120,9 +120,17 @@ function Run-Install {
     $env:CODEX_INSTALLER_USE_RELEASES_OPENAI_COM = 'false'
     $psHost = Get-Command powershell -ErrorAction SilentlyContinue
     if (-not $psHost) { $psHost = Get-Command pwsh -ErrorAction SilentlyContinue }
-    if (-not $psHost) { Die "powershell/pwsh is required to run install.ps1" }
+    if (-not $psHost) {
+        Log "no powershell/pwsh for install.ps1 — recovering via pinned package"
+        Install-FromPackage $wanted
+        return
+    }
     & $psHost.Source -NoProfile -ExecutionPolicy Bypass -File $installer
-    if ($LASTEXITCODE -ne 0) { Die "official install.ps1 failed (exit $LASTEXITCODE)" }
+    if ($LASTEXITCODE -ne 0) {
+        Log "official install.ps1 failed (exit $LASTEXITCODE) — recovering via pinned package"
+        Install-FromPackage $wanted
+        return
+    }
     $installed = Join-Path $CodexBinDir 'codex.exe'
     if ((Get-BinaryVersion $installed) -ne $wanted) {
         Die "installed Codex reported $(Get-BinaryVersion $installed), expected $wanted"
@@ -131,11 +139,40 @@ function Run-Install {
     Log "Codex CLI $wanted installed"
 }
 
+function Install-FromPackage {
+    # Recovery path when the metadata installer cannot run (#11): the
+    # pinned per-platform release package, sha256-verified, same contract
+    # as module.sh.
+    param([string]$Wanted)
+    $platform = $env:HACK_PLATFORM
+    $name = Get-HackPin $PinPath "packages.$platform.name"
+    $archive = Join-Path $env:HACK_CACHE $name
+    Log "downloading pinned package $name"
+    Save-HackFile (Get-HackPin $PinPath "packages.$platform.url") $archive
+    Assert-HackSha256 $archive (Get-HackPin $PinPath "packages.$platform.sha256")
+    $extract = Join-Path $env:HACK_CACHE "codex-pkg-$Wanted"
+    if (Test-Path $extract) { Remove-Item -Recurse -Force $extract }
+    New-Item -ItemType Directory -Force -Path $extract | Out-Null
+    tar -xzf $archive -C $extract
+    if ($LASTEXITCODE -ne 0) { Die "could not extract $name (tar exit $LASTEXITCODE)" }
+    $exe = Get-ChildItem -Recurse -Filter 'codex.exe' $extract | Select-Object -First 1
+    if (-not $exe) { Die "codex.exe missing from $name" }
+    New-Item -ItemType Directory -Force -Path $CodexBinDir | Out-Null
+    $installed = Join-Path $CodexBinDir 'codex.exe'
+    Copy-Item $exe.FullName $installed -Force
+    if ((Get-BinaryVersion $installed) -ne $Wanted) {
+        Die "package Codex reported $(Get-BinaryVersion $installed), expected $Wanted"
+    }
+    Link-Bin $installed $env:HACK_LOCAL_BIN | Out-Null
+    Log "Codex CLI $Wanted installed from package (installer fallback)"
+}
+
 function Run-DryRun {
     $wanted = Get-CliVersion
     Log "would verify $(Get-HackPin $PinPath 'installer_ps1.url')"
     Log "would require sha256 $(Get-HackPin $PinPath 'installer_ps1.sha256')"
     Log "would run official install.ps1 with CODEX_RELEASE=$wanted on $env:HACK_PLATFORM"
+    Log "fallback: packages.$env:HACK_PLATFORM package (sha256-verified) if the installer fails"
 }
 
 $Action = if ($args.Count -gt 0) { $args[0] } else { 'status' }

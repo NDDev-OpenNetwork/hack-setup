@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -108,6 +110,25 @@ def load_toml(path: Path) -> dict[str, object]:
         return tomllib.loads(read_text(path))
     except tomllib.TOMLDecodeError as exc:
         raise CheckError(f"invalid TOML {path.relative_to(ROOT)}: {exc}") from exc
+
+
+def codex_home() -> Path:
+    """One resolver for the Codex user home: CODEX_HOME wins, else
+    ~/.codex — same policy as scripts/repair_setup.py (#11)."""
+    return Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+
+
+def codex_bin() -> Path | None:
+    """Resolve the installed codex binary: repo .local/bin first (setup
+    installs there), then the user bin, then PATH. `.exe` on Windows —
+    a native install must reach the same installed-state checks (#11)."""
+    exe = "codex.exe" if os.name == "nt" else "codex"
+    for base in (ROOT / ".local" / "bin", Path.home() / ".local" / "bin"):
+        candidate = base / exe
+        if candidate.exists():
+            return candidate
+    found = shutil.which("codex")
+    return Path(found) if found else None
 
 
 def lookup_version(data: object, dotted: str) -> str:
@@ -872,10 +893,10 @@ def check_config() -> None:
             "ignores project-local profiles. The sol profile is installed "
             "into the user config by install/modules/20-codex-cli"
         )
-    codex_bin = Path.home() / ".local" / "bin" / "codex"
-    user_cfg_path = Path.home() / ".codex" / "config.toml"
-    sol_path = Path.home() / ".codex" / "sol.config.toml"
-    if codex_bin.exists():
+    installed = codex_bin() is not None
+    user_cfg_path = codex_home() / "config.toml"
+    sol_path = codex_home() / "sol.config.toml"
+    if installed:
         if user_cfg_path.exists() and "sol" in load_toml(user_cfg_path).get(
             "profiles", {}
         ):
@@ -1035,10 +1056,9 @@ def check_marketplace_entry(entry: object, expected_name: str, dest: str) -> Non
 
 
 def check_plugin_cache_sync() -> None:
-    codex_bin = Path.home() / ".local" / "bin" / "codex"
-    if not codex_bin.exists():
+    if codex_bin() is None:
         return
-    cache_root = Path.home() / ".codex" / "plugins" / "cache" / "saint-tibo"
+    cache_root = codex_home() / "plugins" / "cache" / "saint-tibo"
     for name in marketplace_names():
         repo_dir = ROOT / "plugins" / name
         version = load_json(repo_dir / "plugin.json").get("version", "")

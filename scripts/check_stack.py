@@ -357,20 +357,25 @@ def render_standard(stack: dict[str, Any], probes: list[Probe]) -> str:
                     f"- ignore-rules CLI: `{session.get('ignore_rules_cli')}`",
                 ]
             )
-        plugin = registered.get("plugin")
-        standards_plugin = registered.get("standards_plugin")
-        if isinstance(plugin, dict) or isinstance(standards_plugin, dict):
+        # Every registered.<name>_plugin dict is a selected plugin — derive
+        # the summary from the registrations, not a hardcoded pair (#19).
+        plugin_rows = [
+            (key, value)
+            for key, value in registered.items()
+            if key.endswith("_plugin") and isinstance(value, dict)
+        ] + ([("plugin", registered["plugin"])]
+             if isinstance(registered.get("plugin"), dict) else [])
+        if plugin_rows:
             lines.extend(["", "## Plugins", ""])
-            if isinstance(plugin, dict):
-                lines.append(f"- team: `{plugin.get('id')}`")
-            if isinstance(standards_plugin, dict):
-                lines.append(f"- standards: `{standards_plugin.get('id')}`")
-                lines.append(f"- frames: `{standards_plugin.get('standards')}`")
-            skills = registered.get("standards_plugin_skills")
-            if isinstance(skills, list) and skills:
-                listed = ", ".join(f"`{name}`" for name in skills if isinstance(name, str))
-                if listed:
-                    lines.append(f"- standards skills: {listed}")
+            for key, value in sorted(plugin_rows):
+                lines.append(f"- {key.removesuffix('_plugin')}: `{value.get('id')}`")
+                if value.get("standards"):
+                    lines.append(f"  - frames: `{value.get('standards')}`")
+            for key, value in registered.items():
+                if key.endswith("_plugin_skills") and isinstance(value, list):
+                    listed = ", ".join(f"`{s}`" for s in value if isinstance(s, str))
+                    if listed:
+                        lines.append(f"- {key}: {listed}")
 
     if isinstance(banned, list) and banned:
         lines.extend(["", "## Do not use", ""])

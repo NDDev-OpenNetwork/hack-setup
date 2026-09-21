@@ -42,22 +42,24 @@ def report(status: str, name: str, detail: str = "") -> None:
     print(f"{line} — {detail}" if detail else line)
 
 
-def load_json(path: Path) -> dict:
+def load_json(path: Path, required: bool = False) -> dict:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception as exc:
+        if required:
+            raise SystemExit(f"{path} unreadable ({exc}) — pin is law, no fallback")
         return {}
 
 
 def pinned_version() -> str:
-    version = load_json(PIN_PATH).get("codex_cli")
+    version = load_json(PIN_PATH, required=True).get("codex_cli")
     if not version:
         raise SystemExit(f"{PIN_PATH} missing codex_cli — pin is law, no fallback")
     return str(version)
 
 
 def marketplace_names() -> list[str]:
-    doc = load_json(ROOT / ".agents" / "plugins" / "marketplace.json")
+    doc = load_json(ROOT / ".agents" / "plugins" / "marketplace.json", required=True)
     return [str(p.get("name")) for p in doc.get("plugins", []) if p.get("name")]
 
 
@@ -86,8 +88,10 @@ def atomic_write(path: Path, text: str) -> None:
     os.replace(tmp, path)
 
 
-def run(cmd: list[str], timeout: int = 30) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+def run(cmd: list[str], timeout: int = 30,
+        cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(cmd, capture_output=True, text=True,
+                          timeout=timeout, cwd=cwd)
 
 
 # --- FIX items ---------------------------------------------------------------
@@ -218,7 +222,7 @@ def fix_notify_block() -> None:
 def fix_sol_profile() -> None:
     """Rewrite ~/.codex/sol.config.toml from stack-pin models.* — the file is
     fully managed, so regeneration is always safe."""
-    pin = load_json(STACK_PIN_PATH)
+    pin = load_json(STACK_PIN_PATH, required=True)
     models = pin.get("models") or {}
     secondary = models.get("secondary", "gpt-5.6-sol")
     effort = models.get("reasoning_effort", "xhigh")
@@ -473,8 +477,12 @@ def fix_state_files() -> None:
 
 def check_codex_version() -> None:
     wanted = pinned_version()
+    bin_path = codex_bin()
+    if not bin_path:
+        report("FAIL", "codex-version", f"codex not found; expected codex-cli {wanted} — run ./setup")
+        return
     try:
-        res = run(["codex", "--version"])
+        res = run([bin_path, "--version"])
     except (OSError, subprocess.SubprocessError):
         report("FAIL", "codex-version", f"codex not runnable; expected codex-cli {wanted} — run ./setup")
         return
@@ -541,13 +549,15 @@ def check_env_sh() -> None:
 
 
 def check_git_sync() -> None:
+    # -C ROOT so --root from another cwd inspects the requested checkout,
+    # not whatever repository the caller happens to sit in (#11).
     try:
-        main = run(["git", "rev-parse", "main"]).stdout.strip()
-        dev = run(["git", "rev-parse", "dev"], ).stdout.strip()
+        main = run(["git", "-C", str(ROOT), "rev-parse", "main"]).stdout.strip()
+        dev = run(["git", "-C", str(ROOT), "rev-parse", "dev"]).stdout.strip()
     except subprocess.SubprocessError:
         report("WARN", "git-sync", "git refs unreadable")
         return
-    dirty = len(run(["git", "status", "--porcelain"]).stdout.splitlines())
+    dirty = len(run(["git", "-C", str(ROOT), "status", "--porcelain"]).stdout.splitlines())
     if main == dev:
         report("OK", "git-sync", f"main==dev, dirty={dirty}")
     else:

@@ -194,10 +194,16 @@ Refresh with `python3 scripts/check_stack.py --write`.
 
 ## Plugins
 
-- team: `saint-tibo@saint-tibo`
+- lsp: `hack-agent-lsp@saint-tibo`
+- mcp: `hack-agent-mcp@saint-tibo`
+- plugin: `saint-tibo@saint-tibo`
 - standards: `hack-agent-standards@saint-tibo`
-- frames: `plugins/hack-agent-standards/standards/INDEX.md`
-- standards skills: `apply-agent-standard`, `core-motion`, `quality-proof`, `pin-dependencies`, `web-ui`, `python-api`, `wire-contracts`, `data-stores`, `native-clients`, `ai-models`, `identity-auth`, `text-formats`, `file-documents`, `education-lessons`, `runtime-infra`
+  - frames: `plugins/hack-agent-standards/standards/INDEX.md`
+- workflow: `hack-agent-workflow@saint-tibo`
+- workflow_plugin_skills: `session-boot`, `github-flow`, `agent-handoff`, `delegate-worker`, `hack-mode`, `ship-verify`, `debt-ledger`
+- lsp_plugin_skills: `lsp-map`, `lsp-setup`
+- mcp_plugin_skills: `mcp-usage`, `serena-workflow`, `research-workflow`, `component-workflow`
+- standards_plugin_skills: `apply-agent-standard`, `core-motion`, `quality-proof`, `pin-dependencies`, `web-ui`, `python-api`, `wire-contracts`, `data-stores`, `native-clients`, `ai-models`, `identity-auth`, `text-formats`, `file-documents`, `education-lessons`, `runtime-infra`
 
 ## Do not use
 
