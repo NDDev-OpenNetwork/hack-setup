@@ -72,7 +72,7 @@ function Ensure-Devin {
     # The installer ends with `& $EntryExe setup` - the interactive login
     # wizard. Auth is a per-member step and CI has no TTY, so strip the
     # tail; the version check below is the install proof.
-    $filtered = "$installer.run"
+    $filtered = "$installer.run.ps1"  # -File requires the .ps1 extension
     [System.IO.File]::WriteAllLines($filtered, @(
         [System.IO.File]::ReadAllLines($installer) | Where-Object { $_ -notmatch 'EntryExe\s+setup\s*$' }
     ))

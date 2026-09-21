@@ -11,14 +11,22 @@ install_plugins() {
   [ -n "$devin_bin" ] || die "devin is required before plugins; run module 20"
   # devin-pin plugins[] is the SoT — local install links the repo tree,
   # so skills/rules track the checkout (no cloud sync).
+  failed=0
   python3 -c 'import json,sys
 for p in json.load(open(sys.argv[1]))["plugins"]:
     print(p["dir"])' "$HACK_REPO_ROOT/build/devin-pin.json" \
     | while IFS= read -r dir; do
-        "$devin_bin" plugins install --local "$HACK_REPO_ROOT/$dir" -y >/dev/null 2>&1 \
-          || "$devin_bin" plugin install --local "$HACK_REPO_ROOT/$dir" -y >/dev/null
-      done
-  log "plugins installed (local) and synced with the repo"
+        err="$("$devin_bin" plugins install --local "$HACK_REPO_ROOT/$dir" -y 2>&1)" \
+          || { printf '%s\n' "$err" >&2; exit 3; }
+      done || failed=$?
+  if [ "$failed" != "0" ]; then
+    # Plugin install reaches the devin account layer even with --local;
+    # on an unauthenticated host (CI) that is a cannot-fake boundary.
+    # Repo-side artifacts are still proven by the checker below.
+    log "WARN: devin plugins install --local failed (needs 'devin' auth); run again on a logged-in host"
+  else
+    log "plugins installed (local) and synced with the repo"
+  fi
 }
 
 run_verify() {

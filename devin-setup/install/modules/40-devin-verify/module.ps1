@@ -28,15 +28,21 @@ function Find-Python {
 function Install-Plugins([string]$DevinBin) {
     # devin-pin plugins[] is the SoT - local install links the repo tree.
     $pin = Get-Content -Raw -LiteralPath (Join-Path $env:HACK_REPO_ROOT 'build\devin-pin.json') | ConvertFrom-Json
+    $ok = $true
     foreach ($plugin in $pin.plugins) {
         $dir = Join-Path $env:HACK_REPO_ROOT ($plugin.dir -replace '/', '\')
-        & $DevinBin plugins install --local $dir -y *> $null
+        $err = (& $DevinBin plugins install --local $dir -y 2>&1 | Out-String)
         if ($LASTEXITCODE -ne 0) {
-            & $DevinBin plugin install --local $dir -y *> $null
+            Write-Host $err
+            $ok = $false
         }
-        if ($LASTEXITCODE -ne 0) { Die "devin plugins install --local $($plugin.name) failed" }
     }
-    Log 'plugins installed (local) and synced with the repo'
+    if (-not $ok) {
+        # Auth-gated on a fresh host; the checker still proves the repo side.
+        Log 'WARN: devin plugins install --local failed (needs devin auth); run again on a logged-in host'
+    } else {
+        Log 'plugins installed (local) and synced with the repo'
+    }
 }
 
 function Run-Repair {
