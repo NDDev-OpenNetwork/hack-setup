@@ -44,9 +44,15 @@ touch and fix the shared function once.
 - Complex request? Ship the lazy version and question the scope in the
   same response: "Did X; Y covers it. Need full X? Say so." Never stall.
 - Demo-first cuts are allowed: hardcode the seed data, skip the settings
-  page, fake the second locale — but every real corner cut gets a
+  page, stub the analytics depth — but every real corner cut gets a
   `hack:` comment naming the ceiling and upgrade path
   (`# hack: single tenant, filter by org_id when multi-tenant lands`).
+- Never fake, even on a demo: auth and permissions (a judge clicking
+  "admin" must not get a fake session), the primary user journey being
+  presented, secrets or personal-data handling, and the deployment
+  itself — "it works" must mean the live server, not a mock. Secondary
+  surfaces may be `hack:`-ed; the three locales ru/kk/en are core
+  product surface, not a corner — real strings, no fake second locale.
 - Never lazy about: understanding the problem, input validation at trust
   boundaries, error handling that prevents data loss, auth/security on
   exposed endpoints, anything explicitly requested.

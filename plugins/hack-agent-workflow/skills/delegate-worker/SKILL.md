@@ -24,7 +24,10 @@ Hard limits that shape the flow:
 
 - `create_thread` args are only `{prompt, title?, model?}` — **no
   workspace param; the thread inherits the caller's cwd**, and `model`
-  inherits when omitted.
+  inherits when omitted. Consequence: file tools and `apply_patch` keep
+  resolving relative paths against THAT cwd even after a `cd` in exec —
+  a shell `cd` does not rebind them. The worker must edit through
+  absolute worktree paths, never bare relative ones.
 - `prompt` is capped at **1,000 UTF-8 bytes** — the full brief does not
   fit. Write a brief file; the prompt is a pointer plus the mission.
 - `send_message_to_thread` takes `{threadId, prompt, model?}`.
@@ -32,19 +35,21 @@ Hard limits that shape the flow:
 ## Spawn (orchestrator creates the worktree first)
 
 The thread inherits your cwd, so the worktree must exist **before**
-`create_thread` — the worker starts inside a directory you control:
+`create_thread`:
 
 1. `git fetch origin && git worktree add ../<repo>-w<N> -b
    feat/<issue>-<slug> origin/dev` — one worktree per feature,
    off the latest dev.
-2. Write the brief to `.agent/briefs/<user>-<round>.md` (gitignored) in
-   the repo: issues with numbers, claimed files, lane name, worktree
-   path, ruleset, loop, DONE report format.
+2. Write the brief to `.agent/briefs/<user>-<round>.md` in the
+   ORCHESTRATOR checkout (gitignored — a fresh worktree does NOT contain
+   it, so reference it by absolute path, never relative).
 3. `create_thread`:
    - `title`: `worker/<user>/<round>`
-   - `prompt` (≤1000 B): one-line mission + "First `cd
-     <absolute worktree path>` — ALL work happens inside that
-     worktree — then read `.agent/briefs/<user>-<round>.md`."
+   - `prompt` (≤1000 B): one-line mission + "Read the brief at
+     `<abs path>/.agent/briefs/<user>-<round>.md`. Work ONLY under
+     `<abs worktree path>` — file tools stay bound to the orchestrator
+     checkout, so every file path you touch must be absolute or
+     verified against `pwd` first."
    - omit `model` unless the user asked for an override.
 4. Record the returned `threadId` in the brief file and your notes.
 
@@ -57,9 +62,11 @@ Issues (SoT — `gh issue view <n>` before starting): #12, #15
 Lane: merge into `<user>` only. Never push dev or main — the
 PreToolUse hook denies it anyway; never create `.agent/orchestrator`
 in your worktree (that marker is the orchestrator's).
-Worktree: already created for you at `../<repo>-w<N>`; `cd` in and
+Worktree: already created for you at `<abs path>`. File tools and
+apply_patch resolve against the ORCHESTRATOR checkout (the thread
+inherits its cwd) — every edit must use an absolute worktree path, or
 verify `pwd` + `git branch --show-current` == `feat/<issue>-<slug>`
-before the first edit. Activate serena on the worktree root.
+first. Activate serena on the worktree root.
 
 Live rules (already injected by hooks; recap):
 - hack-mode: laziest working solution, no review round, no test suite,
@@ -69,9 +76,14 @@ Live rules (already injected by hooks; recap):
 - Claim files on each issue (comment) before editing.
 
 Loop per issue: implement → build+run → verify live → commit → merge
-into `<user>` → comment `done: <sha>` on the issue → write/refresh the
-`.serena/memories/<DOMAIN>-*.md` note for what you touched (domain:
-API / WEB / DB / AUTH / INFRA / MODELS) → next issue.
+into `<user>` → comment `done: <sha>` on the issue → next issue.
+
+Sync agent: after your lane push, spawn one `sync/<user>/<round>`
+thread whose ONLY job is current-state knowledge: read the merged
+diff, refresh `.serena/memories/<DOMAIN>-*.md` for touched domains
+(API / WEB / DB / AUTH / INFRA / MODELS), DELETE stale/noisy notes,
+update `.serena/plans/NEXT-SESSION.md`, commit as `docs(serena):`.
+It writes knowledge, never product code.
 
 Finish with: DONE <user> — merged to <user> @ <sha>; verified live at
 <url>; hack: markers left: <n>; worktree left at <path> for the
@@ -100,15 +112,24 @@ Blockers: report immediately, do not improvise scope.
 
 ## Worktree retirement (main chat, after the lane merged)
 
-Clean git is part of done — a finished feature leaves no debris:
+Clean git is part of done, but removal is irreversible — inventory
+BEFORE deleting, never `--force` blind (issue #4):
 
 1. The feature branch is merged into `<user>` (check `git branch
    --merged <user>`).
-2. `git worktree remove ../<repo>-w<N>` (add `--force` only if the
-   worker left uncommitted junk — report that, don't keep it).
-3. `git branch -d feat/<issue>-<slug>` and `git worktree prune`.
-4. `git remote prune origin` when remote tracking went stale.
-5. `set_thread_archived {threadId, archived: true}` — the thread, the
+2. Inventory the worktree: `git -C <wt> status --porcelain --ignored`
+   and `git -C <wt> log origin/<user>..HEAD --oneline`. Anything in
+   there — uncommitted edits, untracked files, ignored evidence
+   (`.agent/` logs, dumps) — is either pushed, copied to the
+   orchestrator's `.agent/`, or reported to the user. A clean tree
+   shows nothing.
+3. Only when the inventory is empty: `git worktree remove
+   ../<repo>-w<N>`. If it is NOT empty, `--force` is allowed only after
+   the inventory was reported — it deletes uncommitted work and ignored
+   evidence permanently.
+4. `git branch -d feat/<issue>-<slug>` and `git worktree prune`.
+5. `git remote prune origin` when remote tracking went stale.
+6. `set_thread_archived {threadId, archived: true}` — the thread, the
    worktree and the branch all close together.
 
 ## Verify agent (separate thread, after `<user>` → `dev`)
