@@ -67,10 +67,13 @@ def _skill_path() -> Path:
     if local.is_file():
         return local
     hits = []
-    for base in (
-        Path.home() / ".local/share/devin",
-        _DEVIN_HOME,
-    ):
+    bases = []
+    try:
+        bases.append(Path.home() / ".local/share/devin")
+    except Exception:
+        pass
+    bases.append(_DEVIN_HOME)
+    for base in bases:
         try:
             hits.extend(base.glob("**/hack-devin-workflow/**/hack-mode/SKILL.md"))
         except Exception:
@@ -467,12 +470,16 @@ def _current_branch(root: Path) -> str:
 
 def _repo_root(cwd: str, base: Path | None = None) -> Path | None:
     """`git -C <cwd>` — `base` is the CALLER's cwd so a relative -C dir
-    resolves against where the user typed, not the hook process."""
+    resolves against where the user typed, not the hook process. Joined
+    textually: passing a missing dir as subprocess cwd would kill the
+    call entirely and silently bypass the guard (issue #24)."""
+    target = cwd
+    if base and not Path(cwd).is_absolute():
+        target = str(Path(base) / cwd)
     try:
         out = subprocess.run(
-            ["git", "-C", cwd, "rev-parse", "--show-toplevel"],
+            ["git", "-C", target, "rev-parse", "--show-toplevel"],
             capture_output=True, text=True, timeout=2,
-            cwd=str(base) if base else None,
         )
         return Path(out.stdout.strip()) if out.returncode == 0 else None
     except Exception:

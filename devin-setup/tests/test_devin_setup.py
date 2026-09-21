@@ -12,12 +12,18 @@ HOOK = ROOT / ".devin" / "hooks" / "devin_mode.py"
 
 def run_hook(event: str, stdin: str = "", env_extra: dict | None = None,
              cwd: Path | None = None) -> subprocess.CompletedProcess:
+    home = ROOT / ".agent" / "test-home"
     env = {
         "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
-        "HOME": str(ROOT / ".agent" / "test-home"),
+        "HOME": str(home),
         "DEVIN_PROJECT_DIR": str(cwd or ROOT),
         **(env_extra or {}),
     }
+    if os.name == "nt":
+        # Path.home() ignores HOME on Windows — redirect the vars it
+        # actually reads so the run stays hermetic (issue #24).
+        env["USERPROFILE"] = str(home)
+        env["APPDATA"] = str(home / "AppData" / "Roaming")
     Path(env["HOME"]).mkdir(parents=True, exist_ok=True)
     return subprocess.run(
         [sys.executable, str(HOOK), event],

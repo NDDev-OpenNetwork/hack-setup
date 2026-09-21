@@ -15,6 +15,7 @@ import re
 import shlex
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -22,7 +23,19 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 # One home resolver, same policy as scripts/repair_setup.py (#11):
 # CODEX_HOME wins so a dedicated hackathon home keeps mode state too.
-_CODEX_HOME = Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+# Module-level code must survive a stripped environment — Path.home()
+# raises on Windows when USERPROFILE/HOMEDRIVE are absent (issue #24).
+def _codex_home() -> Path:
+    override = os.environ.get("CODEX_HOME")
+    if override:
+        return Path(override)
+    try:
+        return Path.home() / ".codex"
+    except Exception:
+        return Path(tempfile.gettempdir()) / ".codex"
+
+
+_CODEX_HOME = _codex_home()
 STATE = _CODEX_HOME / f"hack-mode-{ROOT.name}.json"
 
 
@@ -461,12 +474,16 @@ def _current_branch(root: Path) -> str:
 
 def _repo_root(cwd: str, base: Path | None = None) -> Path | None:
     """`git -C <cwd>` — `base` is the CALLER's cwd so a relative -C dir
-    resolves against where the user typed, not the hook process (#5)."""
+    resolves against where the user typed, not the hook process (#5).
+    Joined textually: a missing caller cwd as subprocess cwd would kill
+    the call entirely and silently bypass the guard (issue #24)."""
+    target = cwd
+    if base and not Path(cwd).is_absolute():
+        target = str(Path(base) / cwd)
     try:
         out = subprocess.run(
-            ["git", "-C", cwd, "rev-parse", "--show-toplevel"],
+            ["git", "-C", target, "rev-parse", "--show-toplevel"],
             capture_output=True, text=True, timeout=2,
-            cwd=str(base) if base else None,
         )
         return Path(out.stdout.strip()) if out.returncode == 0 else None
     except Exception:
