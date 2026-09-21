@@ -71,3 +71,8 @@ verification:
 
 release:
   mode: "none"
+
+relationships:
+  - type: "git-submodule-consumer"
+    target: "repo_01M31VT2VXJ1V8S1SMKVZKHD2W"
+    gitmodules_name: "product/vibestrap"
