@@ -148,3 +148,70 @@ jobs:
           . .\install\env.ps1
           $pytestV = (Get-Content -Raw build\stack-pin.json | ConvertFrom-Json).quality.pytest.version
           uvx --from "pytest==$pytestV" pytest -q tests/
+
+  # Issue #7: prove repeatable, non-destructive provisioning for real on a
+  # free OSS runner — self-SSH to root@localhost, provision twice (env file
+  # preserved, idempotent), a dirty checkout must refuse, then the systemd
+  # timer itself drives a real ff-only deploy tick.
+  deploy-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Start sshd with root key access
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq openssh-server
+          mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+          ssh-keygen -t ed25519 -N '' -f "$HOME/.ssh/id_ed25519" -q
+          sudo mkdir -p /root/.ssh && sudo chmod 700 /root/.ssh
+          sudo cp "$HOME/.ssh/id_ed25519.pub" /root/.ssh/authorized_keys
+          sudo chmod 600 /root/.ssh/authorized_keys
+          echo 'PermitRootLogin prohibit-password' | sudo tee /etc/ssh/sshd_config.d/99-root-key.conf
+          sudo mkdir -p /run/sshd
+          sudo systemctl restart ssh
+          ssh-keyscan -H localhost 127.0.0.1 >> "$HOME/.ssh/known_hosts" 2>/dev/null
+          ssh -o BatchMode=yes root@localhost true
+      - name: Create upstream repo
+        run: |
+          git init --bare -b dev /tmp/upstream.git
+          work=$(mktemp -d)
+          git -C "$work" init -q -b dev
+          git -C "$work" -c user.email=ci@local -c user.name=ci commit -qm init --allow-empty
+          git -C "$work" push -q /tmp/upstream.git dev
+      - name: Provision run 1 — clone, watcher units, env file, timer
+        run: |
+          ./install/deploy/provision-server.sh root@localhost dev /tmp/upstream.git /opt/hack-app
+          sudo test -f /etc/default/hack-deploy
+          sudo test -d /opt/hack-app/.git
+          sudo systemctl is-active --quiet deploy-watch.timer
+      - name: Provision run 2 — idempotent, existing env preserved
+        run: |
+          printf '#!/bin/sh\ndate -u +%%s >> /tmp/hack-deploy-ran\n' | sudo tee /tmp/deploy-stub.sh
+          sudo chmod +x /tmp/deploy-stub.sh
+          echo 'HACK_DEPLOY_CMD=/tmp/deploy-stub.sh' | sudo tee -a /etc/default/hack-deploy
+          ./install/deploy/provision-server.sh root@localhost dev /tmp/upstream.git /opt/hack-app
+          sudo grep -q 'HACK_DEPLOY_CMD' /etc/default/hack-deploy
+      - name: Dirty checkout refuses provisioning
+        run: |
+          sudo touch /opt/hack-app/dirty
+          if ./install/deploy/provision-server.sh root@localhost dev /tmp/upstream.git /opt/hack-app; then
+            echo 'dirty checkout must fail provisioning'; exit 1
+          fi
+          sudo rm /opt/hack-app/dirty
+      - name: Systemd timer drives a real deploy tick
+        run: |
+          work=$(mktemp -d)
+          git -C "$work" init -q
+          git -C "$work" fetch -q /tmp/upstream.git dev
+          git -C "$work" checkout -q FETCH_HEAD
+          git -C "$work" -c user.email=ci@local -c user.name=ci commit -qm second --allow-empty
+          git -C "$work" push -q /tmp/upstream.git HEAD:dev
+          sudo touch /opt/hack-app/.env
+          want=$(git -C "$work" rev-parse HEAD)
+          for i in $(seq 1 24); do
+            sudo test -f /opt/hack-app/.deployed-sha && break
+            sleep 5
+          done
+          got=$(sudo cat /opt/hack-app/.deployed-sha 2>/dev/null || echo none)
+          [ "$got" = "$want" ] || { echo "deployed-sha $got != remote $want"; sudo journalctl -u deploy-watch.service --no-pager | tail -20; exit 1; }
+          sudo grep -q . /tmp/hack-deploy-ran
