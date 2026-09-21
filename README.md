@@ -71,6 +71,7 @@ shims; Windows additionally exposes `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin`.
 ```bash
 codex --version     # expected: codex-cli 0.155.1
 just check          # artifact validator + host doctor
+just live           # real Serena MCP proof (handshake/symbol/memory)
 just repair         # diagnose + auto-fix safe drift (plugin cache, user config)
 just stack          # print generated standard
 just reverify       # hackathon-day network drift

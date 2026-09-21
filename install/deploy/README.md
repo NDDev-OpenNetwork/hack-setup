@@ -21,10 +21,12 @@ source of hosts.
 
 - `/usr/local/bin/deploy-watch.sh` — fetch → ff-only pull →
   `HACK_DEPLOY_CMD` (default `docker compose up -d --build`) → optional
-  health curl. A dirty tree pauses the watcher instead of clobbering it.
+  health curl. A dirty, ahead, or diverged tree refuses the deploy
+  instead of clobbering it; `.deployed-sha` records the actual HEAD
+  after a successful deploy+health.
 - `deploy-watch.{service,timer}` — systemd, every 30 s.
 - `/etc/default/hack-deploy` — env config (dir, branch, deploy cmd,
-  health URL, log file).
+  health URL, log file); provision writes it only when absent.
 
 ## Operate
 
@@ -33,8 +35,10 @@ journalctl -u deploy-watch.service -f     # live deploy log
 systemctl stop deploy-watch.timer         # freeze deploys
 ```
 
-The app `.env` lives on the server only — never committed. Put it in
-the app dir before the first deploy tick or the health check will fail.
+The app `.env` lives on the server only — never committed. The watcher
+self-gates: before the first deploy it skips ticks while `.env` is
+absent, so the timer can stay running — dropping `.env` into the app
+dir is all it takes for the next tick to deploy.
 
 ## Repo-side contract
 

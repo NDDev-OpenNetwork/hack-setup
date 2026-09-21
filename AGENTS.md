@@ -281,12 +281,15 @@ codex --version
 
 All four must succeed before the setup is treated as ready. `just gate`
 runs the same four. `just check` is only the two Python scripts.
+`just live` (`scripts/verify_serena.py`) is the real Serena MCP proof —
+stdio handshake, activation, `find_symbol` through pinned `ty`, memory
+write/read/delete; slower and needs network, so it is not in `gate`.
 `just repair` (`scripts/repair_setup.py`, law `registered.repair`)
 diagnoses the setup, auto-fixes safe drift — plugin cache parity,
 managed notify/sol user-config blocks, `.agent` dirs, stale hook
 bytecode, corrupt hook state files — and ends with the real checkers;
 it reports rather than touches what needs a human or `./setup`. Host
-doctor fails if Codex/Node/bun/Python/uv drift.
+doctor fails if Codex/Node/bun/Python/uv/just drift.
 `python3 scripts/check_stack.py --list` prints the frozen standard.
 `--strict` also requires declared host tools (Rust/Go/Docker/...).
 Hackathon-day live drift only: `just reverify`.
