@@ -258,8 +258,10 @@ Landed this pass (audit wave):
   ff-only from ancestor, `.deployed-sha` = actual HEAD after a
   SUCCESSFUL deploy+healthcheck. provision-server.sh: non-destructive
   (no reset --hard, env written only if absent via separate SSH
-  temp+mv), prereq checks incl. compose-plugin/curl, timer starts only
-  with app `.env` or START_TIMER=1, remote values quoted.
+  temp+mv), prereq checks incl. compose-plugin/curl, remote values
+  quoted, `user@host` accepted. Timer now ALWAYS runs: deploy-watch.sh
+  self-gates on `$dir/.env` until the first deploy — no manual
+  `systemctl start` step.
 - notify.sh: JSON-safe parse, 120-char bound, `'`→`''` PS escaping,
   injection-neutral (verified with hostile payload).
 - Workflow skills: brief stays in ORCHESTRATOR checkout (worktree lacks
@@ -275,6 +277,26 @@ Landed this pass (audit wave):
   reverify filters draft/prerelease releases.
 - Proof labels: checkers print `[artifact]`/`[installed]`; live proofs
   print `[live]`.
+
+Landed this pass (hardening sweep, no live-host items):
+- hack_mode.py: `_split_tokens` — posix=False on Windows so
+  `C:\repo` keeps backslashes, outer quotes stripped manually; `git -C`
+  relative dirs resolve against payload cwd (was hook process cwd —
+  silent bypass); STATE/GH_CACHE/plugin cache honor `CODEX_HOME`.
+- check_codex_setup.py: `check_serena_project` — ty_version must equal
+  quality.ty pin, python_ty required, `powershell` LS banned (missing
+  pwsh aborts whole LS manager), ls_workspace_folders must carry `.`;
+  hook checker now validates `commandWindows` script refs too.
+- reverify_stack_pin.py: per-row ERR — a registry failure prints ERR
+  and exits 2 (never silent pass, never aborts remaining rows).
+  Verified live 2026-09-21: all 28 tracked pins match latest;
+  verified_on bumped.
+- deploy kit: watcher self-gates on missing .env until first deploy;
+  service `EnvironmentFile=-` + static Description (was invalid
+  `%E{}`); provision accepts `user@host`, timer always enabled.
+- .gitmodules: vibestrap URL → SSH (private repo, team uses keys).
+- tests: +2 lane-guard regressions (relative -C, Windows tokenize) —
+  19 passed.
 
 Open:
 - ~/.codex/config.toml has foreign root `notify` (Codex Computer Use

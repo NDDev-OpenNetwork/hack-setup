@@ -58,10 +58,12 @@ Orchestrator/worker flow and deployment model (ADR 0014).
   git/docker/compose/curl/systemd, clones only when absent, NEVER
   `reset --hard` an existing checkout, refuses dirty/ahead/diverged,
   preserves `/etc/default/hack-deploy` (writes only when absent, via
-  temp+chmod+mv over a separate SSH call), installs watcher+timer,
-  starts the timer only when the app `.env` exists or `START_TIMER=1`,
-  quotes remote values. No GitHub admin needed (BAITC org: push/triage
-  only, Actions 404).
+  temp+chmod+mv over a separate SSH call), installs watcher+timer.
+  The timer always runs — deploy-watch.sh self-gates: before the first
+  deploy it skips ticks while the app `.env` is absent, so dropping the
+  env file in is the only step needed. `ssh` target accepts `user@host`
+  (defaults to root). Quotes remote values. No GitHub admin needed
+  (BAITC org: push/triage only, Actions 404).
 - Product skeleton: `NDDev-OpenNetwork/vibestrap` (private mirror of
   R3flector/vibestrap, no upstream license). Agent surface projected:
   `.codex/{config.toml,hooks.json,hooks/hack_mode.py,lanes.json}` +
