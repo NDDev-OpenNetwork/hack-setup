@@ -1,6 +1,9 @@
 # Member identity + shared git defaults, native Windows. Twin of
-# module.sh — member is data in the pin (team.members), identity is
+# module.sh -- member is data in the pin (team.members), identity is
 # derived from `gh api user` so no personal mail lands in this repo.
+# NOTE: keep this file pure ASCII -- Windows PowerShell 5.1 reads ps1
+# without BOM as ANSI, and smart quotes from mangled UTF-8 would toggle
+# string state (see CI run 35645725406).
 $ErrorActionPreference = 'Stop'
 . (Join-Path $env:HACK_LIB 'common.ps1')
 
@@ -8,7 +11,9 @@ $PinPath = Join-Path $env:HACK_REPO_ROOT 'build\stack-pin.json'
 $Marker = Join-Path $env:HACK_REPO_ROOT '.agent\member'
 
 function Get-MemberList {
-    return ((Get-HackPin $PinPath 'team.members').PSObject.Properties.Name) -join ' '
+    $members = Get-HackPin $PinPath 'team.members'
+    if (-not $members) { return '' }
+    return ($members.PSObject.Properties.Name) -join ' '
 }
 
 function Get-MemberGithub([string]$Member) {
@@ -22,9 +27,11 @@ function Resolve-Member {
 }
 
 function Assert-KnownMember([string]$Member) {
-    $names = (Get-HackPin $PinPath 'team.members').PSObject.Properties.Name
+    $members = Get-HackPin $PinPath 'team.members'
+    $names = @()
+    if ($members) { $names = @($members.PSObject.Properties.Name) }
     if ($names -notcontains $Member) {
-        Die "unknown member '$Member' — expected one of: $($names -join ', ')"
+        Die "unknown member '$Member' - expected one of: $($names -join ', ')"
     }
 }
 
@@ -32,7 +39,9 @@ function Get-GhIdentity {
     # @{login; name; email} for the authenticated gh user, or $null.
     $raw = gh api user 2>$null
     if ($LASTEXITCODE -ne 0 -or -not $raw) { return $null }
-    $u = $raw | ConvertFrom-Json
+    # gh api prints multi-line JSON; join before ConvertFrom-Json (PS 5.1
+    # pipes each line separately otherwise).
+    $u = ($raw -join "`n") | ConvertFrom-Json
     $login = [string]$u.login
     $name = if ($u.name) { [string]$u.name } else { $login }
     $email = if ($u.email) { [string]$u.email } else { "$($u.id)+$login@users.noreply.github.com" }
@@ -40,15 +49,13 @@ function Get-GhIdentity {
 }
 
 function Set-GitDefaults {
-    $defaults = Get-HackPin $PinPath 'team.git_defaults'
-    foreach ($prop in $defaults.PSObject.Properties) {
-        & git config --global $prop.Name "$($prop.Value)"
-        if ($LASTEXITCODE -ne 0) { Die "git config --global $($prop.Name) failed" }
-    }
-    $winDefaults = Get-HackPin $PinPath 'team.windows_git_defaults'
-    foreach ($prop in $winDefaults.PSObject.Properties) {
-        & git config --global $prop.Name "$($prop.Value)"
-        if ($LASTEXITCODE -ne 0) { Die "git config --global $($prop.Name) failed" }
+    foreach ($section in 'git_defaults', 'windows_git_defaults') {
+        $defaults = Get-HackPin $PinPath "team.$section"
+        if (-not $defaults) { continue }
+        foreach ($prop in $defaults.PSObject.Properties) {
+            & git config --global $prop.Name "$($prop.Value)"
+            if ($LASTEXITCODE -ne 0) { Die "git config --global $($prop.Name) failed" }
+        }
     }
 }
 
@@ -58,7 +65,7 @@ function Test-SshGitHub {
     if ("$out" -match 'successfully authenticated') {
         Log "ssh: github.com key ok"
     } else {
-        Log "WARN: no github.com SSH key — needed for the vibestrap submodule; ssh-keygen + add to GitHub"
+        Log "WARN: no github.com SSH key - needed for the vibestrap submodule; ssh-keygen + add to GitHub"
     }
 }
 
@@ -68,7 +75,8 @@ function Run-Install {
     Log "git defaults applied (ff-only, prune, rerere, zdiff3, lf, longpaths)"
 
     if (-not $member) {
-        Log "WARN: no --member flag — git identity untouched; rerun .\setup.ps1 --member <$(Get-MemberList)>"
+        $list = Get-MemberList
+        Log "WARN: no --member flag - git identity untouched; rerun .\setup.ps1 --member NAME ($list)"
         return
     }
     Assert-KnownMember $member
@@ -79,25 +87,32 @@ function Run-Install {
     }
     $id = Get-GhIdentity
     if (-not $id) {
-        Die "gh not authenticated — run: gh auth login  (member $member expects @$expected)"
+        Die "gh not authenticated - run: gh auth login  (member $member expects @$expected)"
     }
     if ($id.login -ne $expected) {
-        Die "gh is authenticated as @$($id.login) but member '$member' is @$expected — run gh auth login first"
+        Die "gh is authenticated as @$($id.login) but member '$member' is @$expected - run gh auth login first"
     }
     & git config --global user.name $id.name
     & git config --global user.email $id.email
-    Log "git identity: $($id.name) <$($id.email)>"
+    $name = $id.name
+    $email = $id.email
+    Log "git identity: $name <$email>"
 
     & gh auth setup-git 2>$null
     Test-SshGitHub
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $Marker) | Out-Null
     [System.IO.File]::WriteAllText($Marker, "$member`n")
-    Log "member: $member (@$($id.login)) — marker at .agent\member"
+    $ghLogin = $id.login
+    Log "member: $member (@$ghLogin) - marker at .agent\member"
 }
 
 function Run-Status {
     $member = Resolve-Member
-    if (-not $member) { Die "no member configured — run .\setup.ps1 --member <name>" }
+    if (-not $member) {
+        $list = Get-MemberList
+        Log "no member configured - run .\setup.ps1 --member NAME ($list)"
+        return
+    }
     Assert-KnownMember $member
     $expected = Get-MemberGithub $member
     $id = Get-GhIdentity
@@ -107,26 +122,28 @@ function Run-Status {
     }
     $name = & git config --global user.name
     $email = & git config --global user.email
-    if (-not $name -or -not $email) { Die "git identity unset — run .\setup.ps1 --member $member" }
-    Log "member $member ok: $name <$email>, gh @$($id.login)"
+    if (-not $name -or -not $email) { Die "git identity unset - run .\setup.ps1 --member $member" }
+    $ghLogin = $id.login
+    Log "member $member ok: $name <$email>, gh @$ghLogin"
 }
 
 function Run-DryRun {
     $member = Resolve-Member
     if ($member) {
         Assert-KnownMember $member
-        Log "member $member -> expects gh login @$(Get-MemberGithub $member)"
+        $expected = Get-MemberGithub $member
+        Log "member $member -> expects gh login @$expected"
         Log "would set git user.name/user.email from gh api user (profile name + email/noreply)"
     } else {
-        Log "no member selected (.\setup.ps1 --member <$(Get-MemberList)>) — would apply shared git defaults only"
+        $list = Get-MemberList
+        Log "no member selected (.\setup.ps1 --member NAME: $list) - would apply shared git defaults only"
     }
-    $defaults = Get-HackPin $PinPath 'team.git_defaults'
-    foreach ($prop in $defaults.PSObject.Properties) {
-        Log "would git config --global $($prop.Name) $($prop.Value)"
-    }
-    $winDefaults = Get-HackPin $PinPath 'team.windows_git_defaults'
-    foreach ($prop in $winDefaults.PSObject.Properties) {
-        Log "would git config --global $($prop.Name) $($prop.Value)"
+    foreach ($section in 'git_defaults', 'windows_git_defaults') {
+        $defaults = Get-HackPin $PinPath "team.$section"
+        if (-not $defaults) { continue }
+        foreach ($prop in $defaults.PSObject.Properties) {
+            Log "would git config --global $($prop.Name) $($prop.Value)"
+        }
     }
     Log "would verify ssh -T git@github.com and run gh auth setup-git"
 }
@@ -134,7 +151,7 @@ function Run-DryRun {
 $Action = if ($args.Count -gt 0) { $args[0] } else { 'status' }
 switch ($Action) {
     'install' { Run-Install }
-    { $_ -in 'status' } { Run-Status }
+    'status' { Run-Status }
     'dry-run' { Run-DryRun }
     default { Die "unknown action: $Action" }
 }

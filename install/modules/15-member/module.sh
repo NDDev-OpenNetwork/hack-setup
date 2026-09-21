@@ -106,7 +106,10 @@ run_install() {
 
 run_status() {
   member="$(resolve_member || true)"
-  [ -n "$member" ] || die "no member configured — run ./setup --member <name>"
+  if [ -z "$member" ]; then
+    log "no member configured — run ./setup --member <$(member_list | tr ' ' '|')>"
+    return 0
+  fi
   require_known_member "$member"
   expected="$(member_github "$member")"
   row="$(gh_identity || true)"
