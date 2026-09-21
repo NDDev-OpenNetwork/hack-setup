@@ -226,8 +226,10 @@ Serena MCP chain. Landed as `4b3b243` (impl) + `a923dd9` (tests) +
 (resolver/package-recovery/plugin-summary). Mid-wave PR #22 added
 `product/vibestrap` submodule + `.gds/` — audit commits were rebased on
 it; dev carries a merge commit for the pre-rebase SHAs. main==dev at
-`122ebfd`. Per-issue evidence comments are on GitHub #1–#19; tracker #20
-has the roll-up.
+`a52bd96`. Issue disposition: 14 closed `live-verified` (#1,2,5,6,8,10,
+12,13,14,15,16,17,18,19); 5 open `integrated` awaiting a real host —
+#3/#4 need a live worker spawn, #7 a real droplet re-run, #9/#11 a real
+Windows pass; #20 tracker stays open. Lifecycle labels exist on the repo.
 
 Landed this pass (audit wave):
 - repair_setup.py: `pinned_version()` reads `codex_cli` key (no
