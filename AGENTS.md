@@ -129,12 +129,17 @@ keenable (HTTP, keyless by default; keys travel as env-var names only).
 `.codex/hooks.json` runs `.codex/hooks/hack_mode.py` on six events
 (law: `registered.hooks`, ADR 0015):
 
-- `SessionStart` (startup/resume/clear/compact) injects the hack-mode
-  ruleset — including re-injection after every auto-compact.
+- `SessionStart` (no matcher — all sources: startup/resume/clear/compact/
+  fork) injects the hack-mode ruleset — including re-injection after
+  every auto-compact and into forked threads.
 - `UserPromptSubmit` adds the reminder + `STATUS` line (repo, branch,
   dirty count, last commit, `@me` issues via a 60 s gh cache).
-- `PreToolUse` `Bash` is the lane guard described above.
-- `PostToolUse` `Bash` reminds ship-verify after `git push`.
+- `PreToolUse` `Bash|exec_command|write_stdin|shell` is the lane guard
+  described above — 0.155.1 names the exec tool `exec_command` and sends
+  `tool_input.cmd`; `write_stdin` is covered so a typed `git push` into a
+  persistent shell is denied too. `command` argv-list shapes are also
+  handled.
+- `PostToolUse` same matcher — reminds ship-verify after `git push`.
 - `SessionEnd` and `Interrupt` append `.agent/session-log.ndjson` —
   how sessions end and where they were interrupted (timeout is capped
   at 3 s by Codex for these two events).
@@ -148,7 +153,7 @@ pulling hook changes run `just repair` once — no manual `/hooks` review
 
 Upstream caveats that shape this design (ADR 0016): `compact_prompt` is
 ignored on the remote-compaction path (openai/codex#34428) — the
-`SessionStart` `compact` matcher is the real re-injection channel; Codex
+`SessionStart` hook (all sources) is the real re-injection channel; Codex
 App threads can shadow project `developer_instructions` (#33238/#11004),
 so this `AGENTS.md` remains the authoritative instruction channel.
 

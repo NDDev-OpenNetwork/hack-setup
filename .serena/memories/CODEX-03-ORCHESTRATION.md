@@ -34,7 +34,7 @@ Orchestrator/worker flow and deployment model (ADR 0014).
   (`/health/ready`, frontend fetch). BAITC repo untouched until day.
 - ADR 0015: `developer_instructions` (compaction-proof law block) +
   `compact_prompt` (preserves issue/branch/worktree/lane/hack: state) +
-  `check_for_update_on_startup=false`. Lane guard: PreToolUse(Bash)
+  `check_for_update_on_startup=false`. Lane guard: PreToolUse(exec_command|write_stdin|Bash|shell)
   denies protected-branch push + `gh pr merge` unless untracked
   `.agent/orchestrator` marker; activates via tracked
   `.codex/lanes.json` (vibestrap carries it). PostToolUse → ship-verify

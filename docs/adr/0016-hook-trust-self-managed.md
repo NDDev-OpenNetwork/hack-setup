@@ -22,7 +22,8 @@ Also learned from upstream issues:
 - openai/codex#34428 — `compact_prompt` is ignored on the remote
   compaction path used by the default OpenAI provider; it only applies
   to local compaction. Our real compaction protection is the
-  `SessionStart` `compact` matcher re-injecting the ruleset.
+  `SessionStart` hook re-injecting the ruleset (no matcher — it covers
+  all sources including `compact` and `fork`).
 - openai/codex#33238, #11004 — Codex App/Desktop shadows project
   `developer_instructions` with a host-generated thread value. The
   reliable channel in App threads is `AGENTS.md` (`<INSTRUCTIONS>`

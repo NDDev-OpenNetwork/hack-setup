@@ -1,13 +1,13 @@
 {
-  "description": "hack-mode lifecycle: ruleset at session start, reminder + git/issues STATUS per prompt, lane-law push guard (PreToolUse), ship-verify nudge after git push (PostToolUse), session log on exit (SessionEnd). Law: build/stack-pin.json registered.hooks.",
+  "description": "hack-mode lifecycle: ruleset at session start (all sources incl. fork/compact), reminder + git/issues STATUS per prompt, lane-law push guard (PreToolUse), ship-verify nudge after git push (PostToolUse), session log on exit/interrupt (SessionEnd/Interrupt). Law: build/stack-pin.json registered.hooks.",
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|resume|clear|compact",
         "hooks": [
           {
             "type": "command",
             "command": "python3 .codex/hooks/hack_mode.py session",
+            "commandWindows": "python .codex/hooks/hack_mode.py session",
             "timeout": 5,
             "statusMessage": "Loading hack mode",
             "additionalContextLimit": 12000
@@ -21,6 +21,7 @@
           {
             "type": "command",
             "command": "python3 .codex/hooks/hack_mode.py prompt",
+            "commandWindows": "python .codex/hooks/hack_mode.py prompt",
             "timeout": 5,
             "statusMessage": "hack mode"
           }
@@ -29,11 +30,12 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|exec_command|write_stdin|shell",
         "hooks": [
           {
             "type": "command",
             "command": "python3 .codex/hooks/hack_mode.py pretooluse",
+            "commandWindows": "python .codex/hooks/hack_mode.py pretooluse",
             "timeout": 5
           }
         ]
@@ -41,11 +43,12 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|exec_command|write_stdin|shell",
         "hooks": [
           {
             "type": "command",
             "command": "python3 .codex/hooks/hack_mode.py posttooluse",
+            "commandWindows": "python .codex/hooks/hack_mode.py posttooluse",
             "timeout": 5
           }
         ]
@@ -57,6 +60,7 @@
           {
             "type": "command",
             "command": "python3 .codex/hooks/hack_mode.py interrupt",
+            "commandWindows": "python .codex/hooks/hack_mode.py interrupt",
             "timeout": 3
           }
         ]
@@ -68,6 +72,7 @@
           {
             "type": "command",
             "command": "python3 .codex/hooks/hack_mode.py sessionend",
+            "commandWindows": "python .codex/hooks/hack_mode.py sessionend",
             "timeout": 3
           }
         ]

@@ -75,9 +75,11 @@ def _refresh_issues() -> None:
             capture_output=True, text=True, timeout=8, cwd=ROOT,
         )
         if proc.returncode == 0:
-            GH_CACHE.write_text(json.dumps(
+            tmp = GH_CACHE.with_suffix(".tmp")
+            tmp.write_text(json.dumps(
                 {"ts": time.time(), "root": str(ROOT),
                  "issues": json.loads(proc.stdout)}))
+            os.replace(tmp, GH_CACHE)
     except Exception:
         pass
 
@@ -208,6 +210,70 @@ LANES_FILE = ".codex/lanes.json"
 ORCH_MARKER = ".agent/orchestrator"
 
 
+def _tool_command(payload: dict) -> str:
+    """Exec surface arg shapes in 0.155.1 (be2951ea): exec_command sends
+    `cmd` (string), write_stdin sends `chars` (string), legacy/permission
+    payloads send `command` (string or argv list)."""
+    tool_input = payload.get("tool_input")
+    if not isinstance(tool_input, dict):
+        return ""
+    for key in ("cmd", "command", "chars", "input"):
+        value = tool_input.get(key)
+        if isinstance(value, str) and value:
+            return value
+        if isinstance(value, list):
+            return " ".join(str(part) for part in value)
+    return ""
+
+
+_GIT_FLAGS = (
+    r"(?:-[cC]\s+\S+|-[cC]\S+|-P|--no-pager|--literal-pathspecs"
+    r"|--no-optional-locks|--(?:git-dir|work-tree|exec-path)"
+    r"(?:=|\s+)\S+)\s+"
+)
+
+
+def _push_to(
+    command: str, guard: str, root: Path | None, protected: list[str]
+) -> bool:
+    # `git <global-flags> push <tail>` inside one |;& segment. Guard rail,
+    # not a security boundary: aliases/wrappers are out of scope, workers
+    # are our own agents.
+    for match in re.finditer(
+        rf"\bgit\s+(?:{_GIT_FLAGS})*push\b([^|;&]*)", command
+    ):
+        tail = match.group(1)
+        if re.search(rf"\b({guard})\b", tail):
+            return True
+        if re.search(r"--all\b|--mirror\b", tail):
+            return True
+        words = [w for w in tail.split() if not w.startswith("-")]
+        refspecs = words[1:] if words else []
+        if not refspecs or all(w == "HEAD" for w in refspecs):
+            # `git push`, `git push origin`, `git push origin HEAD` — target
+            # is upstream of HEAD: deny only when HEAD itself is protected.
+            if root is not None and _current_branch(root) in protected:
+                return True
+    return bool(
+        re.search(r"\bgh\s+pr\s+merge\b", command)
+        or re.search(
+            r"\bgh\s+api\b[^|;&]*(?:/merges\b|/merge\b|merge-upstream)",
+            command,
+        )
+    )
+
+
+def _current_branch(root: Path) -> str:
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(root), "branch", "--show-current"],
+            capture_output=True, text=True, timeout=2,
+        )
+        return out.stdout.strip()
+    except Exception:
+        return ""
+
+
 def _repo_root(cwd: str) -> Path | None:
     try:
         out = subprocess.run(
@@ -237,7 +303,7 @@ def pretooluse(payload: dict) -> None:
     the orchestrator checkout (untracked `.agent/orchestrator` marker —
     worker worktrees never have it) may push protected branches or merge
     PRs."""
-    command = str(payload.get("tool_input", {}).get("command") or "")
+    command = _tool_command(payload)
     if not command:
         return
     root = _repo_root(str(payload.get("cwd") or "."))
@@ -247,10 +313,7 @@ def pretooluse(payload: dict) -> None:
     if not protected or (root / ORCH_MARKER).is_file():
         return
     guard = "|".join(re.escape(b) for b in protected)
-    hit = re.search(rf"\bgit\s+push\b[^|;&]*\b({guard})\b", command) or re.search(
-        r"\bgh\s+pr\s+merge\b", command
-    )
-    if not hit:
+    if not _push_to(command, guard, root, protected):
         return
     emit_pre(
         {
@@ -271,8 +334,8 @@ def emit_pre(out: dict) -> None:
 
 
 def posttooluse(payload: dict) -> None:
-    command = str(payload.get("tool_input", {}).get("command") or "")
-    if "git push" not in command:
+    command = _tool_command(payload)
+    if not re.search(r"\bgit\b[^|;&]*\bpush\b", command):
         return
     emit(
         context=(

@@ -272,7 +272,7 @@ def fix_hook_trust() -> None:
             skip = key.startswith(prefix)
         elif line.strip().startswith("[") and not line.strip().startswith("[["):
             skip = False
-        if skip:
+        if skip or line.strip() == "# hack-setup: hook trust":
             continue
         out.append(line)
     src = "\n".join(out).rstrip() + "\n"

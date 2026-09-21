@@ -165,11 +165,11 @@ Setup owner stream: Danil.
   replaces base instructions) + custom `compact_prompt` (preserves
   issues/branch/worktree/lane/`hack:` markers) +
   `check_for_update_on_startup=false` in project config. Hook surface
-  now 5 events: +PreToolUse(Bash) lane guard — denies protected-branch
+  now 6 events: +PreToolUse lane guard (exec_command|write_stdin|Bash|shell matcher) — denies protected-branch
   pushes + `gh pr merge` unless `.agent/orchestrator` marker exists
   (activates only where tracked `.codex/lanes.json` declares protected
   branches — vibestrap has it, hack-setup does not push-guard itself);
-  +PostToolUse(Bash) ship-verify nudge after `git push`; +SessionEnd
+  +PostToolUse ship-verify nudge after `git push`; +SessionEnd
   appends `.agent/session-log.ndjson`. additionalContext only lands on
   PreToolUse/PostToolUse/SessionStart/UserPromptSubmit/SubagentStart —
   PostCompact cannot inject, so compact survival lives in

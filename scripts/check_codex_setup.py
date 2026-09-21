@@ -1214,6 +1214,20 @@ def check_hooks() -> None:
         raise CheckError(
             f"registered.hooks.scripts unused: {sorted(scripts - seen_scripts)}"
         )
+    # 0.155.1 names the exec tool `exec_command` for PreToolUse (tool_input
+    # carries `cmd`); `Bash` is only the PostToolUse normalization. A matcher
+    # without `exec_command` never fires on shell calls — dead guard.
+    for tool_event in ("PreToolUse", "PostToolUse"):
+        matchers = [
+            str(group.get("matcher") or "") for group in events.get(tool_event, [])
+        ]
+        if not any(
+            "exec_command" in m.split("|") or m in ("", "*") for m in matchers
+        ):
+            raise CheckError(
+                f"hooks.{tool_event} matcher must cover exec_command "
+                f"(0.155.1 exec tool name); got {matchers}"
+            )
     if "SubagentStart" in events or "SubagentStop" in events:
         raise CheckError(
             "subagent hooks are banned: agents are disabled and lazy-mode "
