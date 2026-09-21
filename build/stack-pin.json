@@ -56,6 +56,31 @@
     "Codex subagents / features.multi_agent / features.multi_agent_v2",
     "model_reasoning_effort extra-high or x-high (wire value is xhigh)"
   ],
+  "team": {
+    "members": {
+      "danil": {"github": "rldyourmnd"},
+      "ivan": {"github": "r3flector"},
+      "artem": {"github": "letya999"}
+    },
+    "git_defaults": {
+      "pull.ff": "only",
+      "push.default": "simple",
+      "push.autoSetupRemote": "true",
+      "init.defaultBranch": "main",
+      "fetch.prune": "true",
+      "fetch.pruneTags": "true",
+      "rerere.enabled": "true",
+      "rebase.autoStash": "true",
+      "merge.conflictStyle": "zdiff3",
+      "core.eol": "lf",
+      "core.autocrlf": "false"
+    },
+    "windows_git_defaults": {
+      "core.longpaths": "true"
+    },
+    "identity_source": "gh api user — login must match members.<member>.github; user.name = profile name or login; user.email = profile email or <id>+<login>@users.noreply.github.com (keeps personal mail out of the public repo)",
+    "marker": ".agent/member records the selected member in the checkout (gitignored)"
+  },
   "environments": {
     "api_workers": {
       "python": "3.14.7",

@@ -12,6 +12,11 @@ dir = "modules/10-prereqs"
 enabled = true
 
 [[modules]]
+id = "member"
+dir = "modules/15-member"
+enabled = true
+
+[[modules]]
 id = "codex-cli"
 dir = "modules/20-codex-cli"
 enabled = true

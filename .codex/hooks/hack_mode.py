@@ -152,8 +152,15 @@ def status_line() -> str:
     n_dirty = len([l for l in dirty.splitlines() if l.strip()])
     # SHA only — commit subjects are untrusted text injected into prompts.
     last = _git("log", "-1", "--format=%h")
+    member = ""
+    try:
+        marker = ROOT / ".agent" / "member"
+        if marker.is_file():
+            member = f" member={marker.read_text().strip()}"
+    except Exception:
+        pass
     return (
-        f"STATUS repo={ROOT.name} branch={branch} dirty={n_dirty} "
+        f"STATUS repo={ROOT.name}{member} branch={branch} dirty={n_dirty} "
         f"last={last} {issues_status()}"
     )
 

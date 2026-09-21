@@ -11,22 +11,36 @@ $env:HACK_CACHE = if ($env:HACK_CACHE) { $env:HACK_CACHE } else { Join-Path $env
 $env:HACK_LOCAL_BIN = if ($env:HACK_LOCAL_BIN) { $env:HACK_LOCAL_BIN } else { Join-Path $env:HACK_REPO_ROOT '.local\bin' }
 $env:HACK_DRY_RUN = if ($env:HACK_DRY_RUN) { $env:HACK_DRY_RUN } else { '0' }
 $env:HACK_ACTION = 'install'
+$env:HACK_MEMBER = if ($env:HACK_MEMBER) { $env:HACK_MEMBER } else { '' }
+$env:HACK_TARGET_OS = if ($env:HACK_TARGET_OS) { $env:HACK_TARGET_OS } else { '' }
 
 . (Join-Path $env:HACK_LIB 'common.ps1')
 . (Join-Path $env:HACK_LIB 'os.ps1')
 . (Join-Path $env:HACK_LIB 'download.ps1')
 
-foreach ($arg in $args) {
-    switch ($arg) {
-        '--dry-run'   { $env:HACK_DRY_RUN = '1' }
-        '--status'    { $env:HACK_ACTION = 'status' }
-        '--print-env' {
+for ($i = 0; $i -lt $args.Count; $i++) {
+    $arg = $args[$i]
+    switch -Regex ($arg) {
+        '^--dry-run$'   { $env:HACK_DRY_RUN = '1' }
+        '^--status$'    { $env:HACK_ACTION = 'status' }
+        '^--member$'    {
+            if ($i + 1 -ge $args.Count) { Die "--member needs a name (danil|ivan|artem)" }
+            $env:HACK_MEMBER = $args[++$i]
+        }
+        '^--member=(.+)$' { $env:HACK_MEMBER = $Matches[1] }
+        { $_ -in '--danil', '--ivan', '--artem' } { $env:HACK_MEMBER = $_.TrimStart('-') }
+        '^--os$'        {
+            if ($i + 1 -ge $args.Count) { Die "--os needs a value (macos|ubuntu|windows)" }
+            $env:HACK_TARGET_OS = $args[++$i]
+        }
+        '^--os=(.+)$'   { $env:HACK_TARGET_OS = $Matches[1] }
+        '^--print-env$' {
             Write-Host "`$env:PATH = `"$env:HACK_LOCAL_BIN;$HOME\.local\bin;`$env:PATH`""
             return
         }
         { $_ -in '--help', '-h' } {
-            Write-Host "Usage: .\setup.ps1 [--dry-run] [--status] [--print-env]"
-            Write-Host "Clone the repo, then run .\setup.ps1. Modules live under install/modules/."
+            Write-Host "Usage: .\setup.ps1 [--dry-run] [--status] [--print-env] [--member <danil|ivan|artem>] [--os <macos|ubuntu|windows>]"
+            Write-Host "--member sets git identity + team defaults; --os must match this host (POSIX targets run ./setup inside WSL2 or on that host)."
             return
         }
         default { Die "unknown argument: $arg" }
@@ -34,6 +48,28 @@ foreach ($arg in $args) {
 }
 
 Hack-DetectOs
+
+# --os declares the install target; native Windows covers only windows.
+# POSIX targets belong to ./setup inside WSL2 Ubuntu or on that host.
+# Under --dry-run the flag instead previews that platform's plan.
+$targetFamily = $null
+switch -Regex ($env:HACK_TARGET_OS) {
+    '^$'                    { }
+    '^(macos|mac|darwin)$'  { $targetFamily = 'darwin' }
+    '^(ubuntu|linux)$'      { $targetFamily = 'linux' }
+    '^(windows|win)$'       { $targetFamily = 'windows' }
+    default { Die "unknown --os $env:HACK_TARGET_OS (expected macos|ubuntu|windows)" }
+}
+if ($targetFamily -and $targetFamily -ne 'windows') {
+    if ($env:HACK_DRY_RUN -ne '1') {
+        Die "--os $env:HACK_TARGET_OS is POSIX: run ./setup inside WSL2 Ubuntu or on that host"
+    }
+    $preview = @{ darwin = 'darwin-arm64'; linux = 'linux-x86_64' }[$targetFamily]
+    $env:HACK_PLATFORM = $preview
+    $env:HACK_TRIPLE = @{ darwin = 'aarch64-apple-darwin'; linux = 'x86_64-unknown-linux-musl' }[$targetFamily]
+    Log "dry-run preview for $preview (this host is windows)"
+}
+
 Log "platform $env:HACK_PLATFORM ($env:HACK_TRIPLE)"
 Log "repo $env:HACK_REPO_ROOT"
 if ($env:HACK_DRY_RUN -eq '1') { Log "dry-run; no downloads" }

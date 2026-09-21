@@ -28,10 +28,25 @@ PINNED_PLATFORMS = (
 )
 CATALOG_MODULES = (
     ("prereqs", "modules/10-prereqs"),
+    ("member", "modules/15-member"),
     ("codex-cli", "modules/20-codex-cli"),
     ("runtimes", "modules/30-runtimes"),
     ("project-verify", "modules/40-project-verify"),
 )
+TEAM_MEMBERS = {"danil": "rldyourmnd", "ivan": "r3flector", "artem": "letya999"}
+TEAM_GIT_DEFAULTS = {
+    "pull.ff",
+    "push.default",
+    "push.autoSetupRemote",
+    "init.defaultBranch",
+    "fetch.prune",
+    "fetch.pruneTags",
+    "rerere.enabled",
+    "rebase.autoStash",
+    "merge.conflictStyle",
+    "core.eol",
+    "core.autocrlf",
+}
 ROOT_PLUGIN_KEYS = {
     "$schema",
     "name",
@@ -583,6 +598,28 @@ def check_stack_pin() -> None:
     just = quality.get("just")
     if isinstance(just, dict) and just.get("version") != "1.58.0":
         raise CheckError("stack-pin.quality.just.version must be 1.58.0")
+    team = pin.get("team")
+    if not isinstance(team, dict):
+        raise CheckError("stack-pin.team must be an object")
+    members = team.get("members")
+    if not isinstance(members, dict) or set(members) != set(TEAM_MEMBERS):
+        raise CheckError(
+            f"stack-pin.team.members must be exactly {sorted(TEAM_MEMBERS)}"
+        )
+    for member, expected_login in TEAM_MEMBERS.items():
+        entry = members[member]
+        if not isinstance(entry, dict) or entry.get("github") != expected_login:
+            raise CheckError(
+                f"stack-pin.team.members.{member}.github must be {expected_login}"
+            )
+    git_defaults = team.get("git_defaults")
+    if not isinstance(git_defaults, dict) or not TEAM_GIT_DEFAULTS.issubset(git_defaults):
+        raise CheckError(
+            f"stack-pin.team.git_defaults must include {sorted(TEAM_GIT_DEFAULTS)}"
+        )
+    windows_defaults = team.get("windows_git_defaults")
+    if not isinstance(windows_defaults, dict) or windows_defaults.get("core.longpaths") != "true":
+        raise CheckError("stack-pin.team.windows_git_defaults must set core.longpaths")
     banned = pin.get("do_not_use")
     if not isinstance(banned, list) or "Next.js" not in banned or "pnpm" not in banned:
         raise CheckError("stack-pin.do_not_use must include Next.js and pnpm")
@@ -729,6 +766,14 @@ def check_bootstrap() -> None:
         raise CheckError("missing install/bootstrap.sh")
     if not (ROOT / "install" / "bootstrap.ps1").is_file():
         raise CheckError("missing install/bootstrap.ps1")
+    for script in ("bootstrap.sh", "bootstrap.ps1"):
+        text = read_text(ROOT / "install" / script)
+        for flag in ("--member", "--os"):
+            if flag not in text:
+                raise CheckError(f"install/{script} must accept {flag}")
+        for member in TEAM_MEMBERS:
+            if f"--{member}" not in text:
+                raise CheckError(f"install/{script} must accept the --{member} shorthand")
     if not (ROOT / "install" / "env.sh").is_file():
         raise CheckError("missing install/env.sh")
     if not (ROOT / "install" / "env.ps1").is_file():
@@ -742,7 +787,9 @@ def check_bootstrap() -> None:
         raise CheckError("install/catalog.toml entry_windows must be ./setup.ps1")
     modules = catalog.get("modules")
     if not isinstance(modules, list) or len(modules) != len(CATALOG_MODULES):
-        raise CheckError("install/catalog.toml must list the four bootstrap modules")
+        raise CheckError(
+            f"install/catalog.toml must list the {len(CATALOG_MODULES)} bootstrap modules"
+        )
     for expected, raw in zip(CATALOG_MODULES, modules, strict=True):
         if not isinstance(raw, dict):
             raise CheckError("catalog module must be a table")
