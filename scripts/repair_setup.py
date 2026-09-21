@@ -50,7 +50,10 @@ def load_json(path: Path) -> dict:
 
 
 def pinned_version() -> str:
-    return str(load_json(PIN_PATH).get("version", "0.155.1"))
+    version = load_json(PIN_PATH).get("codex_cli")
+    if not version:
+        raise SystemExit(f"{PIN_PATH} missing codex_cli — pin is law, no fallback")
+    return str(version)
 
 
 def marketplace_names() -> list[str]:
@@ -58,11 +61,29 @@ def marketplace_names() -> list[str]:
     return [str(p.get("name")) for p in doc.get("plugins", []) if p.get("name")]
 
 
+def codex_home() -> Path:
+    """One resolver for the Codex user home: CODEX_HOME wins, else ~/.codex.
+    Used by every writer below so custom homes stay coherent (#11)."""
+    return Path(os.environ.get("CODEX_HOME") or Path.home() / ".codex")
+
+
 def codex_bin() -> str | None:
-    local = Path.home() / ".local" / "bin" / ("codex.exe" if os.name == "nt" else "codex")
-    if local.exists():
-        return str(local)
+    """Repo-local install wins (setup installs into $REPO/.local/bin),
+    then the user bin, then PATH."""
+    exe = "codex.exe" if os.name == "nt" else "codex"
+    for base in (ROOT / ".local" / "bin", Path.home() / ".local" / "bin"):
+        candidate = base / exe
+        if candidate.exists():
+            return str(candidate)
     return shutil.which("codex")
+
+
+def atomic_write(path: Path, text: str) -> None:
+    """Sibling temp + os.replace — a crashed write never leaves a torn
+    config file for readers."""
+    tmp = path.with_name(f"{path.name}.tmp-{os.getpid()}")
+    tmp.write_text(text, encoding="utf-8")
+    os.replace(tmp, path)
 
 
 def run(cmd: list[str], timeout: int = 30) -> subprocess.CompletedProcess[str]:
@@ -79,7 +100,7 @@ def fix_plugin_cache() -> None:
     if not bin_path:
         report("WARN", "plugin-cache", "codex not on PATH; skipped")
         return
-    cache_root = Path.home() / ".codex" / "plugins" / "cache" / "saint-tibo"
+    cache_root = codex_home() / "plugins" / "cache" / "saint-tibo"
     fixed = []
     for name in marketplace_names():
         repo_dir = ROOT / "plugins" / name
@@ -110,6 +131,16 @@ def fix_plugin_cache() -> None:
                     report("FAIL", "plugin-cache", f"{name}@{version} reinstall failed: {res.stderr.strip()[:120]}")
                     return
             fixed.append(name)
+        # Prune non-selected cached versions — a stale sibling dir is
+        # drift the resolver could pick up (#14). Only cache dirs under
+        # the plugin name; the selected version is never touched.
+        plugin_cache = cache_root / name
+        if plugin_cache.is_dir():
+            for old in plugin_cache.iterdir():
+                if old.is_dir() and old.name != version:
+                    if not DRY_RUN:
+                        shutil.rmtree(old, ignore_errors=True)
+                    fixed.append(f"{name}@{old.name} pruned")
     if fixed:
         report("FIX", "plugin-cache", f"reinstalled: {', '.join(fixed)}")
     else:
@@ -122,32 +153,55 @@ def fix_notify_block() -> None:
     before the first table header, not appended at EOF (appending lands
     it inside the last table). A foreign root-level `notify` is reported,
     never clobbered: a duplicate key would invalidate the whole config."""
-    cfg = Path.home() / ".codex" / "config.toml"
+    cfg = codex_home() / "config.toml"
     cfg.parent.mkdir(parents=True, exist_ok=True)
     src = cfg.read_text(encoding="utf-8") if cfg.is_file() else ""
-    if "hack-setup: notify" in src:
-        report("OK", "notify-block")
-        return
     lines = src.splitlines(keepends=True)
     # Root keyspace ends at the first table header.
     root_end = next(
         (i for i, l in enumerate(lines) if l.lstrip().startswith("[")),
         len(lines),
     )
-    if any(
-        re.match(r"\s*notify\s*=", l) for l in lines[:root_end]
-    ):
-        report(
-            "WARN", "notify-block",
-            "foreign `notify` already set at root of ~/.codex/config.toml — "
-            "merge install/notify.sh manually (duplicate key = invalid TOML)",
-        )
-        return
     if os.name == "nt":
         script = str(ROOT / "install" / "notify.ps1")
-        entry = f"notify = ['powershell', '-NoProfile', '-File', '{script}']  # hack-setup"
     else:
         script = str(ROOT / "install" / "notify.sh")
+    root_lines = lines[:root_end]
+    entry_idx = next(
+        (i for i, l in enumerate(root_lines)
+         if re.match(r"\s*notify\s*=", l)),
+        None,
+    )
+    if entry_idx is not None:
+        line = root_lines[entry_idx]
+        if script in line:
+            report("OK", "notify-block")
+            return
+        if "# hack-setup" in line:
+            # Our own entry at a stale path — rewrite in place, not foreign.
+            lines[entry_idx] = None  # marker for rewrite below
+            root_lines[entry_idx] = None
+        else:
+            report(
+                "WARN", "notify-block",
+                "foreign `notify` already set at root of "
+                "~/.codex/config.toml — merge install/notify.sh manually "
+                "(duplicate key = invalid TOML)",
+            )
+            return
+    # Stale managed marker comments/entries in the root region are ours —
+    # remove them so the rewrite below stays the single managed block.
+    kept = [
+        l for l in lines[:root_end]
+        if l is not None
+        and l.strip() != "# hack-setup: notify"
+        and not (l.lstrip().startswith("notify") and "# hack-setup" in l)
+    ]
+    lines = kept + lines[root_end:]
+    root_end = len(kept)
+    if os.name == "nt":
+        entry = f"notify = ['powershell', '-NoProfile', '-File', '{script}']  # hack-setup"
+    else:
         entry = f'notify = ["{script}"]  # hack-setup'
     block = f"# hack-setup: notify\n{entry}\n"
     new_src = "".join(lines[:root_end]) + block + "".join(lines[root_end:])
@@ -157,7 +211,7 @@ def fix_notify_block() -> None:
         report("FAIL", "notify-block", f"would produce invalid TOML: {exc}")
         return
     if not DRY_RUN:
-        cfg.write_text(new_src, encoding="utf-8")
+        atomic_write(cfg, new_src)
     report("FIX", "notify-block", f"{'would insert' if DRY_RUN else 'inserted'} managed root block in {cfg}")
 
 
@@ -170,7 +224,7 @@ def fix_sol_profile() -> None:
     effort = models.get("reasoning_effort", "xhigh")
     ctx = models.get("requested_context_window", 872000)
     compact = models.get("requested_auto_compact", 700000)
-    target = Path.home() / ".codex" / "sol.config.toml"
+    target = codex_home() / "sol.config.toml"
     body = (
         "# hack-setup managed: secondary model profile for `codex --profile sol`.\n"
         "# Values come from build/stack-pin.json models.* — edit the pin, not this file.\n"
@@ -185,7 +239,7 @@ def fix_sol_profile() -> None:
         return
     if not DRY_RUN:
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(body, encoding="utf-8")
+        atomic_write(target, body)
     report("FIX", "sol-profile", f"{'would rewrite' if DRY_RUN else 'rewrote'} {target} from the pin")
 
 
@@ -289,7 +343,7 @@ def fix_hook_trust() -> None:
     if not entries:
         report("WARN", "hook-trust", "no hook handlers parsed")
         return
-    cfg = Path.home() / ".codex" / "config.toml"
+    cfg = codex_home() / "config.toml"
     cfg.parent.mkdir(parents=True, exist_ok=True)
     src = cfg.read_text(encoding="utf-8") if cfg.is_file() else ""
     prefix = str(hooks_path)
@@ -303,7 +357,9 @@ def fix_hook_trust() -> None:
             # (unicode_escape would mangle non-ASCII paths — HS-02.)
             key = m.group(1).replace('\\"', '"').replace("\\\\", "\\")
             skip = key.startswith(prefix)
-        elif line.strip().startswith("[") and not line.strip().startswith("[["):
+        elif line.strip().startswith("["):
+            # Any table header ends the skipped block — including
+            # [[array-of-tables]] (previously eaten, #1).
             skip = False
         if skip or line.strip() == "# hack-setup: hook trust":
             continue
@@ -324,17 +380,83 @@ def fix_hook_trust() -> None:
         report("FAIL", "hook-trust", f"would produce invalid TOML: {exc}")
         return
     if not DRY_RUN:
-        cfg.write_text(new_src, encoding="utf-8")
+        atomic_write(cfg, new_src)
     report("FIX", "hook-trust", f"{'would write' if DRY_RUN else 'wrote'} {len(entries)} trusted_hash entries to {cfg}")
+
+
+def fix_config_cleanup() -> None:
+    """Strip legacy managed lines from the USER config.toml without
+    touching per-checkout state (#1): `# hack-setup:` comment blocks,
+    stale `key = v # hack-setup` entries, and the removed [profiles.sol].
+    [hooks.state.*] tables — ours AND foreign — are preserved verbatim;
+    fix_hook_trust owns them (it rewrites this checkout's entries itself).
+    Removing them here would fight that writer every run."""
+    cfg = codex_home() / "config.toml"
+    if not cfg.is_file():
+        report("OK", "config-cleanup", "no user config.toml")
+        return
+    src = cfg.read_text(encoding="utf-8")
+    lines = src.splitlines(keepends=True)
+    # Comment headers + entries OWNED by sibling writers — stripping them
+    # would ping-pong with fix_notify_block / fix_hook_trust every run.
+    owned_comments = {"# hack-setup: notify", "# hack-setup: hook trust"}
+    out: list[str] = []
+    i, n = 0, len(lines)
+    in_hooks_state = False
+    while i < n:
+        line = lines[i]
+        stripped = line.strip()
+        if re.match(r'\[hooks\.state\."', stripped):
+            in_hooks_state = True
+            out.append(line)
+            i += 1
+            continue
+        if in_hooks_state:
+            out.append(line)
+            i += 1
+            if stripped.startswith("["):
+                in_hooks_state = False
+            continue
+        if line.lstrip().startswith("# hack-setup:"):
+            if stripped in owned_comments:
+                out.append(line)
+                i += 1
+            else:
+                # eat the stale comment block but stop at owned headers
+                while (
+                    i < n
+                    and lines[i].lstrip().startswith("#")
+                    and lines[i].strip() not in owned_comments
+                ):
+                    i += 1
+            continue
+        if "# hack-setup" in line and "=" in line and not line.lstrip().startswith("notify"):
+            i += 1
+            continue
+        if re.fullmatch(r"\[profiles\.sol\]", stripped):
+            i += 1
+            while i < n and not lines[i].strip().startswith("["):
+                i += 1
+            continue
+        out.append(line)
+        i += 1
+    res = "".join(out)
+    if res != src:
+        if not DRY_RUN:
+            atomic_write(cfg, res)
+        report("FIX", "config-cleanup",
+               f"{'would strip' if DRY_RUN else 'stripped'} legacy managed entries")
+    else:
+        report("OK", "config-cleanup")
 
 
 def fix_state_files() -> None:
     """Corrupt per-repo hook state (~/.codex/hack-mode-*.json,
     hack-issues-*.json) self-heals on next hook run — drop broken files."""
-    codex_home = Path.home() / ".codex"
+    home = codex_home()
     removed = []
     for pattern in ("hack-mode-*.json", "hack-issues-*.json"):
-        for path in codex_home.glob(pattern):
+        for path in home.glob(pattern):
             try:
                 json.loads(path.read_text(encoding="utf-8"))
             except Exception:
@@ -383,19 +505,24 @@ def check_hook_smoke() -> None:
     except py_compile.PyCompileError as exc:
         report("FAIL", "hook-smoke", f"does not compile: {exc}")
         return
+    # `session` always emits (systemMessage when mode is off,
+    # additionalContext when on) and never mutates state — deterministic
+    # regardless of the persisted mode (#12). Proof level: script runs +
+    # emits valid hook JSON; discovery/trust is fix_hook_trust's proof.
     payload = json.dumps(
-        {"hook_event_name": "UserPromptSubmit", "prompt": "repair smoke", "cwd": str(ROOT)}
+        {"hook_event_name": "SessionStart", "source": "startup", "cwd": str(ROOT)}
     )
     try:
         proc = subprocess.run(
-            [sys.executable, str(script), "prompt"],
+            [sys.executable, str(script), "session"],
             input=payload, capture_output=True, text=True, timeout=15,
         )
         out = proc.stdout.strip()
         doc = json.loads(out) if out else {}
         ctx = (doc.get("hookSpecificOutput") or {}).get("additionalContext", "")
-        if proc.returncode == 0 and ("STATUS" in ctx or "hack" in ctx.lower()):
-            report("OK", "hook-smoke", "UserPromptSubmit emits context")
+        msg = doc.get("systemMessage", "")
+        if proc.returncode == 0 and (ctx or "HACK-MODE" in msg):
+            report("OK", "hook-smoke", "SessionStart emits hook JSON")
         else:
             report("FAIL", "hook-smoke", f"unexpected output: {out[:120]}")
     except Exception as exc:
@@ -468,6 +595,7 @@ def main() -> int:
                 report("FAIL", name, "unknown repair item")
         return 1 if any(s == "FAIL" for s, _, _ in RESULTS) else 0
     fix_plugin_cache()
+    fix_config_cleanup()
     fix_notify_block()
     fix_sol_profile()
     fix_agent_dirs()

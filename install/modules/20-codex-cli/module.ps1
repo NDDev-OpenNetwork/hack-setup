@@ -57,29 +57,13 @@ function Ensure-SolProfile {
     )
     [System.IO.File]::WriteAllText((Join-Path $codexHome 'sol.config.toml'), ($lines -join "`n") + "`n")
 
-    $cfg = Join-Path $codexHome 'config.toml'
-    if (Test-Path -LiteralPath $cfg -PathType Leaf) {
-        $src = [System.IO.File]::ReadAllLines($cfg)
-        $out = New-Object System.Collections.Generic.List[string]
-        $i = 0; $n = $src.Count
-        while ($i -lt $n) {
-            $line = $src[$i]
-            if ($line.TrimStart().StartsWith('# hack-setup:')) {
-                while ($i -lt $n -and $src[$i].TrimStart().StartsWith('#')) { $i++ }
-                continue
-            }
-            if ($line.Contains('# hack-setup') -and $line.Contains('=')) { $i++; continue }
-            if ($line.Trim() -eq '[profiles.sol]') {
-                $i++
-                while ($i -lt $n -and -not $src[$i].TrimStart().StartsWith('[')) { $i++ }
-                continue
-            }
-            $out.Add($line); $i++
-        }
-        $res = ([string]::Join("`n", $out)) + "`n"
-        if ($res -ne ([string]::Join("`n", $src) + "`n")) {
-            [System.IO.File]::WriteAllText($cfg, $res)
-        }
+    # Legacy managed-line cleanup (foreign [hooks.state] tables are
+    # preserved — issue #1) lives in repair_setup.py as the single writer.
+    $py = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $py) { $py = Get-Command python3 -ErrorAction SilentlyContinue }
+    if ($py) {
+        & $py.Source (Join-Path $env:HACK_REPO_ROOT 'scripts\repair_setup.py') --only config-cleanup | Out-Null
+        if ($LASTEXITCODE -ne 0) { Log "WARN: config-cleanup repair failed (exit $LASTEXITCODE)" }
     }
     Log "installed user profile ~/.codex/sol.config.toml ($secondary)"
 }
@@ -93,6 +77,7 @@ function Ensure-Notify {
     if (-not $py) { $py = Get-Command python3 -ErrorAction SilentlyContinue }
     if (-not $py) { return }
     & $py.Source (Join-Path $env:HACK_REPO_ROOT 'scripts\repair_setup.py') --only notify-block | Out-Null
+    if ($LASTEXITCODE -ne 0) { Log "WARN: notify-block repair failed (exit $LASTEXITCODE)" }
 }
 
 function Run-Status {
@@ -110,6 +95,7 @@ function Ensure-HookTrust {
     if (-not $py) { $py = Get-Command python3 -ErrorAction SilentlyContinue }
     if (-not $py) { return }
     & $py.Source (Join-Path $env:HACK_REPO_ROOT 'scripts\repair_setup.py') --only hook-trust | Out-Null
+    if ($LASTEXITCODE -ne 0) { Log "WARN: hook-trust repair failed (exit $LASTEXITCODE)" }
 }
 
 function Run-Install {

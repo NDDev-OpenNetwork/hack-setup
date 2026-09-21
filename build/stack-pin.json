@@ -167,7 +167,7 @@
         "SessionEnd",
         "Interrupt"
       ],
-      "note": "project-layer hooks; plugin manifests cannot carry hooks in 0.155.1 (plugin_hooks feature removed, openai/codex#39895). hack_mode.py: SessionStart (no matcher = every source: startup|resume|clear|compact) injects the ruleset — a forked/edited thread re-fires startup and DUPLICATES context (upstream #39951); compact sources queue until the next user turn (#28736); UserPromptSubmit emits reminder + git/issues STATUS; PreToolUse matcher 'Bash|exec_command|write_stdin|shell' (0.155.1 sends tool_name 'exec_command' with tool_input.cmd for exec, 'write_stdin' with .chars, 'Bash' is the PostToolUse normalized name) denies pushes whose tail names a protected branch, --all/--mirror, bare/HEAD pushes when HEAD is protected, gh pr merge, and gh api merge endpoints, unless the checkout carries .agent/orchestrator (lane law activates via tracked .codex/lanes.json); PostToolUse reminds ship-verify after git push; SessionEnd and Interrupt append .agent/session-log.ndjson (their timeout caps at 3s). commandWindows mirrors every command for hosts without python3. Non-managed hooks run only when a hooks.state trusted_hash in the USER config layer matches the definition hash — repair/module 20 write the managed block (ADR 0016). compact_prompt is ignored under remote compaction (openai/codex#34428) — SessionStart re-injection is the real channel; Codex App threads can shadow project developer_instructions (#33238). additionalContext only works on PreToolUse/PostToolUse/SessionStart/UserPromptSubmit/SubagentStart. Standalone 'normal mode'/'hack ultra'/'hack mode' toggles per-project state under ~/.codex/hack-mode-<repo>.json"
+      "note": "project-layer hooks; plugin manifests cannot carry hooks in 0.155.1 (plugin_hooks feature removed, openai/codex#39895). hack_mode.py: SessionStart (no matcher = every source: startup|resume|clear|compact) injects the ruleset \u2014 a forked/edited thread re-fires startup and DUPLICATES context (upstream #39951); compact sources queue until the next user turn (#28736); UserPromptSubmit emits reminder + git/issues STATUS; PreToolUse matcher 'Bash|exec_command|write_stdin|shell' (0.155.1 sends tool_name 'exec_command' with tool_input.cmd for exec, 'write_stdin' with .chars, 'Bash' is the PostToolUse normalized name) denies pushes whose tail names a protected branch, --all/--mirror, bare/HEAD pushes when HEAD is protected, gh pr merge, and gh api merge endpoints, unless the checkout carries .agent/orchestrator (lane law activates via tracked .codex/lanes.json); PostToolUse reminds ship-verify after git push; SessionEnd and Interrupt append .agent/session-log.ndjson (their timeout caps at 3s). commandWindows mirrors every command for hosts without python3. Non-managed hooks run only when a hooks.state trusted_hash in the USER config layer matches the definition hash \u2014 repair/module 20 write the managed block (ADR 0016). compact_prompt is ignored under remote compaction (openai/codex#34428) \u2014 SessionStart re-injection is the real channel; Codex App threads can shadow project developer_instructions (#33238). additionalContext only works on PreToolUse/PostToolUse/SessionStart/UserPromptSubmit/SubagentStart. Standalone 'normal mode'/'hack ultra'/'hack mode' toggles per-project state under ~/.codex/hack-mode-<repo>.json"
     },
     "deploy": {
       "model": "server-side pull watcher, no GitHub admin rights needed",
@@ -215,7 +215,7 @@
       },
       "context7": {
         "url": "https://mcp.context7.com/mcp",
-        "note": "keyless by default — Codex 0.155.1 hard-errors when a bearer_token_env_var is unset (rmcp_client.rs), so no env ref is declared; hosts wanting higher limits export CONTEXT7_API_KEY and add bearer_token_env_var in their USER config layer"
+        "note": "keyless by default \u2014 Codex 0.155.1 hard-errors when a bearer_token_env_var is unset (rmcp_client.rs), so no env ref is declared; hosts wanting higher limits export CONTEXT7_API_KEY and add bearer_token_env_var in their USER config layer"
       },
       "grep": {
         "url": "https://mcp.grep.app",
@@ -910,7 +910,7 @@
     "typescript": {
       "server": "tsserver (bundled with the typescript package; editors attach it directly)",
       "version_from": "runtimes.typescript",
-      "note": "typescript@7.0.2 ships bin tsc only; tsgo exists only as @typescript/native-preview dev builds — do not pin those"
+      "note": "typescript@7.0.2 ships bin tsc only; tsgo exists only as @typescript/native-preview dev builds \u2014 do not pin those"
     },
     "typescript_stdio": {
       "server": "typescript-language-server (stdio wrapper for editors without built-in tsserver support)",
@@ -1046,7 +1046,34 @@
     "just": {
       "package": "just",
       "version": "1.58.0",
-      "role": "project command runner; no Makefile"
+      "role": "project command runner; no Makefile",
+      "packages": {
+        "darwin-arm64": {
+          "name": "just-1.58.0-aarch64-apple-darwin.tar.gz",
+          "url": "https://github.com/casey/just/releases/download/1.58.0/just-1.58.0-aarch64-apple-darwin.tar.gz",
+          "sha256": "50ae3e996c974a0bf32ea7d10f495070df33f1b43e0616b2769e3d4821ed8f48"
+        },
+        "darwin-x86_64": {
+          "name": "just-1.58.0-x86_64-apple-darwin.tar.gz",
+          "url": "https://github.com/casey/just/releases/download/1.58.0/just-1.58.0-x86_64-apple-darwin.tar.gz",
+          "sha256": "9a09cfef66aaa79da58203970103a0684307716caaabd3e9844cacc4dc0f4023"
+        },
+        "linux-arm64": {
+          "name": "just-1.58.0-aarch64-unknown-linux-musl.tar.gz",
+          "url": "https://github.com/casey/just/releases/download/1.58.0/just-1.58.0-aarch64-unknown-linux-musl.tar.gz",
+          "sha256": "748237128c4c40cbdabc65e841d05ceba13cc23a91eaba395495894c1d9764df"
+        },
+        "linux-x86_64": {
+          "name": "just-1.58.0-x86_64-unknown-linux-musl.tar.gz",
+          "url": "https://github.com/casey/just/releases/download/1.58.0/just-1.58.0-x86_64-unknown-linux-musl.tar.gz",
+          "sha256": "4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d"
+        },
+        "windows-x86_64": {
+          "name": "just-1.58.0-x86_64-pc-windows-msvc.zip",
+          "url": "https://github.com/casey/just/releases/download/1.58.0/just-1.58.0-x86_64-pc-windows-msvc.zip",
+          "sha256": "759f16fb7aa17c5c8b9594b6d4a8c1a6630dfd042cf2b3ff84841454d3d188dc"
+        }
+      }
     },
     "required_gates": [
       "OpenAPI contract sync",
@@ -1157,6 +1184,15 @@
           "--version"
         ],
         "pattern": "uv\\s+([0-9]+(?:\\.[0-9]+)*)"
+      },
+      {
+        "id": "just",
+        "path": "quality.just.version",
+        "bin": "just",
+        "argv": [
+          "--version"
+        ],
+        "pattern": "just\\s+([0-9]+(?:\\.[0-9]+)*)"
       }
     ],
     "declared": [
@@ -1232,15 +1268,6 @@
           "--version"
         ],
         "pattern": "pytest\\s+([0-9]+(?:\\.[0-9]+)*)"
-      },
-      {
-        "id": "just",
-        "path": "quality.just.version",
-        "bin": "just",
-        "argv": [
-          "--version"
-        ],
-        "pattern": "just\\s+([0-9]+(?:\\.[0-9]+)*)"
       },
       {
         "id": "ty",

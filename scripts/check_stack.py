@@ -63,7 +63,7 @@ SECTION_ORDER = (
     "lsp",
     "mcp",
 )
-REQUIRED_PROBE_IDS = ("codex", "node", "bun", "python", "uv")
+REQUIRED_PROBE_IDS = ("codex", "node", "bun", "python", "uv", "just")
 DEFAULT_TIMEOUT = 8.0
 
 
@@ -447,7 +447,7 @@ def doctor_decision(results: list[ProbeResult], *, strict: bool) -> tuple[int, l
     if strict and (declared_bad or missing_declared):
         messages.append("FAIL --strict: declared host tools must match the pin")
         return 1, messages
-    messages.append("PASS required host tools match the pin")
+    messages.append("PASS [installed] required host tools match the pin")
     return 0, messages
 
 

@@ -10,8 +10,9 @@
 #   HACK_DEPLOY_LOG     log file                           (default: stderr/journald)
 #
 # State: $HACK_DEPLOY_DIR/.deployed-sha records the SHA whose deploy
-# SUCCEEDED (checkout HEAD is not proof — a fresh clone has the desired
-# HEAD but nothing deployed, and a failed build must be retried).
+# SUCCEEDED. It always holds the real deployed HEAD — never the desired
+# remote SHA — so a local-ahead or diverged checkout can never masquerade
+# as a clean deploy (issue #6).
 set -eu
 
 log() { printf '%s deploy-watch: %s\n' "$(date -u +%H:%M:%S)" "$*" >> "${HACK_DEPLOY_LOG:-/dev/stderr}"; }
@@ -34,8 +35,16 @@ deployed=$(cat .deployed-sha 2>/dev/null || echo none)
 
 local=$(git rev-parse HEAD)
 if [ "$remote" != "$local" ]; then
-  log "checkout $local -> $remote ($HACK_DEPLOY_BRANCH)"
-  git merge --ff-only "$remote" || die "ff-only pull failed; reset manually"
+  if git merge-base --is-ancestor "$local" "$remote"; then
+    log "checkout $local -> $remote ($HACK_DEPLOY_BRANCH)"
+    git merge --ff-only "$remote" || die "ff-only pull failed; reset manually"
+  else
+    # HEAD is ahead of or has diverged from origin — merging would be a
+    # no-op and .deployed-sha would lie about what is deployed (#6).
+    # Refuse: a human must reconcile (review, then
+    # `git reset --hard origin/$HACK_DEPLOY_BRANCH`).
+    die "server HEAD $local is not an ancestor of origin/$HACK_DEPLOY_BRANCH $remote — local commits or diverged; refusing to deploy"
+  fi
 fi
 
 log "deploying $remote ($HACK_DEPLOY_BRANCH)"
@@ -53,5 +62,6 @@ if [ -n "${HACK_DEPLOY_HEALTH:-}" ]; then
   log "healthy at $HACK_DEPLOY_HEALTH"
 fi
 
-echo "$remote" > .deployed-sha
+# Record what is ACTUALLY checked out — enforced equal to remote above.
+git rev-parse HEAD > .deployed-sha
 log "deployed $remote"

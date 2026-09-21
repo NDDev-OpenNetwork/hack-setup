@@ -122,6 +122,38 @@ install_bun() {
   log "bun $wanted installed"
 }
 
+install_just() {
+  # The documented command runner (`just gate` etc.) — must be installed,
+  # not assumed on the host (#9).
+  wanted="$(pin_get quality.just.version)"
+  if [ "$(bin_version "$HACK_LOCAL_BIN/just" --version || true)" = "$wanted" ]; then
+    log "just $wanted already at $HACK_LOCAL_BIN/just"
+    return 0
+  fi
+  mkdir -p "$HACK_CACHE" "$HACK_RUNTIME_ROOT/just"
+  url="$(pin_get "quality.just.packages.${HACK_PLATFORM}.url")"
+  sha="$(pin_get "quality.just.packages.${HACK_PLATFORM}.sha256")"
+  name="$(pin_get "quality.just.packages.${HACK_PLATFORM}.name")"
+  archive="$HACK_CACHE/$name"
+  log "downloading $name"
+  hack_download "$url" "$archive"
+  hack_verify_sha256 "$archive" "$sha"
+  extract_dir="$HACK_RUNTIME_ROOT/just/$wanted"
+  rm -rf "$extract_dir"
+  mkdir -p "$extract_dir"
+  case "$name" in
+    *.zip) extract_zip "$archive" "$extract_dir" ;;
+    *) tar -xzf "$archive" -C "$extract_dir" ;;
+  esac
+  just_bin="$(python3 -c 'import pathlib,sys; print(next(pathlib.Path(sys.argv[1]).rglob("just")))' "$extract_dir")"
+  [ -f "$just_bin" ] || die "just binary missing from $name"
+  chmod +x "$just_bin"
+  got="$(bin_version "$just_bin" --version || true)"
+  [ "$got" = "$wanted" ] || die "just reported $got, expected $wanted"
+  link_bin "$just_bin"
+  log "just $wanted installed"
+}
+
 warm_mcp_servers() {
   serena_v="$(pin_get mcp.serena.version)"
   shadcn_v="$(pin_get frontend.shadcn.version)"
@@ -170,6 +202,7 @@ run_install() {
   install_python
   install_bun
   install_node
+  install_just
   warm_mcp_servers
 }
 
@@ -178,11 +211,13 @@ run_status() {
   bun_v="$(pin_get runtimes.bun.version)"
   uv_v="$(pin_get runtimes.uv.version)"
   py_v="$(pin_get runtimes.python.version)"
+  just_v="$(pin_get quality.just.version)"
   [ "$(bin_version "$HACK_LOCAL_BIN/uv" --version || true)" = "$uv_v" ] || die "uv $uv_v missing; run ./setup"
   [ "$(bin_version "$HACK_LOCAL_BIN/python3" --version || true)" = "$py_v" ] || die "python $py_v missing; run ./setup"
   [ "$(bin_version "$HACK_LOCAL_BIN/bun" --version || true)" = "$bun_v" ] || die "bun $bun_v missing; run ./setup"
   [ "$(bin_version "$HACK_LOCAL_BIN/node" --version || true)" = "$node_v" ] || die "node $node_v missing; run ./setup"
-  log "runtimes ok (node $node_v, bun $bun_v, python $py_v, uv $uv_v)"
+  [ "$(bin_version "$HACK_LOCAL_BIN/just" --version || true)" = "$just_v" ] || die "just $just_v missing; run ./setup"
+  log "runtimes ok (node $node_v, bun $bun_v, python $py_v, uv $uv_v, just $just_v)"
 }
 
 run_dry_run() {
@@ -190,6 +225,7 @@ run_dry_run() {
   log "would uv python install $(pin_get runtimes.python.version)"
   log "would install bun $(pin_get runtimes.bun.version) ($HACK_PLATFORM)"
   log "would install node $(pin_get runtimes.node.version) ($HACK_PLATFORM)"
+  log "would install just $(pin_get quality.just.version) ($HACK_PLATFORM)"
   log "would warm MCP caches: serena-agent $(pin_get mcp.serena.version), shadcn $(pin_get frontend.shadcn.version)"
 }
 

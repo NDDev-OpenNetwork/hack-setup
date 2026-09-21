@@ -24,7 +24,12 @@ ignore_all_files_in_gitignore: true
 # Maps the language key to the options.
 # The settings are considered only if the project is trusted (see global configuration to define trusted projects).
 # See https://oraios.github.io/serena/02-usage/050_configuration.html#language-server-specific-settings
-ls_specific_settings: {}
+# python_ty.ty_version pins the analyzer Serena downloads/uses to the same
+# `ty` release as stack-pin — without it Serena falls back to its bundled
+# default (issue #2).
+ls_specific_settings:
+  python_ty:
+    ty_version: "0.0.82"
 
 # list of additional paths to ignore in this project.
 # Same syntax as gitignore, so you can use * and **.
@@ -141,12 +146,13 @@ ls_additional_workspace_folders: []
 # The first language server is the default language and the respective language server will be used as a fallback.
 # Note that when using the JetBrains backend, language servers are not used and this list is correspondingly ignored.
 # Pinned analyzer ids (Serena 1.7.0 LanguageServerId): python_ty = our
-# pinned `ty` (not default pyright); powershell/bash/markdown/json/yaml/
-# toml match the surfaces this repo actually ships.
+# pinned `ty` (not default pyright); bash/markdown/json/yaml/toml match
+# the surfaces this repo actually ships. `powershell` is deliberately
+# absent: its LS needs pwsh, which POSIX hosts lack, and one failed LS
+# aborts the whole language-server manager (find_symbol dies with it).
 language_servers:
 - python_ty
 - bash
-- powershell
 - markdown
 - json
 - yaml

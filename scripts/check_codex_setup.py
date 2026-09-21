@@ -630,8 +630,8 @@ def check_verify_block(pin: dict[str, object]) -> None:
     for index, entry in enumerate(required):
         probe_id = require_probe_entry(entry, f"verify.required[{index}]", pin)
         required_ids.append(probe_id)
-    if required_ids != ["codex", "node", "bun", "python", "uv"]:
-        raise CheckError("verify.required ids must be codex, node, bun, python, uv")
+    if required_ids != ["codex", "node", "bun", "python", "uv", "just"]:
+        raise CheckError("verify.required ids must be codex, node, bun, python, uv, just")
     seen = set(required_ids)
     for index, entry in enumerate(declared):
         probe_id = require_probe_entry(entry, f"verify.declared[{index}]", pin)
@@ -1291,7 +1291,10 @@ def main() -> int:
         for error in errors:
             print(f"FAIL {error}", file=sys.stderr)
         return 1
-    print("PASS Codex 0.155.1 project artifacts")
+    # Proof level 1 (artifact): pin == config == docs == generated files.
+    # Installed proof is `./setup --status`; live/capability proof needs a
+    # real Codex session (trust, hooks, MCP) — this check cannot claim it.
+    print("PASS [artifact] Codex 0.155.1 project artifacts")
     return 0
 
 
