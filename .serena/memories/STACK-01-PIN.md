@@ -37,7 +37,7 @@ API: FastAPI, `httpx` `0.28.1` (`<1`). Isolated Python envs: API/workers redis-p
 
 Flutter 3.47.5 + bundled Dart 3.13.4. Tauri 2 npm `2.11.4`/`2.11.1`, crate `2.11.5`.
 
-`./setup` installs Codex plus Node/bun/uv/Python. Required probes: `codex`, `node`, `bun`, `python`, `uv`. Declared probes (rustc, go, docker, compose, psql, redis-server, ruff, pytest, just, `ty` `0.0.82`) report OK/MISSING/DRIFT and do not fail the default doctor; `--strict` fails them.
+`./setup` installs Codex plus Node/bun/uv/Python/`just` (module 30 unpacks `quality.just.packages.<platform>` release assets, sha256-checked). Required probes: `codex`, `node`, `bun`, `python`, `uv`, `just`. Declared probes (rustc, go, docker, compose, psql, redis-server, ruff, pytest, `ty` `0.0.82`) report OK/MISSING/DRIFT and do not fail the default doctor; `--strict` fails them. `just live` is the `[live]` Serena MCP proof; `reverify` filters GitHub releases to non-draft non-prerelease before comparing.
 
 ## Contracts And Data
 

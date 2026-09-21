@@ -19,13 +19,24 @@ Prove Codex artifacts, the installer catalog, and required host versions.
 - `tests/test_check_codex_setup.py`: validator plus `./setup --dry-run`.
 - `tests/test_check_stack.py`: version extract, standard contents, `doctor_decision`, live required doctor.
 - `tests/test_env_sh.py`: bash/zsh `. install/env.sh` PATH heads.
+- `tests/test_lane_guard.py`: hack_mode.py push deny/allow — `git -C` target repos, quoted refspecs, `--all`/`--mirror`, bare HEAD, `gh pr merge`, orchestrator marker.
+- `tests/test_repair_config_cleanup.py`: repair config-cleanup keeps foreign `[hooks.state.*]` tables + `[[array-of-tables]]`, drops stale legacy.
+- `scripts/verify_serena.py`: stdio MCP client proving handshake → activate_project → tools/list → `find_symbol` (python_ty must be up) → list/write/read/delete memory. Tool errors are `isError` results, not RPC errors — the script checks both.
 
 ## Entry Points
 
 - `just gate`: `./setup --status`, `check_codex_setup.py`, `check_stack.py`, `codex --version`.
 - `just check`: the two Python scripts. This is `stack-pin.control.proof`. It requires pin `control` paths, config == pin session/models/features, and AGENTS Mechanism.
 - `just test`: `pytest -q` (use `pytest` / `~/.local/bin/pytest`, not `python3 -m pytest` on uv CPython).
+- `just live`: `scripts/verify_serena.py` — REAL MCP proof, network + uvx required, not part of `gate`.
 - `ruff check scripts tests`
+
+## Proof levels
+
+Output is labeled so nobody confuses a file check with a live wire-up:
+`[artifact]` pin/config/docs consistency (check_codex_setup),
+`[installed]` host tools match the pin (check_stack doctor),
+`[live]` real MCP/deploy evidence (verify_serena, deploy health).
 
 ## Current Behavior
 
@@ -33,7 +44,7 @@ The artifact validator requires catalog ids `prereqs`, `codex-cli`, `runtimes`, 
 
 Stack-pin schema 2: `control.rules` = `plugins/hack-agent-standards/standards/INDEX.md`. `registered.standards_plugin.id` = `hack-agent-standards@saint-tibo`. typescript `7.0.2` with no `compat_package`, `api_client.workspace` = `not-web`, `quality.just` = `1.58.0`. `do_not_use` includes Next.js, pnpm, asyncpg, TS6-in-web, `@hey-api/openapi-ts@next`, `bun add shadcn`, unconstrained RapidOCR/opencv-python, httpx 1.x, GNU make. Required conflicts include `hey-api-ts7-runtime` and `docling-opencv-cv2`.
 
-Required probes must be OK. Declared tools (rustc, go, docker, compose, psql, redis-server, ruff, pytest, just, ty) may DRIFT or be MISSING without failing the default doctor.
+Required probes must be OK: codex, node, bun, python, uv, just (just is installed by module 30 from pinned per-platform release assets, so requiring it is fair). Declared tools (rustc, go, docker, compose, psql, redis-server, ruff, pytest, ty) may DRIFT or be MISSING without failing the default doctor. CI runs artifact checkers, pinned pytest via `uvx --from pytest==<quality.pytest.version>`, and `sh -n` over every module/deploy/notify shell file in a loop (a bare `sh -n a b` checks only `a`).
 
 ## Invariants
 
