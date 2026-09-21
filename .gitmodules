@@ -1,0 +1,3 @@
+[submodule "product/vibestrap"]
+	path = product/vibestrap
+	url = https://github.com/NDDev-OpenNetwork/vibestrap.git
