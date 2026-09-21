@@ -1,6 +1,6 @@
 <!-- Memory Metadata
-Last updated: 2026-09-20
-Last commit: bc3c4c3 fix(docs+check): document plugin install steps; scope legacy-profile ban to sol
+Last updated: 2026-09-21
+Last commit: 63ddace docs(serena): record deploy-e2e verification and full issue closure
 Scope: .agents/, .codex/, plugins/saint-tibo/, plugins/hack-agent-standards/, plugins/hack-agent-workflow/, plugins/hack-agent-lsp/, AGENTS.md, docs/adr/0005-codex-rule-catalogue.md, docs/adr/0008-agent-standards-plugin.md, docs/adr/0009-agent-workflow-format.md, docs/adr/0011-lsp-matrix.md, build/stack-pin.json registered.standards_plugin_skills + registered.workflow_plugin_skills + registered.lsp_plugin_skills
 Area: CODEX
 -->
@@ -16,11 +16,11 @@ Map native Codex 0.155.1 project surfaces in this repo.
 - Repo skills: `.agents/skills/{repo-orientation,quality-gate,one-repo-workflow,apply-stack-rule}/SKILL.md`
 - Frames: `plugins/hack-agent-standards/standards/` (on-demand; Codex does not auto-load it). ADR 0005 + ADR 0008.
 - Nested AGENTS templates: `plugins/hack-agent-standards/nested/` (copy when a product tree is created; do not create empty trees).
-- Marketplace: `.agents/plugins/marketplace.json` name `saint-tibo`, plugins `./plugins/saint-tibo` then `./plugins/hack-agent-standards` then `./plugins/hack-agent-workflow`
+- Marketplace: `.agents/plugins/marketplace.json` name `saint-tibo`, plugins `./plugins/{saint-tibo,hack-agent-standards,hack-agent-workflow,hack-agent-lsp,hack-agent-mcp}`
 - Team plugin: `plugins/saint-tibo/plugin.json` portable Agent Plugins 1.0.0
 - Team plugin skill: `plugins/saint-tibo/skills/saint-tibo/SKILL.md` name `saint-tibo`
 - Standards plugin: `plugins/hack-agent-standards/plugin.json` portable Agent Plugins 1.0.0. Skills are DirectChildren `skills/<name>/SKILL.md` only. Pin `registered.standards_plugin_skills` is the skill-set SoT.
-- Workflow plugin: `plugins/hack-agent-workflow/plugin.json` portable 1.0.0. Skills `session-boot`, `github-flow`, `agent-handoff`; pin `registered.workflow_plugin_skills` is their SoT. Format: serena-first open, github-first loop, agent-first close. ADR 0009.
+- Workflow plugin: `plugins/hack-agent-workflow/plugin.json` portable 1.0.0. Seven skills `session-boot`, `github-flow`, `agent-handoff`, `delegate-worker`, `hack-mode`, `ship-verify`, `debt-ledger`; pin `registered.workflow_plugin_skills` is their SoT. Format: serena-first open, github-first loop, agent-first close. ADR 0009 + orchestration ADR 0014.
 - LSP plugin: `plugins/hack-agent-lsp/plugin.json` portable 1.0.0. Skills `lsp-map`, `lsp-setup`; pin `registered.lsp_plugin_skills` + `lsp.*` matrix is the SoT. ADR 0011.
 - Config: `.codex/config.toml` is a projection of pin `registered.session` + `models` + `registered.features` (`gpt-6-astra` + `xhigh`, window `872000` / compact `700000`, `agents.enabled=false`). 0.155.1 ignores project-local `profiles` and rejects a legacy `[profiles.sol]` table; module 20 writes `~/.codex/sol.config.toml` (overlay file mechanism) and the checker verifies it.
 

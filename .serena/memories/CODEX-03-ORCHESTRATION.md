@@ -1,6 +1,6 @@
 <!-- Memory Metadata
 Last updated: 2026-09-21
-Last commit: audit-wave fixes (issues #1-#19 vs a77e2fb)
+Last commit: 63ddace docs(serena): record deploy-e2e verification and full issue closure
 Scope: plugins/hack-agent-workflow/skills/{delegate-worker,github-flow}, install/deploy/, .codex/hooks/, docs/adr/0014-*, build/stack-pin.json registered.{deploy,hooks}, NDDev-OpenNetwork/vibestrap
 Area: CODEX
 -->
@@ -63,7 +63,16 @@ Orchestrator/worker flow and deployment model (ADR 0014).
   deploy it skips ticks while the app `.env` is absent, so dropping the
   env file in is the only step needed. `ssh` target accepts `user@host`
   (defaults to root). Quotes remote values. No GitHub admin needed
-  (BAITC org: push/triage only, Actions 404).
+  (BAITC org: push/triage only, Actions 404). Logging is journald-safe:
+  `>> /dev/stderr` dies under systemd oneshot (O_APPEND on a journald
+  socket → ENXIO, every tick died before reaching the watch logic —
+  caught by deploy-e2e); watcher writes to fd 2 when HACK_DEPLOY_LOG
+  is unset. Dirty semantics: only TRACKED modifications/diverged HEAD
+  refuse — untracked `.env`/`.deployed-sha` is legitimate state and
+  git merge itself protects untracked files from overwrite.
+  LIVE-VERIFIED by `deploy-e2e` CI job (ubuntu-latest, self-SSH
+  root@localhost): provision twice → env preserved → tracked-dirty
+  refuses → timer fires a real deploy tick (.deployed-sha == remote).
 - Product skeleton: `NDDev-OpenNetwork/vibestrap` (private mirror of
   R3flector/vibestrap, no upstream license). Agent surface projected:
   `.codex/{config.toml,hooks.json,hooks/hack_mode.py,lanes.json}` +
@@ -90,7 +99,12 @@ Orchestrator/worker flow and deployment model (ADR 0014).
   wildcard, bare/HEAD on protected upstream, `gh pr merge`,
   `gh api .../merge(s)` — unless untracked `.agent/orchestrator` marker.
   Tested by `tests/test_lane_guard.py` (incl. `-C`, quoted, `-u`,
-  push-options). Hook commands resolve root via
+  push-options, deleted caller cwd — issue #24 regression). Hook
+  hardening: `_repo_root` joins relative `-C` dirs textually instead of
+  relying on the subprocess cwd (a missing caller cwd used to kill
+  every resolution → silent bypass), and `Path.home()` at module scope
+  is guarded — a stripped env (no USERPROFILE/HOMEDRIVE on Windows)
+  crashed the hook at import. Hook commands resolve root via
   `git rev-parse --show-toplevel` (session cwd may be a subdir);
   commandWindows cmd variants mirror all six handlers.
   PostToolUse → ship-verify nudge; SessionEnd/Interrupt (timeout≤3s) →

@@ -1,6 +1,6 @@
 <!-- Memory Metadata
-Last updated: 2026-09-20
-Last commit: bc3c4c3 fix(docs+check): document plugin install steps; scope legacy-profile ban to sol
+Last updated: 2026-09-21
+Last commit: 63ddace docs(serena): record deploy-e2e verification and full issue closure
 Scope: build/stack-pin.json, build/stack-standard.md, docs/adr/0003-stack-pin.md, docs/adr/0004-product-stack.md, docs/adr/0008-agent-standards-plugin.md, justfile, scripts/check_stack.py
 Area: STACK
 -->
@@ -13,7 +13,7 @@ Frozen product + toolchain standard and host doctor.
 
 ## Source Of Truth
 
-- `build/stack-pin.json` schema 2, `verified_on` 2026-09-20. `control` names the pin → config → `just check` loop.
+- `build/stack-pin.json` schema 2, `verified_on` 2026-09-21. `control` names the pin → config → `just check` loop. `team` block pins member→GitHub-login map + shared git defaults consumed by module 15.
 - `build/stack-standard.md`: generated; refresh with `python3 scripts/check_stack.py --write`.
 - `docs/adr/0003-stack-pin.md`, `docs/adr/0004-product-stack.md`, `docs/adr/0006-codex-yolo-session.md`, `docs/adr/0007-codex-models-context.md`, and `docs/adr/0008-agent-standards-plugin.md`.
 - `control.rules` is `plugins/hack-agent-standards/standards/INDEX.md`. Generated standard lists both plugins.
@@ -37,7 +37,7 @@ API: FastAPI, `httpx` `0.28.1` (`<1`). Isolated Python envs: API/workers redis-p
 
 Flutter 3.47.5 + bundled Dart 3.13.4. Tauri 2 npm `2.11.4`/`2.11.1`, crate `2.11.5`.
 
-`./setup` installs Codex plus Node/bun/uv/Python/`just` (module 30 unpacks `quality.just.packages.<platform>` release assets, sha256-checked). Required probes: `codex`, `node`, `bun`, `python`, `uv`, `just`. Declared probes (rustc, go, docker, compose, psql, redis-server, ruff, pytest, `ty` `0.0.82`) report OK/MISSING/DRIFT and do not fail the default doctor; `--strict` fails them. `just live` is the `[live]` Serena MCP proof; `reverify` filters GitHub releases to non-draft non-prerelease before comparing.
+`./setup --member <name>` installs member identity (module 15, `team.members` pin) plus Codex and Node/bun/uv/Python/`just` (module 30 unpacks `quality.just.packages.<platform>` release assets, sha256-checked). Python stays `3.14.7` — it is the latest 3.14 release; a stale host uv was the only "No download found" cause (issue #24). Required probes: `codex`, `node`, `bun`, `python`, `uv`, `just`. Declared probes (rustc, go, docker, compose, psql, redis-server, ruff, pytest, `ty` `0.0.82`) report OK/MISSING/DRIFT and do not fail the default doctor; `--strict` fails them. `just live` is the `[live]` Serena MCP proof; `reverify` filters GitHub releases to non-draft non-prerelease before comparing.
 
 ## Contracts And Data
 

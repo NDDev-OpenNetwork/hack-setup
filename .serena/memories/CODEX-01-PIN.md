@@ -1,7 +1,7 @@
 <!-- Memory Metadata
-Last updated: 2026-09-20
-Last commit: 2410c1c feat(install): install codex from the sha256-verified package tarball
-Scope: build/codex-pin.json, docs/adr/0001-codex-cli-155-pin.md, install/modules/20-codex-cli/module.sh
+Last updated: 2026-09-21
+Last commit: 63ddace docs(serena): record deploy-e2e verification and full issue closure
+Scope: build/codex-pin.json, docs/adr/0001-codex-cli-155-pin.md, install/modules/20-codex-cli/module.{sh,ps1}
 Area: CODEX
 -->
 
@@ -19,7 +19,7 @@ Record the Codex CLI pin for this repository.
 
 ## Current Behavior
 
-`./setup` installs the official standalone package to `$HOME/.local/bin/codex` and symlinks `$REPO/.local/bin/codex`. The module downloads the pinned `codex-package-<triple>.tar.gz`, verifies `packages.<platform>.sha256`, extracts the binary, and skips when `--version` already matches. Hashed official `install.sh` is the fallback for a platform missing from `packages`.
+`./setup` installs the official standalone package to `$HOME/.local/bin/codex` and symlinks `$REPO/.local/bin/codex`. The module downloads the pinned `codex-package-<triple>.tar.gz`, verifies `packages.<platform>.sha256`, extracts the binary, and skips when `--version` already matches. Hashed official `install.sh` is the fallback for a platform missing from `packages`. On Windows the twin accepts only `*.exe` candidates when resolving the installed binary — npm `codex.ps1`/`.cmd` shims version-match but break outside their prefix.
 
 ## Contracts And Data
 

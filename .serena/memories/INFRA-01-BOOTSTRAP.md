@@ -1,7 +1,7 @@
 <!-- Memory Metadata
-Last updated: 2026-09-20
-Last commit: 2410c1c feat(install): install codex from the sha256-verified package tarball
-Scope: setup, install/, justfile, docs/adr/0002-hierarchical-bootstrap.md
+Last updated: 2026-09-21
+Last commit: 63ddace docs(serena): record deploy-e2e verification and full issue closure
+Scope: setup, install/, justfile, docs/adr/0002-hierarchical-bootstrap.md, docs/adr/0012, team member module
 Area: INFRA
 -->
 
@@ -23,8 +23,14 @@ Windows x86_64 (`.\setup.ps1`), with a numbered module catalog.
 
 ## Entry Points
 
-- `./setup` or `just setup`: install numbered modules (skip `disabled`).
-- `.\setup.ps1` on Windows (`powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1`).
+- `./setup --member <danil|ivan|artem>` or `just setup --member <name>`:
+  install numbered modules (skip `disabled`). Member shorthands
+  `--danil`/`--ivan`/`--artem`; ps1 also accepts `-Member` single-dash.
+- `.\setup.ps1 -Member <name>` on Windows (`powershell -NoProfile
+  -ExecutionPolicy Bypass -File .\setup.ps1 -Member <name>`).
+- `--os <macos|ubuntu|windows>` asserts the target family; under
+  `--dry-run` it previews a foreign platform's plan. Empty
+  `--member=`/`--os=` die on both twins.
 - `just dry-run` / `./setup --dry-run`
 - `just status` / `./setup --status`
 - `./setup --print-env`
@@ -34,9 +40,9 @@ Windows x86_64 (`.\setup.ps1`), with a numbered module catalog.
 
 ## Current Behavior
 
-Bootstrap sources `install/lib/{common,os,download}.{sh,ps1}`, detects the platform, and globs `10-prereqs`, `20-codex-cli`, `30-runtimes`, `40-project-verify`. A `disabled` file skips a module. `catalog.toml` `enabled` is documentary. The artifact gate requires numbered dirs to match the catalog exactly and every module to have both `.sh` and `.ps1` twins. The Windows twin needs no host python — pin reads are `ConvertFrom-Json`, hashes are `Get-FileHash`, zips are `Expand-Archive`; codex lands via the pinned official `install.ps1` (junctions + persistent user PATH under `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin`), uv via pinned `uv-installer.ps1`, python via `uv python install --default`, bun via zip (`bunx.exe` = hardlink of `bun.exe`), node via `win-x64.zip` + `npm.cmd`/`npx.cmd` shims.
+Bootstrap sources `install/lib/{common,os,download}.{sh,ps1}`, detects the platform, and globs `10-prereqs`, `15-member`, `20-codex-cli`, `30-runtimes`, `40-project-verify`. A `disabled` file skips a module. Module 15 enforces member law: `gh api user` login must equal `team.members.<member>.github` from the stack pin (wrong login = hard fail), writes git identity from the GitHub profile (public email or `id+login@users.noreply.github.com` — personal mail never enters the repo), applies the pinned shared git defaults via `git config --global` (ff-only, prune+pruneTags, rerere, zdiff3, autocrlf=false; `core.longpaths` on Windows; `GIT_CONFIG_GLOBAL` is the isolation escape hatch), probes `ssh -T git@github.com`, and writes the `.agent/member` marker the STATUS line reads. `catalog.toml` `enabled` is documentary. The artifact gate requires numbered dirs to match the catalog exactly and every module to have both `.sh` and `.ps1` twins. The Windows twin needs no host python — pin reads are `ConvertFrom-Json`, hashes are `Get-FileHash`, zips are `Expand-Archive`; codex lands via the pinned official `install.ps1` (junctions + persistent user PATH under `%LOCALAPPDATA%\Programs\OpenAI\Codex\bin`), uv via pinned `uv-installer.ps1`, python via `uv python install --default`, bun via zip (`bunx.exe` = hardlink of `bun.exe`), node via `win-x64.zip` + `npm.cmd`/`npx.cmd` shims.
 
-Codex module installs `rust-v0.155.1` into `~/.local/bin` and symlinks `$REPO/.local/bin`; primary path downloads the pinned `codex-package-<triple>.tar.gz` and verifies `packages.<platform>.sha256`, with hashed official `install.sh` as fallback for a platform missing from `packages`. It also writes the managed `~/.codex/sol.config.toml` profile overlay and strips a legacy `[profiles.sol]` table from the user config (0.155.1 ignores project-local `profiles`; since 0.134 `--profile` reads `<name>.config.toml` files). Runtimes module installs pinned Node, bun, uv, CPython, AND `just` (`quality.just.packages.<platform>` — per-platform release tarball, sha256-verified, extracted into the runtime cache, version-checked, linked into the local bin; Windows twin searches for `just.exe`), links `python3.<minor>` from `runtimes.python.version`, guarantees `bunx`/`uvx` links on every path (bunx is argv0 dispatch on the bun binary; both were previously skipped on early-return), and pre-warms the MCP stdio caches (`uvx --from serena-agent==<mcp.serena.version>`, `bunx shadcn@<frontend.shadcn>`). Verify module registers the marketplace, installs all five plugins (`saint-tibo`, `hack-agent-standards`, `hack-agent-workflow`, `hack-agent-lsp`, `hack-agent-mcp`), then runs full `repair_setup.py` (converges notify-block + hook-trust that module 20 may skip on fresh hosts without python3), then the two Python checkers — a fresh machine would fail cache-parity otherwise. `bootstrap.sh` exports `$HACK_LOCAL_BIN:~/.local/bin:~/.bun/bin` into PATH before the module loop so freshly installed binaries are visible to later modules.
+Codex module installs `rust-v0.155.1` into `~/.local/bin` and symlinks `$REPO/.local/bin`; primary path downloads the pinned `codex-package-<triple>.tar.gz` and verifies `packages.<platform>.sha256`, with hashed official `install.sh` as fallback for a platform missing from `packages`. It also writes the managed `~/.codex/sol.config.toml` profile overlay and strips a legacy `[profiles.sol]` table from the user config (0.155.1 ignores project-local `profiles`; since 0.134 `--profile` reads `<name>.config.toml` files). Runtimes module installs pinned Node, bun, uv, CPython, AND `just` (`quality.just.packages.<platform>` — per-platform release tarball, sha256-verified, extracted into the runtime cache, version-checked, linked into the local bin; Windows twin searches for `just.exe`), links `python3.<minor>` from `runtimes.python.version`, guarantees `bunx`/`uvx` links on every path (bunx is argv0 dispatch on the bun binary; both were previously skipped on early-return), and pre-warms the MCP stdio caches (`uvx --from serena-agent==<mcp.serena.version>`, `bunx shadcn@<frontend.shadcn>`). uv/uvx stage into `$HACK_RUNTIME_ROOT/uv/<ver>` — never overwritten in place under a locked `uv.exe` — and `$HACK_LOCAL_BIN` is the authoritative bin; the user-bin link (`$HACK_USER_BIN`, default `~/.local/bin`) is best-effort WARN. Legacy user↔local symlink layouts migrate via realpath+copy (an ELOOP cycle was caught live). On Windows the codex resolver only accepts `*.exe` candidates — npm `codex.ps1`/`.cmd` shims version-match but break outside their prefix. Verify module registers the marketplace, installs all five plugins (`saint-tibo`, `hack-agent-standards`, `hack-agent-workflow`, `hack-agent-lsp`, `hack-agent-mcp`), then runs full `repair_setup.py` (converges notify-block + hook-trust that module 20 may skip on fresh hosts without python3), then the two Python checkers — a fresh machine would fail cache-parity otherwise. `bootstrap.sh` exports `$HACK_LOCAL_BIN:~/.local/bin:~/.bun/bin` into PATH before the module loop so freshly installed binaries are visible to later modules.
 
 `status` is OBSERVATIONAL in every module — it runs checkers only and never repairs (install repairs, then checks; repair failures propagate). Legacy user-config cleanup is per-checkout: POSIX and PowerShell twins scope `[hooks.state.*]` removal by the repo's own absolute hooks.json path and preserve foreign checkouts' tables; the shared single writer for that policy is `fix_config_cleanup` in `repair_setup.py`.
 
@@ -45,8 +51,12 @@ Codex module installs `rust-v0.155.1` into `~/.local/bin` and symlinks `$REPO/.l
 ## Contracts And Data
 
 - Module actions: `install`, `status`, `dry-run`.
-- Catalog ids: `prereqs`, `codex-cli`, `runtimes`, `project-verify`.
+- Catalog ids: `prereqs`, `member`, `codex-cli`, `runtimes`, `project-verify`.
 - Add a future installer as `install/modules/<nn>-<id>/module.sh` + `module.ps1` and the matching `catalog.toml` row.
+- `install/deploy/`: pull-watcher deploy kit (provision-server.sh +
+  deploy-watch.sh + systemd units); see `mem:CODEX-03-ORCHESTRATION`.
+- `lib/download.ps1` retries transient download failures 3× with
+  backoff (schannel CRYPT_E_REVOCATION_OFFLINE flake on CI).
 
 ## Invariants
 

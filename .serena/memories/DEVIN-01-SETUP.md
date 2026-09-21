@@ -34,7 +34,22 @@ same mechanism as the root Codex setup, herdr-based orchestration.
 - Proof: `devin-setup/scripts/check_devin_setup.py` (11 checks incl.
   hook smoke), `just check/gate` inside devin-setup. 10 pytest tests.
 - CI: `devin-artifacts` + `devin-e2e` (ubuntu+macos) + `devin-e2e-windows`
-  jobs in `.github/workflows/check.yml`.
+  (native install + pinned pytest on real Windows) jobs in
+  `.github/workflows/check.yml`; all green since run 35662843426.
+- Shared twins inherit root fixes byte-identically: staged
+  `$HACK_RUNTIME_ROOT/uv/<ver>` + `HACK_USER_BIN`, `.exe`-only binary
+  resolution (applied to devin's Find-PinnedBinary too).
+- Hook hardening (issue #24 wave): `devin_mode.py` survives a stripped
+  env — `_devin_home` falls back to tempdir when `Path.home()` raises,
+  `_skill_path` guards its home lookup, `_repo_root` joins relative
+  `git -C` dirs textually (a missing caller cwd silently bypassed the
+  lane guard). `from __future__ import annotations` keeps it 3.9-safe
+  (system python3 on macOS is 3.9). Tests redirect
+  USERPROFILE/APPDATA on nt.
+- Windows binary layout: devin lands in
+  `%LOCALAPPDATA%\devin\cli\bin\devin.exe`; PS native stderr must run
+  under `ErrorActionPreference=Continue` (`$PSNativeCommandUseErrorActionPreference`
+  is ignored on PS5.1). Unauthenticated `devin plugins` ops WARN in CI.
 
 ## Verified live (this host)
 
@@ -46,8 +61,10 @@ sha256-verified, `herdr integration status` shows `devin: current (v2)`,
 ## Known gaps / rules
 
 - Devin installer script is URL-versioned, no published sha256 —
-  same trust level as the codex installer fallback.
-- Windows e2e unproven until CI runs; `python3.cmd` shim in module 20
-  keeps hook commands identical across OSes.
+  same trust level as the codex installer fallback. The interactive
+  `devin setup` wizard tail is stripped from CI installs (binary +
+  version check is the proof; auth is per-member).
+- `python3.cmd` shim in module 20 keeps hook commands identical across
+  OSes.
 - Subagents stay off — the codex no-subagents law ported; workers are
   real sessions via herdr panes.
