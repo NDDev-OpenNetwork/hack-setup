@@ -10,8 +10,9 @@ import re
 import shutil
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 ROOT = Path(__file__).resolve().parents[1]
 PIN_PATH = ROOT / "build" / "codex-pin.json"
@@ -296,9 +297,9 @@ def check_stack_pin() -> None:
         if not (ROOT / rel).is_file():
             raise CheckError(f"control path missing: {rel}")
     justfile = read_text(ROOT / "justfile")
-    if not re.search(r"^check:", justfile, re.M):
+    if not re.search(r"^check:", justfile, re.MULTILINE):
         raise CheckError("justfile must define the proof recipe `check:`")
-    if not re.search(r"^gate:", justfile, re.M):
+    if not re.search(r"^gate:", justfile, re.MULTILINE):
         raise CheckError("justfile must define the gate recipe `gate:`")
     registered = pin.get("registered")
     if not isinstance(registered, dict):

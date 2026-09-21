@@ -13,8 +13,9 @@ import os
 import py_compile
 import re
 import sys
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
 PARENT = ROOT.parent
@@ -37,7 +38,7 @@ def read_text(path: Path) -> str:
 
 
 def _strip_jsonc(text: str) -> str:
-    out = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    out = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
     lines = []
     for line in out.splitlines():
         in_str = False
@@ -172,7 +173,7 @@ def check_mcp_config() -> None:
             if got.get("headers", {}) != spec.get("headers", {}):
                 fail(f"mcp {name}: headers drift")
         blob = repr(got)
-        if re.search(r"(api[_-]?key|token|secret)['\"]?\s*[:=]\s*['\"][^$][^\"]{8,}", blob, re.I):
+        if re.search(r"(api[_-]?key|token|secret)['\"]?\s*[:=]\s*['\"][^$][^\"]{8,}", blob, re.IGNORECASE):
             fail(f"mcp {name}: possible literal secret; use ${{VAR}} references")
 
 
@@ -238,7 +239,7 @@ def check_plugin() -> None:
         for name in skill_dirs:
             skill_md = pdir / "skills" / name / "SKILL.md"
             head = read_text(skill_md)[:400]
-            if not re.search(rf"^name:\s*{re.escape(name)}\s*$", head, re.M):
+            if not re.search(rf"^name:\s*{re.escape(name)}\s*$", head, re.MULTILINE):
                 fail(f"skill {name}/SKILL.md frontmatter name mismatch")
 
 
@@ -299,7 +300,7 @@ def check_bootstrap() -> None:
             fail(f"install/{env_file} lost DEVIN_PERMISSION_MODE")
     just = read_text(ROOT / "justfile")
     for recipe in ("setup", "check", "gate", "dry-run", "status", "sync-pin"):
-        if not re.search(rf"^{recipe}[ :]?", just, re.M):
+        if not re.search(rf"^{recipe}[ :]?", just, re.MULTILINE):
             fail(f"justfile lost {recipe} recipe")
 
 

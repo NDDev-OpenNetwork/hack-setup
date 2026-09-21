@@ -17,8 +17,10 @@ import re
 import shutil
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
+
+import tomllib
+
 
 def _arg_value(flag: str) -> str | None:
     if flag in sys.argv:

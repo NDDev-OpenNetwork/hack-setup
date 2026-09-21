@@ -9,7 +9,7 @@ REPO = Path(__file__).resolve().parents[1]
 SCRIPTS = REPO / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-import check_stack  # noqa: E402
+import check_stack
 
 
 def test_extract_version_common_tools() -> None:

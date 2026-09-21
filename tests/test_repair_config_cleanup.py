@@ -3,7 +3,6 @@ stripped while per-checkout [hooks.state] tables — ours AND foreign —
 and sibling-writer entries (notify, hook-trust header) are preserved, so
 the repair pipeline converges instead of ping-ponging."""
 import importlib.util
-import sys
 from pathlib import Path
 
 import pytest

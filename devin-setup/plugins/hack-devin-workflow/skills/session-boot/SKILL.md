@@ -5,7 +5,8 @@ description: Open a Saint Tibo Devin session the serena-first way. Use at the st
 
 State lives in the repo, not in chat. Before touching code:
 
-1. Read `.serena/plans/NEXT-SESSION.md`, then open only the
+1. Read `.serena/plans/NEXT-SESSION.md` when present (transient handoff
+   state — absent after a clean close), then open only the
    `.serena/memories/` notes for the areas you will touch. If the Serena
    MCP is attached, prefer `list_memories` / `read_memory` over raw
    file reads; use its symbol tools (`find_symbol`,

@@ -22,6 +22,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def _arg_value(flag: str) -> str | None:
     if flag in sys.argv:
         i = sys.argv.index(flag)
@@ -56,7 +57,7 @@ def load_json(path: Path, required: bool = False) -> dict:
 def _strip_jsonc(text: str) -> str:
     """Devin config files allow // and /* */ comments. Strip them without
     touching string contents."""
-    out = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    out = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
     lines = []
     for line in out.splitlines():
         # cut // only outside string literals
