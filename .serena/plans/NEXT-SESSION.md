@@ -401,7 +401,19 @@ Open:
 - Verified live on this host: devin `3000.10.31`, herdr `0.9.1`,
   `herdr integration status` = `devin: current (v2)`, plugin v0.1.0
   installed, repair 10/10, checker PASS, 10 pytest tests, dry-run full.
-- CI: `devin-artifacts` + `devin-e2e` (ubuntu/macos) + `devin-e2e-windows`
-  jobs added to check.yml — first run pending on this push.
-- Open: Windows e2e unproven until CI; Devin installer has no published
-  sha (URL-versioned, same trust as codex installer fallback).
+- CI GREEN run 35658922487 (all 8 jobs): `devin-e2e-windows` 2m48s,
+  `devin-e2e` ubuntu/macos, `setup-e2e*` all pass on `dc82f84`.
+- Windows CI fought through 4 real bugs in sequence: `powershell -File`
+  requires a `.ps1` extension; the binary lands at
+  `%LOCALAPPDATA%\devin\cli\bin\devin.exe` (not ~/.local/bin);
+  `$PSNativeCommandUseErrorActionPreference` does not exist on PS5.1 —
+  native stderr still becomes NativeCommandError under EAP=Stop, so the
+  plugin/herdr calls are wrapped in `EAP=Continue` try/finally; and
+  `check_devin_mode_smoke` stripped the whole env so `Path.home()`
+  raised (host env kept now, only PATH neutered). devin_mode.py gained
+  `from __future__ import annotations` (Py3.9 `Path | None` TypeError)
+  and `_devin_home` falls back to tempdir when home is unresolvable.
+- Open: Devin installer has no published sha (URL-versioned, same trust
+  as codex installer fallback). Unauthenticated `devin plugins` ops in
+  CI degrade to WARN — auth is a cannot-fake boundary, module 40 still
+  installs the plugin on a logged-in host.
