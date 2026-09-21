@@ -128,3 +128,30 @@ def test_feature_and_personal_lanes_allowed(repos):
     assert not _denied("gh pr merge 12", orch)
     # repo without lanes.json is unrestricted
     assert not _denied("git push origin main", free)
+
+
+def test_relative_git_c_anchors_at_caller_cwd(repos, tmp_path):
+    """`git -C <relative>` must resolve against payload cwd, not the hook
+    process's own cwd — otherwise a laned repo slips past (#5)."""
+    worker = tmp_path / "worker"  # fixture created it under tmp_path
+    assert worker.is_dir()
+    assert _denied("git -C worker push origin dev", tmp_path)
+    assert not _denied("git -C free push origin dev", tmp_path)
+
+
+def test_windows_tokenize_keeps_backslash_paths():
+    """posix=True shlex eats `\\` in unquoted tokens — C:\\repo would
+    become C:repo and bypass the -C target lookup. Windows mode keeps
+    the backslashes and strips only the outer quote pair."""
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("hack_mode", HOOK)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    mod._POSIX_SHLEX = False
+    words = mod._split_tokens(r'git -C C:\repo\dir push origin "dev"')
+    assert r"C:\repo\dir" in words
+    assert "dev" in words  # quotes still stripped
+    mod._POSIX_SHLEX = True
+    words = mod._split_tokens('git push origin "dev"')
+    assert words == ["git", "push", "origin", "dev"]
