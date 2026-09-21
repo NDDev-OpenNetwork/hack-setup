@@ -21,26 +21,27 @@ $env:HACK_TARGET_OS = if ($env:HACK_TARGET_OS) { $env:HACK_TARGET_OS } else { ''
 for ($i = 0; $i -lt $args.Count; $i++) {
     $arg = $args[$i]
     switch -Regex ($arg) {
-        '^--dry-run$'   { $env:HACK_DRY_RUN = '1' }
-        '^--status$'    { $env:HACK_ACTION = 'status' }
-        '^--member$'    {
+        '^--?dry-run$'   { $env:HACK_DRY_RUN = '1' }
+        '^--?status$'    { $env:HACK_ACTION = 'status' }
+        '^--?member$'    {
             if ($i + 1 -ge $args.Count) { Die "--member needs a name (danil|ivan|artem)" }
             $env:HACK_MEMBER = $args[++$i]
         }
-        '^--member=(.+)$' { $env:HACK_MEMBER = $Matches[1] }
-        { $_ -in '--danil', '--ivan', '--artem' } { $env:HACK_MEMBER = $_.TrimStart('-') }
-        '^--os$'        {
+        '^--?member=(.+)$' { $env:HACK_MEMBER = $Matches[1] }
+        { $_ -in '--danil', '--ivan', '--artem', '-danil', '-ivan', '-artem' } { $env:HACK_MEMBER = $_.TrimStart('-') }
+        '^--?os$'        {
             if ($i + 1 -ge $args.Count) { Die "--os needs a value (macos|ubuntu|windows)" }
             $env:HACK_TARGET_OS = $args[++$i]
         }
-        '^--os=(.+)$'   { $env:HACK_TARGET_OS = $Matches[1] }
-        '^--print-env$' {
+        '^--?os=(.+)$'   { $env:HACK_TARGET_OS = $Matches[1] }
+        '^--?print-env$' {
             Write-Host "`$env:PATH = `"$env:HACK_LOCAL_BIN;$HOME\.local\bin;`$env:PATH`""
             return
         }
-        { $_ -in '--help', '-h' } {
+        { $_ -in '--help', '-h', '-help' } {
             Write-Host "Usage: .\setup.ps1 [--dry-run] [--status] [--print-env] [--member <danil|ivan|artem>] [--os <macos|ubuntu|windows>]"
             Write-Host "--member sets git identity + team defaults; --os must match this host (POSIX targets run ./setup inside WSL2 or on that host)."
+            Write-Host "Single-dash PowerShell forms work too: -Member ivan, -Status, -Dry-Run (matching is case-insensitive)."
             return
         }
         default { Die "unknown argument: $arg" }

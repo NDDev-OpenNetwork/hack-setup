@@ -1,4 +1,5 @@
 # Native Windows entry point. Mirrors ./setup; runs install/bootstrap.ps1.
-# Usage:  powershell -ExecutionPolicy Bypass -File .\setup.ps1 [--dry-run|--status|--print-env]
+# Usage:  powershell -ExecutionPolicy Bypass -File .\setup.ps1 [--dry-run|--status|--print-env] [--member <danil|ivan|artem>] [--os windows]
+#         (single-dash forms -Member/-Status/... work too)
 $ErrorActionPreference = 'Stop'
 & (Join-Path $PSScriptRoot 'install\bootstrap.ps1') @args

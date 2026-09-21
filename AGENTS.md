@@ -261,6 +261,8 @@ git clone git@github.com:NDDev-OpenNetwork/hack-setup.git
 cd hack-setup
 ./setup --member <danil|ivan|artem>          # macOS / Ubuntu / WSL2
 .\setup.ps1 --member <danil|ivan|artem>     # native Windows x86_64
+                                           # (or -Member <name> — single-dash
+                                           # PowerShell forms work too)
 . install/env.sh
 ```
 
