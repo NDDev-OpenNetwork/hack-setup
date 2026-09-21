@@ -6,6 +6,37 @@ description: Run the Saint Tibo GitHub-first lane model. Use when taking, doing,
 GitHub issues are the single source of truth for tasks. Branches form
 lanes: `feat/<issue>-<slug>` → `<user>` → `dev` → `main`.
 
+## Issue capture (agents file, threshold calibrated)
+
+All work is done by agents — issues are cheap coordination, not
+bureaucracy. File an issue (`gh issue create` + self-assign) for:
+
+- anything you will implement (no issue, no work),
+- every problem you DISCOVER but don't fix inline — a bug in another
+  domain, a broken contract, stale doc, data inconsistency. Dedup by
+  root cause: `gh issue list` + one search before creating.
+
+Skip the issue only for trivia fixed in the same commit you are already
+making: a typo, a local rename, a one-line config fix inside files you
+already claimed. If it touches a contract, another lane's files, data,
+or deploy behavior — it is never trivia.
+
+## Issue lifecycle (states live in issue comments)
+
+`implemented` (feature branch pushed) → `lane-ready` (merged to
+`<user>`, `done: <sha>` commented) → `integrated` (orchestrator merged
+`<user>` → `dev`, comment `integrated: <sha>`) → `live-verified`
+(verify agent reports `LIVE-OK <sha>`) → `closed`. An issue is closed
+only on the live-verified signal — never on "code written".
+
+## Integrator
+
+Danil (`rldyourmnd`) is the default integration owner — the merge gate
+below is his. Ivan or Artem may integrate only when they explicitly
+take it (issue comment or chat word); the orchestrator confirms who
+holds integration before merging. Everyone codes; integration is a
+role, not a privilege.
+
 ## Worker loop (implementation thread)
 
 1. Take a named issue (`gh issue list --assignee @me`, or

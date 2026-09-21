@@ -235,11 +235,22 @@ the toolchain refuses outright:
 
 - One claimed file owner at a time — claim files in an issue comment
   before editing.
+- Danil (`rldyourmnd`) is the default integration owner (`<user>` → `dev`
+  merge gate). Ivan or Artem integrate only when they explicitly take it.
+  Everyone codes; integration is a role, not a privilege.
+- Workers spawn a separate `sync/<user>/<round>` thread for current-state
+  knowledge: refresh touched `.serena/memories/<DOMAIN>-*.md`, delete
+  stale notes, update `NEXT-SESSION.md`. Sync writes knowledge, never
+  product code.
+- Discovered problems become issues immediately (dedup by root cause);
+  trivia fixed inside already-claimed files needs none.
 - Conventional Commits; split implementation, docs, and knowledge sync.
 - Commit messages carry only the message itself — the repo owner is the
   sole author. No `Co-Authored-By` lines, no "Generated with" trailers,
   no AI attribution of any kind.
-- A check counts as passing only when you ran it.
+- A check counts as passing only when you ran it — proof levels are
+  labelled: `[artifact]` (pin==config==docs), `[installed]` (host tools),
+  `[live]` (real MCP/deploy evidence).
 - Check commands read state — they leave formatting, lockfiles,
   generated clients and migrations untouched.
 
