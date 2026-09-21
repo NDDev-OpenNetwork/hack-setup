@@ -31,6 +31,10 @@ function Install-Plugins([string]$DevinBin) {
     # devin-pin plugins[] is the SoT - local install links the repo tree.
     $pin = Get-Content -Raw -LiteralPath (Join-Path $env:HACK_REPO_ROOT 'build\devin-pin.json') | ConvertFrom-Json
     $ok = $true
+    # pwsh 7.5+ turns native stderr into NativeCommandError under
+    # $ErrorActionPreference=Stop before $LASTEXITCODE is readable —
+    # native commands report failure by exit code here, not by stderr.
+    $PSNativeCommandUseErrorActionPreference = $false
     foreach ($plugin in $pin.plugins) {
         $dir = Join-Path $env:HACK_REPO_ROOT ($plugin.dir -replace '/', '\')
         $err = (& $DevinBin plugins install --local $dir -y 2>&1 | Out-String)

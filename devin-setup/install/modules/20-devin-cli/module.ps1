@@ -3,6 +3,9 @@
 # asset, managed user-config block via repair_devin_setup.py, then
 # `herdr integration install devin`.
 $ErrorActionPreference = 'Stop'
+# pwsh 7.5+ turns native stderr into NativeCommandError under EAP=Stop
+# before $LASTEXITCODE is readable — native installers report by exit code.
+$PSNativeCommandUseErrorActionPreference = $false
 . (Join-Path $env:HACK_LIB 'common.ps1')
 . (Join-Path $env:HACK_LIB 'download.ps1')
 
