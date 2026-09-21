@@ -76,7 +76,14 @@ ensure_devin() {
   # no published sha; the installer itself fetches the versioned binary.
   log "downloading pinned Devin installer for $wanted"
   hack_download "$url" "$installer"
-  sh "$installer"
+  # bash, not sh: the script starts with `set -o pipefail` (dash dies).
+  # Its last line launches `devin setup` — the interactive login wizard.
+  # Auth is a per-member step and CI has no TTY, so strip the tail;
+  # the version check below is the install proof.
+  grep -vF '"$VERSION_DIR/bin/$COMPILED_BIN_NAME" setup' "$installer" \
+    > "$installer.run"
+  bash "$installer.run" </dev/null \
+    || log "installer tail nonzero (interactive setup skipped); verifying binary"
   got="$(binary_version "${HOME}/.local/bin/devin" || true)"
   [ "$got" = "$wanted" ] || die "installed Devin reported $got, expected $wanted"
   link_repo_bin "${HOME}/.local/bin/devin"

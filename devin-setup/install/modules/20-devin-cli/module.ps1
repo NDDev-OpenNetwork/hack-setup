@@ -69,7 +69,14 @@ function Ensure-Devin {
     # %USERPROFILE%\.local\share\devin\cli and shims ~/.local/bin.
     Log "downloading pinned Devin installer for $wanted"
     Save-HackFile $url $installer
-    & powershell -NoProfile -ExecutionPolicy Bypass -File $installer
+    # The installer ends with `& $EntryExe setup` - the interactive login
+    # wizard. Auth is a per-member step and CI has no TTY, so strip the
+    # tail; the version check below is the install proof.
+    $filtered = "$installer.run"
+    [System.IO.File]::WriteAllLines($filtered, @(
+        [System.IO.File]::ReadAllLines($installer) | Where-Object { $_ -notmatch 'EntryExe\s+setup\s*$' }
+    ))
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $filtered
     if ($LASTEXITCODE -ne 0) { Die 'Devin installer failed' }
     $devinBin = Join-Path $HOME '.local\bin\devin.exe'
     $got = Get-BinaryVersion $devinBin
