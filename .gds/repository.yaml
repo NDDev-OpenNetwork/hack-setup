@@ -1,0 +1,78 @@
+schema_version: 1
+
+repository:
+  id: "repo_01M31VT30CX00DFPH82QNQ0ZDH"
+  display_name: "hack-setup"
+  roles:
+    - "project"
+    - "superproject"
+  lifecycle: "active"
+
+provider:
+  type: "github"
+  installation: "installation:github-opennetwork"
+  repository_id: 1377434323
+  owner: "NDDev-OpenNetwork"
+  name: "hack-setup"
+
+classification:
+  portfolios:
+    - "portfolio:opennetwork-projects"
+  visibility_contract: "public"
+  data_classification: "public"
+
+product:
+  purpose: >-
+    The Saint Tibo hackathon operating setup: the pinned Codex toolchain,
+    plugins, standards, lane enforcement and server deploy watchers for the
+    three-person team. It carries toolchain and instructions, not product
+    code; the product skeleton is consumed as the `product/vibestrap`
+    submodule.
+  capabilities:
+    - "pinned Codex CLI, models, MCP servers, hooks and plugin marketplace"
+    - "lane enforcement, merge gate and hack-mode hooks for worker threads"
+    - "server-side pull deploy watchers for dev and prod"
+  entrypoints:
+    - change: "what this repository is and what it may do"
+      path: ".gds/repository.yaml"
+    - change: "the operating contract every session loads"
+      path: "AGENTS.md"
+    - change: "toolchain and product stack pins"
+      path: "build"
+    - change: "deploy watcher kit for the product repository"
+      path: "install/deploy"
+
+policy:
+  profiles:
+    - "repository-default"
+    - "opennetwork-default"
+  rollout_ring: "standard"
+
+git:
+  default_branch: "main"
+  integration: "pull-request"
+  branch_model: "task-branches"
+  handoff_pr: "preferred"
+  cleanup: "merged-only"
+
+agent:
+  context_profile: "project-default"
+  generated_agents: false
+  serena:
+    enabled: false
+    provenance_required: false
+
+verification:
+  commands:
+    test: ["just check"]
+    full: ["just gate"]
+  required:
+    - "test"
+
+release:
+  mode: "none"
+
+relationships:
+  - type: "git-submodule-consumer"
+    target: "repo_01M31VT2VXJ1V8S1SMKVZKHD2W"
+    gitmodules_name: "product/vibestrap"
