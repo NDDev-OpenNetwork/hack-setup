@@ -9,6 +9,9 @@ set -eu
 
 PIN_PATH="$HACK_REPO_ROOT/build/stack-pin.json"
 HACK_RUNTIME_ROOT="${HACK_RUNTIME_ROOT:-$HOME/.local/share/hack-setup}"
+# HACK_USER_BIN overrides the user-level bin dir for isolated runs;
+# HACK_LOCAL_BIN (repo .local/bin) stays the authoritative path modules use.
+USER_BIN="${HACK_USER_BIN:-$HOME/.local/bin}"
 
 pin_get() {
   python3 -c 'import json,sys; from functools import reduce; print(reduce(lambda a,b: a[b], sys.argv[2].split("."), json.load(open(sys.argv[1]))))' "$PIN_PATH" "$1"
@@ -39,27 +42,53 @@ extract_zip() {
 
 install_uv() {
   wanted="$(pin_get runtimes.uv.version)"
-  if [ "$(bin_version "$HACK_LOCAL_BIN/uv" --version || true)" = "$wanted" ]; then
-    log "uv $wanted already at $HACK_LOCAL_BIN/uv"
-  elif [ "$(bin_version "${HOME}/.local/bin/uv" --version || true)" = "$wanted" ]; then
-    link_bin "${HOME}/.local/bin/uv"
-    log "uv $wanted linked from ~/.local/bin"
-  else
-    mkdir -p "$HACK_CACHE"
-    url="$(pin_get runtimes.uv.installer.url)"
-    sha="$(pin_get runtimes.uv.installer.sha256)"
-    installer="$HACK_CACHE/uv-installer.sh"
-    log "downloading official uv $wanted installer"
-    hack_download "$url" "$installer"
-    hack_verify_sha256 "$installer" "$sha"
-    mkdir -p "${HOME}/.local/bin"
-    UV_INSTALL_DIR="${HOME}/.local/bin" UV_NO_MODIFY_PATH=1 sh "$installer"
-    got="$(bin_version "${HOME}/.local/bin/uv" --version || true)"
-    [ "$got" = "$wanted" ] || die "uv reported $got, expected $wanted"
-    link_bin "${HOME}/.local/bin/uv"
-    log "uv $wanted installed"
+  # Install into a fresh versioned dir, never overwrite $USER_BIN/uv in
+  # place: a stale or running uv there is a file-lock crash on Windows
+  # (issue #24). Both bins point at the staged real file — never at each
+  # other (a local->user symlink chain is an ELOOP, caught live).
+  uv_root="$HACK_RUNTIME_ROOT/uv/$wanted"
+  staged="$uv_root/uv"
+  if [ ! -x "$staged" ]; then
+    if [ "$(bin_version "$HACK_LOCAL_BIN/uv" --version || true)" = "$wanted" ]; then
+      # Migrate the already-pinned binary (possibly behind a symlink) —
+      # no download needed.
+      real="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$HACK_LOCAL_BIN/uv")"
+      mkdir -p "$uv_root"
+      cp "$real" "$staged" && chmod +x "$staged" || true
+    fi
+    if [ ! -x "$staged" ]; then
+      mkdir -p "$HACK_CACHE" "$uv_root"
+      url="$(pin_get runtimes.uv.installer.url)"
+      sha="$(pin_get runtimes.uv.installer.sha256)"
+      installer="$HACK_CACHE/uv-installer.sh"
+      log "downloading official uv $wanted installer"
+      hack_download "$url" "$installer"
+      hack_verify_sha256 "$installer" "$sha"
+      UV_INSTALL_DIR="$uv_root" UV_NO_MODIFY_PATH=1 sh "$installer"
+      got="$(bin_version "$staged" --version || true)"
+      [ "$got" = "$wanted" ] || die "uv reported $got, expected $wanted"
+    fi
   fi
-  [ -x "${HOME}/.local/bin/uvx" ] && link_bin "${HOME}/.local/bin/uvx"
+  link_bin "$staged"
+  # Convenience link into the user bin: a locked/unwritable entry must
+  # not kill the run — env.sh puts HACK_LOCAL_BIN first on PATH anyway.
+  mkdir -p "$USER_BIN" 2>/dev/null || true
+  ln -sfn "$staged" "$USER_BIN/uv" 2>/dev/null \
+    || log "WARN: $USER_BIN/uv not writable; repo-local uv is authoritative"
+  staged_x="$uv_root/uvx"
+  if [ ! -x "$staged_x" ]; then
+    for src in "$HACK_LOCAL_BIN/uvx" "$USER_BIN/uvx"; do
+      if [ -x "$src" ]; then
+        real="$(python3 -c 'import os,sys; print(os.path.realpath(sys.argv[1]))' "$src")"
+        cp "$real" "$staged_x" && chmod +x "$staged_x" && break || true
+      fi
+    done
+  fi
+  if [ -x "$staged_x" ]; then
+    link_bin "$staged_x"
+    ln -sfn "$staged_x" "$USER_BIN/uvx" 2>/dev/null || true
+  fi
+  log "uv $wanted ok"
 }
 
 link_python() {
@@ -81,7 +110,8 @@ install_python() {
     return 0
   fi
   uv_bin="$HACK_LOCAL_BIN/uv"
-  [ -x "$uv_bin" ] || uv_bin="${HOME}/.local/bin/uv"
+  [ -x "$uv_bin" ] || uv_bin="$HACK_RUNTIME_ROOT/uv/$(pin_get runtimes.uv.version)/uv"
+  [ -x "$uv_bin" ] || uv_bin="$USER_BIN/uv"
   [ -x "$uv_bin" ] || die "uv is required before python $wanted"
   log "uv python install $wanted"
   "$uv_bin" python install "$wanted"
@@ -158,7 +188,8 @@ warm_mcp_servers() {
   serena_v="$(pin_get mcp.serena.version)"
   shadcn_v="$(pin_get frontend.shadcn.version)"
   uvx_bin="$HACK_LOCAL_BIN/uvx"
-  [ -x "$uvx_bin" ] || uvx_bin="${HOME}/.local/bin/uvx"
+  [ -x "$uvx_bin" ] || uvx_bin="$HACK_RUNTIME_ROOT/uv/$(pin_get runtimes.uv.version)/uvx"
+  [ -x "$uvx_bin" ] || uvx_bin="$USER_BIN/uvx"
   [ -x "$uvx_bin" ] || die "uvx is required to warm the serena MCP cache"
   log "warming serena-agent $serena_v (uvx cache)"
   "$uvx_bin" --from "serena-agent==$serena_v" serena --version >/dev/null \

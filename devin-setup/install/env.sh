@@ -25,7 +25,8 @@ HACK_ENV_ROOT="$(CDPATH= cd -- "$(dirname -- "${_hack_env_src}")/.." && pwd)" ||
   unset _hack_env_src HACK_ENV_ROOT
   return 1 2>/dev/null || exit 1
 }
-export PATH="$HACK_ENV_ROOT/.local/bin:$HOME/.local/bin:$HOME/.bun/bin:$PATH"
+# HACK_USER_BIN mirrors module 30's override — default ~/.local/bin.
+export PATH="$HACK_ENV_ROOT/.local/bin:${HACK_USER_BIN:-$HOME/.local/bin}:$HOME/.bun/bin:$PATH"
 unset HACK_ENV_ROOT _hack_env_src
 
 # Devin session law: bypass mode is the YOLO projection — there is no

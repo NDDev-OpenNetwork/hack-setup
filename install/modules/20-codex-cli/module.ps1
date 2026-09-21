@@ -28,8 +28,11 @@ function Find-PinnedCodex {
         (Join-Path $env:HACK_LOCAL_BIN 'codex.exe'),
         (Join-Path $CodexBinDir 'codex.exe')
     )
+    # PATH candidates must be native .exe — an npm-installed codex.ps1 /
+    # codex.cmd version-matches but is a node wrapper that breaks outside
+    # its prefix (issue #24). Reject it and install the pinned package.
     $cmd = Get-Command codex -ErrorAction SilentlyContinue
-    if ($cmd) { $candidates += $cmd.Source }
+    if ($cmd -and $cmd.Source -and $cmd.Source -like '*.exe') { $candidates += $cmd.Source }
     foreach ($candidate in $candidates) {
         if ((Get-BinaryVersion $candidate) -eq $wanted) { return $candidate }
     }

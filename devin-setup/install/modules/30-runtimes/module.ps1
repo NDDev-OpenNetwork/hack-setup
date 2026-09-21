@@ -4,7 +4,9 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $env:HACK_LIB 'download.ps1')
 
 $PinPath = Join-Path $env:HACK_REPO_ROOT 'build\stack-pin.json'
-$UserBin = Join-Path $HOME '.local\bin'
+# HACK_USER_BIN overrides the user-level bin dir for isolated runs;
+# HACK_LOCAL_BIN (repo .local/bin) stays the authoritative path modules use.
+$UserBin = if ($env:HACK_USER_BIN) { $env:HACK_USER_BIN } else { Join-Path $HOME '.local\bin' }
 $RuntimeRoot = if ($env:HACK_RUNTIME_ROOT) { $env:HACK_RUNTIME_ROOT } else { Join-Path $HOME '.local\share\hack-setup' }
 
 function Pin-Get([string]$Path) { return Get-HackPin $PinPath $Path }
@@ -24,35 +26,57 @@ function Write-CmdShim([string]$Dest, [string]$Target) {
 
 function Install-Uv {
     $wanted = Pin-Get 'runtimes.uv.version'
+    # Install into a fresh versioned dir, never overwrite $UserBin\uv.exe
+    # in place: a stale or running uv.exe there is a Win32 file-lock
+    # crash (issue #24). Both bins point at the staged real file.
+    $uvRoot = Join-Path $RuntimeRoot "uv\$wanted"
+    $staged = Join-Path $uvRoot 'uv.exe'
     $local = Join-Path $env:HACK_LOCAL_BIN 'uv.exe'
-    $user = Join-Path $UserBin 'uv.exe'
-    if ((Get-BinVersion $local '--version') -eq $wanted) {
-        Log "uv $wanted already at $local"
-    } elseif ((Get-BinVersion $user '--version') -eq $wanted) {
-        Link-Bin $user $env:HACK_LOCAL_BIN | Out-Null
-        Log "uv $wanted linked from ~/.local/bin"
-    } else {
-        New-Item -ItemType Directory -Force -Path $env:HACK_CACHE, $UserBin | Out-Null
-        $installer = Join-Path $env:HACK_CACHE 'uv-installer.ps1'
-        Log "downloading official uv $wanted installer"
-        Save-HackFile (Pin-Get 'runtimes.uv.installer_ps1.url') $installer
-        Assert-HackSha256 $installer (Pin-Get 'runtimes.uv.installer_ps1.sha256')
-        $env:UV_INSTALL_DIR = $UserBin
-        $env:UV_NO_MODIFY_PATH = '1'
-        $env:UV_PYTHON_BIN_DIR = $UserBin
-        $psHost = Get-Command pwsh -ErrorAction SilentlyContinue
-        if (-not $psHost) { $psHost = Get-Command powershell -ErrorAction SilentlyContinue }
-        if (-not $psHost) { Die "powershell/pwsh is required to run uv-installer.ps1" }
-        & $psHost.Source -NoProfile -ExecutionPolicy Bypass -File $installer
-        if ($LASTEXITCODE -ne 0) { Die "uv-installer.ps1 failed (exit $LASTEXITCODE)" }
-        if ((Get-BinVersion $user '--version') -ne $wanted) {
-            Die "uv reported $(Get-BinVersion $user '--version'), expected $wanted"
+    if (-not (Test-Path -LiteralPath $staged -PathType Leaf)) {
+        if ((Get-BinVersion $local '--version') -eq $wanted) {
+            # Migrate the already-pinned binary - no download needed.
+            New-Item -ItemType Directory -Force -Path $uvRoot | Out-Null
+            Copy-Item -LiteralPath $local -Destination $staged -Force
         }
-        Link-Bin $user $env:HACK_LOCAL_BIN | Out-Null
-        Log "uv $wanted installed"
+        if (-not (Test-Path -LiteralPath $staged -PathType Leaf)) {
+            New-Item -ItemType Directory -Force -Path $env:HACK_CACHE, $uvRoot | Out-Null
+            $installer = Join-Path $env:HACK_CACHE 'uv-installer.ps1'
+            Log "downloading official uv $wanted installer"
+            Save-HackFile (Pin-Get 'runtimes.uv.installer_ps1.url') $installer
+            Assert-HackSha256 $installer (Pin-Get 'runtimes.uv.installer_ps1.sha256')
+            $env:UV_INSTALL_DIR = $uvRoot
+            $env:UV_NO_MODIFY_PATH = '1'
+            $env:UV_PYTHON_BIN_DIR = $UserBin
+            $psHost = Get-Command pwsh -ErrorAction SilentlyContinue
+            if (-not $psHost) { $psHost = Get-Command powershell -ErrorAction SilentlyContinue }
+            if (-not $psHost) { Die "powershell/pwsh is required to run uv-installer.ps1" }
+            & $psHost.Source -NoProfile -ExecutionPolicy Bypass -File $installer
+            if ($LASTEXITCODE -ne 0) { Die "uv-installer.ps1 failed (exit $LASTEXITCODE)" }
+            if ((Get-BinVersion $staged '--version') -ne $wanted) {
+                Die "uv reported $(Get-BinVersion $staged '--version'), expected $wanted"
+            }
+        }
     }
-    $uvx = Join-Path $UserBin 'uvx.exe'
-    if (Test-Path $uvx) { Link-Bin $uvx $env:HACK_LOCAL_BIN | Out-Null }
+    Link-Bin $staged $env:HACK_LOCAL_BIN | Out-Null
+    # Convenience link into the user bin: a locked uv.exe must not kill
+    # the run — env.ps1 puts HACK_LOCAL_BIN first on PATH anyway.
+    New-Item -ItemType Directory -Force -Path $UserBin -ErrorAction SilentlyContinue | Out-Null
+    try { Link-Bin $staged $UserBin | Out-Null }
+    catch { Log "WARN: $UserBin\uv.exe is locked or unwritable; repo-local uv is authoritative" }
+    $stagedX = Join-Path $uvRoot 'uvx.exe'
+    if (-not (Test-Path -LiteralPath $stagedX -PathType Leaf)) {
+        foreach ($src in @((Join-Path $env:HACK_LOCAL_BIN 'uvx.exe'), (Join-Path $UserBin 'uvx.exe'))) {
+            if (Test-Path -LiteralPath $src -PathType Leaf) {
+                Copy-Item -LiteralPath $src -Destination $stagedX -Force
+                break
+            }
+        }
+    }
+    if (Test-Path -LiteralPath $stagedX -PathType Leaf) {
+        Link-Bin $stagedX $env:HACK_LOCAL_BIN | Out-Null
+        try { Link-Bin $stagedX $UserBin | Out-Null } catch { }
+    }
+    Log "uv $wanted ok"
 }
 
 function Install-Python {
@@ -64,6 +88,9 @@ function Install-Python {
         return
     }
     $uv = Join-Path $env:HACK_LOCAL_BIN 'uv.exe'
+    if (-not (Test-Path $uv)) {
+        $uv = Join-Path $RuntimeRoot "uv\$(Pin-Get 'runtimes.uv.version')\uv.exe"
+    }
     if (-not (Test-Path $uv)) { $uv = Join-Path $UserBin 'uv.exe' }
     if (-not (Test-Path $uv)) { Die "uv is required before python $wanted" }
     Log "uv python install $wanted --default"

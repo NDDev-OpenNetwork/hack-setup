@@ -34,8 +34,10 @@ function Find-PinnedBinary([string]$Name, [string]$Wanted) {
     )
     if ($Name -eq 'herdr') { $candidates += (Join-Path $HerdrDir 'herdr.exe') }
     if ($Name -eq 'devin') { $candidates += (Join-Path $DevinBinDir 'devin.exe') }
+    # PATH candidates must be native .exe — script/cmd shims can
+    # version-match while being fragile wrappers (issue #24).
     $cmd = Get-Command $Name -ErrorAction SilentlyContinue
-    if ($cmd) { $candidates += $cmd.Source }
+    if ($cmd -and $cmd.Source -and $cmd.Source -like '*.exe') { $candidates += $cmd.Source }
     foreach ($candidate in $candidates) {
         if ((Get-BinaryVersion $candidate) -eq $Wanted) { return $candidate }
     }

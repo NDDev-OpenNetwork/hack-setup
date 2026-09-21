@@ -28,14 +28,17 @@ for ($i = 0; $i -lt $args.Count; $i++) {
             $env:HACK_MEMBER = $args[++$i]
         }
         '^--?member=(.+)$' { $env:HACK_MEMBER = $Matches[1] }
+        '^--?member=$'   { Die "--member needs a name (danil|ivan|artem)" }
         { $_ -in '--danil', '--ivan', '--artem', '-danil', '-ivan', '-artem' } { $env:HACK_MEMBER = $_.TrimStart('-') }
         '^--?os$'        {
             if ($i + 1 -ge $args.Count) { Die "--os needs a value (macos|ubuntu|windows)" }
             $env:HACK_TARGET_OS = $args[++$i]
         }
         '^--?os=(.+)$'   { $env:HACK_TARGET_OS = $Matches[1] }
+        '^--?os=$'       { Die "--os needs a value (macos|ubuntu|windows)" }
         '^--?print-env$' {
-            Write-Host "`$env:PATH = `"$env:HACK_LOCAL_BIN;$HOME\.local\bin;`$env:PATH`""
+            $ub = if ($env:HACK_USER_BIN) { $env:HACK_USER_BIN } else { "$HOME\.local\bin" }
+            Write-Host "`$env:PATH = `"$env:HACK_LOCAL_BIN;$ub;`$env:PATH`""
             return
         }
         { $_ -in '--help', '-h', '-help' } {
