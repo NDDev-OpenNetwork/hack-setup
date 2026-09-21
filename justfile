@@ -4,14 +4,14 @@ set shell := ["bash", "-eu", "-o", "pipefail", "-c"]
 default:
     @just --list
 
-# Install numbered modules
+# Install numbered modules (args pass through: just setup --member ivan)
 [unix]
-setup:
-    ./setup
+setup *args:
+    ./setup {{args}}
 
 [windows]
-setup:
-    powershell -NoProfile -ExecutionPolicy Bypass -File ./setup.ps1
+setup *args:
+    powershell -NoProfile -ExecutionPolicy Bypass -File ./setup.ps1 {{args}}
 
 # Planned work, no downloads
 [unix]

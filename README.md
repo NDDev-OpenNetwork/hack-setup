@@ -17,7 +17,7 @@ macOS / Linux / WSL:
 ```bash
 git clone git@github.com:NDDev-OpenNetwork/hack-setup.git
 cd hack-setup
-./setup
+./setup --member <danil|ivan|artem>
 . install/env.sh
 ```
 
@@ -26,12 +26,19 @@ Windows (PowerShell):
 ```powershell
 git clone https://github.com/NDDev-OpenNetwork/hack-setup.git
 cd hack-setup
-powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File .\setup.ps1 --member <danil|ivan|artem>
 . .\install\env.ps1
 ```
 
 `./setup` (POSIX) and `.\setup.ps1` (Windows) are the only root entries.
-Modules: prereqs → official Codex CLI → Node/bun/uv/Python 3.14 →
+`--member <name>` (or bare `--danil`/`--ivan`/`--artem`; `-Member` also
+works on PowerShell) applies the shared git defaults and writes your git
+identity from `gh api user` — the gh login must match the pinned member
+login (`stack-pin.json` `team.members`), so wrong-lane commits cannot
+happen silently. Without `--member` the defaults still apply but identity
+is skipped. `--os <macos|ubuntu|windows>` asserts the target family, or
+previews it under `--dry-run`.
+Modules: prereqs → member → official Codex CLI → Node/bun/uv/Python 3.14 →
 project verify. JS installer is bun. Web is React + Vite +
 TypeScript 7.0.2 only, not Next.js.
 
@@ -82,7 +89,7 @@ the discontinued `codex-app` cask.
 
 ## After clone
 
-1. Run `./setup` (or `just setup`).
+1. Run `./setup --member <your-name>` (or `just setup` + `--member`).
 2. Trust this project in Codex so `.codex/config.toml` loads. Session
    law is YOLO (`approval_policy = "never"`,
    `sandbox_mode = "danger-full-access"`). See ADR 0006.

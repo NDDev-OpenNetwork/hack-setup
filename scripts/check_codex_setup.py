@@ -825,9 +825,13 @@ def check_bootstrap() -> None:
     if not justfile.is_file():
         raise CheckError("missing justfile; just is the project command runner")
     just_text = read_text(justfile)
-    for recipe in ("gate:", "check:", "setup:", "test:"):
+    for recipe in ("gate:", "check:", "test:"):
         if recipe not in just_text:
             raise CheckError(f"justfile must define recipe {recipe.rstrip(':')}")
+    # `setup` may declare args (setup *args:) — match the recipe name at
+    # line start rather than the literal "setup:".
+    if not re.search(r"^setup[*\s:]", just_text, re.MULTILINE):
+        raise CheckError("justfile must define recipe setup")
     for name in ("Makefile", "makefile", "GNUmakefile"):
         if (ROOT / name).exists():
             raise CheckError(f"{name} must not exist; use justfile")
