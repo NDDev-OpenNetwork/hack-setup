@@ -176,7 +176,9 @@ jobs:
           git init --bare -b dev /tmp/upstream.git
           work=$(mktemp -d)
           git -C "$work" init -q -b dev
-          git -C "$work" -c user.email=ci@local -c user.name=ci commit -qm init --allow-empty
+          echo app > "$work/README.md"
+          git -C "$work" add README.md
+          git -C "$work" -c user.email=ci@local -c user.name=ci commit -qm init
           git -C "$work" push -q /tmp/upstream.git dev
       - name: Provision run 1 — clone, watcher units, env file, timer
         run: |
@@ -193,11 +195,13 @@ jobs:
           sudo grep -q 'HACK_DEPLOY_CMD' /etc/default/hack-deploy
       - name: Dirty checkout refuses provisioning
         run: |
-          sudo touch /opt/hack-app/dirty
+          # A modified TRACKED file must stop the run (issue #7); untracked
+          # state like .env/.deployed-sha is legitimate and tolerated.
+          sudo sh -c 'echo tampered >> /opt/hack-app/README.md'
           if ./install/deploy/provision-server.sh root@localhost dev /tmp/upstream.git /opt/hack-app; then
             echo 'dirty checkout must fail provisioning'; exit 1
           fi
-          sudo rm /opt/hack-app/dirty
+          sudo git -C /opt/hack-app checkout -- README.md
       - name: Systemd timer drives a real deploy tick
         run: |
           work=$(mktemp -d)
