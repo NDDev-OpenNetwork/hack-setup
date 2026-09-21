@@ -15,7 +15,15 @@
 # as a clean deploy (issue #6).
 set -eu
 
-log() { printf '%s deploy-watch: %s\n' "$(date -u +%H:%M:%S)" "$*" >> "${HACK_DEPLOY_LOG:-/dev/stderr}"; }
+# >> /dev/stderr fails under systemd (append on a journald socket gets
+# ENXIO) — write to the fd itself when no log file is configured.
+log() {
+  if [ -n "${HACK_DEPLOY_LOG:-}" ]; then
+    printf '%s deploy-watch: %s\n' "$(date -u +%H:%M:%S)" "$*" >> "$HACK_DEPLOY_LOG"
+  else
+    printf '%s deploy-watch: %s\n' "$(date -u +%H:%M:%S)" "$*" >&2
+  fi
+}
 die() { log "FAIL $*"; exit 1; }
 
 [ -n "${HACK_DEPLOY_DIR:-}" ] || die "HACK_DEPLOY_DIR unset"
@@ -58,8 +66,13 @@ if [ "$remote" != "$local" ]; then
 fi
 
 log "deploying $remote ($HACK_DEPLOY_BRANCH)"
-${HACK_DEPLOY_CMD:-docker compose up -d --build} >> "${HACK_DEPLOY_LOG:-/dev/stderr}" 2>&1 \
-  || die "deploy command failed for $remote — will retry next tick"
+if [ -n "${HACK_DEPLOY_LOG:-}" ]; then
+  ${HACK_DEPLOY_CMD:-docker compose up -d --build} >> "$HACK_DEPLOY_LOG" 2>&1 \
+    || die "deploy command failed for $remote — will retry next tick"
+else
+  ${HACK_DEPLOY_CMD:-docker compose up -d --build} \
+    || die "deploy command failed for $remote — will retry next tick"
+fi
 
 if [ -n "${HACK_DEPLOY_HEALTH:-}" ]; then
   tries=${HACK_DEPLOY_HEALTH_TRIES:-12}
