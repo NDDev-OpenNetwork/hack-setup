@@ -117,3 +117,14 @@ the discontinued `codex-app` cask.
    ADR 0013.
 
 See `AGENTS.md` and `install/README.md` for layout.
+
+## Devin setup (twin)
+
+`devin-setup/` is a self-contained second setup for the Devin CLI —
+same law model, same `--member`/`--os` flags, same shared
+prereqs/member/runtimes code (byte-identical, checker-guarded). It pins
+`devin 3000.10.31` + `herdr 0.9.1`, projects `.devin/` config, MCP and
+hooks, installs the `hack-devin-workflow` plugin locally, and replaces
+codex_app thread orchestration with herdr panes (`herdr agent
+start/prompt/read/wait`). Docs and proof: `devin-setup/README.md`,
+`devin-setup/AGENTS.md`, `cd devin-setup && just gate`.
