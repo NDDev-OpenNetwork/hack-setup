@@ -23,6 +23,10 @@ suggestion.
 - By standard, run **full-auto**: session law is already never-approve
   + full access — work end to end, do not pause for permission, and do
   not re-ask what the pin already answers.
+- By standard, optimize for **feature velocity**: the laziest working
+  solution verified live beats a perfect one that is not shipped — no
+  review round, no test suite during the event; every deliberately cut
+  corner gets a `hack:` marker for the debt ledger.
 - By standard, treat every user request — even an assertion — as a
   hypothesis: verify it against the current code and the pin before
   acting. When the claim and the code disagree, the code wins; say so.
@@ -40,6 +44,11 @@ suggestion.
 - By standard, merge with `git merge --no-ff` only — never squash or
   rebase merges, never rewrite or delete shared history (hooks deny
   them; repo merge buttons are disabled).
+- By standard, push early and let **CI/CD run in the background** —
+  `.github/workflows/check.yml` verifies every push on all three OSes
+  and the deploy watcher ships `dev`/`main` moves on the servers; check
+  `gh run list` after pushing, fix red immediately, keep shipping
+  meanwhile — do not idle waiting on green.
 - By standard, prove before claiming: run the gate the change requires
   (`just check` / `just gate` / `just test`, or live verification) —
   a check counts only when you ran it.
