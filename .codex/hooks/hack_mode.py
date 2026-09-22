@@ -573,10 +573,10 @@ def pretooluse(payload: dict) -> None:
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",
             "permissionDecisionReason": (
-                "lane law: workers push only their personal lane "
-                "(feat/<issue> -> <user>). dev|main pushes "
-                "and PR merges run from the orchestrator checkout "
-                "(mkdir -p .agent && touch .agent/orchestrator there)."
+                "lane law: protected-branch pushes and PR merges run "
+                "from the integrator checkout (mkdir -p .agent && "
+                "touch .agent/orchestrator there). Members merge their "
+                "own lane into dev themselves — dev is shared."
             ),
         }
     )

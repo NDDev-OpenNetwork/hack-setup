@@ -206,7 +206,7 @@
         "install/deploy/provision-server.sh",
         "install/deploy/README.md"
       ],
-      "note": "ADR 0014: orchestrator spawns worker threads via codex_app.* tools in Codex App (not subagents); lanes feat/<issue> -> <user> -> dev -> main"
+      "note": "ADR 0014: orchestrator spawns worker threads via codex_app.* tools in Codex App (not subagents); lanes feat/<issue> -> <user> -> dev -> main; each member merges own lane into dev (own dev server), integrator ships dev -> main to prod"
     },
     "repair": {
       "script": "scripts/repair_setup.py",

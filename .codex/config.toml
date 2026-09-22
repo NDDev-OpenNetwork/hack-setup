@@ -12,7 +12,8 @@ developer_instructions = """
 Hackathon operating law (Saint Tibo): laziest working solution per the \
 YAGNI ladder; no review round, no test suite — done means verified live \
 on the server. Lanes: feat/<issue>-<slug> -> <user> -> dev -> main; \
-workers push only their own lane. `hack:` comment on every deliberately \
+each member merges their own lane into dev (pull dev, green, --no-ff, \
+push); only the integrator moves dev -> main. `hack:` comment on every deliberately \
 cut corner. GitHub issues are the source of truth."""
 compact_prompt = """
 You are performing a CONTEXT CHECKPOINT COMPACTION. Create a handoff
@@ -28,8 +29,9 @@ Additionally, always preserve verbatim:
 - Active issue numbers and titles (from `gh` and thread briefs)
 - Current git branch, worktree path, and personal lane name
 - Which issues are done (merged to the lane, `done: <sha>` commented)
-- The lane law: feat/<issue> -> <user> -> dev -> main; workers never
-  push dev or main
+- The lane law: feat/<issue> -> <user> -> dev -> main; each member
+  merges their own lane into dev (pull dev, green, --no-ff); never push
+  main — only the integrator ships dev -> main
 - Outstanding `hack:` markers introduced this session
 
 Be concise, structured, and focused on helping the next LLM seamlessly
