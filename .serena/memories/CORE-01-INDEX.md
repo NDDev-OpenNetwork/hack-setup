@@ -16,7 +16,7 @@ Index durable knowledge for the Codex 0.155.1 team setup repository. No applicat
 - Control loop: pin (`build/codex-pin.json` + `build/stack-pin.json`) → runtime (`.codex/config.toml`) → proof (`just check` / `just gate`) → on-demand frames (`plugins/hack-agent-standards/standards/INDEX.md`). `AGENTS.md` is the router plus Motion kernel.
 - Plugin skills: DirectChildren under `plugins/hack-agent-standards/skills/`. Invoke `$hack-agent-standards:<name>`. Pin SoT: `registered.standards_plugin_skills`.
 - Nested AGENTS templates: `plugins/hack-agent-standards/nested/`. Copy in the same change that creates `web/` `api/` `mobile/` `desktop/` `telegram/` `infra/`.
-- `AGENTS.md`: Codex project instructions. Router to the standards plugin INDEX. Combined cap 32 KiB.
+- `AGENTS.md`: Codex project instructions. Router to the standards plugin INDEX. Combined cap 32 KiB. `## Operating standards` is the always-on "By standard," rule list (serena→github→agent, full-auto, hypothesis-verified requests, research-before-edits, durable state, atomic commits, merge commits only, proof before claims) — `check_agents_md` requires the section.
 - `plugins/hack-agent-standards/standards/`: on-demand frames. Pin numbers win. Owner turn beats a frame. ADR 0008.
 - `docs/adr/0001`–`0016`: accepted decisions. Session law is ADR 0006. Models/context/no-subagents is ADR 0007. Frames plugin is ADR 0008. Native Windows is ADR 0012. Orchestrator/deploy is ADR 0014.
 - `build/codex-pin.json`: CLI pin plus official installer/package sha256.
