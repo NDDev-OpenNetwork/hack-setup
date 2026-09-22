@@ -439,12 +439,12 @@ def check_stack_pin() -> None:
         raise CheckError("stack-pin.models must be an object")
     if models.get("primary") != "gpt-6-astra":
         raise CheckError('stack-pin.models.primary must be "gpt-6-astra"')
-    if models.get("secondary") != "gpt-5.6-sol":
-        raise CheckError('stack-pin.models.secondary must be "gpt-5.6-sol"')
+    if models.get("secondary") != "gpt-6-sol":
+        raise CheckError('stack-pin.models.secondary must be "gpt-6-sol"')
     if models.get("secondary_profile") != "sol":
         raise CheckError('stack-pin.models.secondary_profile must be "sol"')
-    if models.get("review_model") != "gpt-5.6-sol":
-        raise CheckError('stack-pin.models.review_model must be "gpt-5.6-sol"')
+    if models.get("review_model") != "gpt-6-sol":
+        raise CheckError('stack-pin.models.review_model must be "gpt-6-sol"')
     if models.get("reasoning_effort") != "xhigh":
         raise CheckError('stack-pin.models.reasoning_effort must be "xhigh"')
     if models.get("requested_context_window") != 872_000:
@@ -486,8 +486,13 @@ def check_stack_pin() -> None:
         "gpt-5.6-luna",
         "gpt-5.6-terra",
         "gpt-5.6",
+        "gpt-5.6-sol",
+        "gpt-6-luna",
     }.issubset(reject):
-        raise CheckError("stack-pin.models.reject must include gpt-5.6-luna, gpt-5.6-terra, gpt-5.6")
+        raise CheckError(
+            "stack-pin.models.reject must include gpt-5.6-luna, gpt-5.6-terra, "
+            "gpt-5.6, gpt-5.6-sol, gpt-6-luna"
+        )
     if pin.get("package_manager") != "bun":
         raise CheckError("stack-pin.package_manager must be bun")
     if "pnpm" in pin.get("runtimes", {}):
@@ -847,8 +852,8 @@ def check_agents_md() -> None:
         raise CheckError(f"AGENTS.md is {size} bytes; Codex default cap is 32 KiB")
     if "0.155.1" not in text:
         raise CheckError("AGENTS.md must name the 0.155.1 pin")
-    if "gpt-6-astra" not in text or "gpt-5.6-sol" not in text:
-        raise CheckError("AGENTS.md must name gpt-6-astra and gpt-5.6-sol")
+    if "gpt-6-astra" not in text or "gpt-6-sol" not in text:
+        raise CheckError("AGENTS.md must name gpt-6-astra and gpt-6-sol")
     if "Do not spawn Codex subagents" not in text:
         raise CheckError("AGENTS.md must forbid Codex subagents")
     if "872_000" not in text or "700_000" not in text:
@@ -929,8 +934,8 @@ def check_config() -> None:
         models = pin["models"]
     if config.get("model") != models.get("primary", "gpt-6-astra"):
         raise CheckError('model must be "gpt-6-astra"')
-    if config.get("review_model") != models.get("review_model", "gpt-5.6-sol"):
-        raise CheckError('review_model must be "gpt-5.6-sol"')
+    if config.get("review_model") != models.get("review_model", "gpt-6-sol"):
+        raise CheckError('review_model must be "gpt-6-sol"')
     if config.get("model_reasoning_effort") != models.get("reasoning_effort", "xhigh"):
         raise CheckError('model_reasoning_effort must be "xhigh"')
     if config.get("model_context_window") != models.get("requested_context_window", 872_000):
@@ -965,11 +970,11 @@ def check_config() -> None:
                 "~/.codex/sol.config.toml missing; run ./setup"
             )
         sol = load_toml(sol_path)
-        if sol.get("model") != models.get("secondary", "gpt-5.6-sol"):
+        if sol.get("model") != models.get("secondary", "gpt-6-sol"):
             raise CheckError("sol.config.toml model must match models.secondary")
         if sol.get("model_reasoning_effort") != models.get("reasoning_effort", "xhigh"):
             raise CheckError("sol.config.toml model_reasoning_effort must match models.reasoning_effort")
-        if sol.get("review_model") != models.get("review_model", "gpt-5.6-sol"):
+        if sol.get("review_model") != models.get("review_model", "gpt-6-sol"):
             raise CheckError("sol.config.toml review_model must match models.review_model")
         if sol.get("model_context_window") != models.get("requested_context_window", 872_000):
             raise CheckError("sol.config.toml model_context_window must match models.requested_context_window")
@@ -1336,7 +1341,8 @@ def check_hooks() -> None:
             raise CheckError(f"deploy kit missing: {rel}")
         if str(rel).endswith(".sh"):
             result = subprocess.run(
-                ["sh", "-n", str(kit_path)], capture_output=True, text=True
+                ["sh", "-n", str(kit_path)], capture_output=True, text=True,
+                check=False,
             )
             if result.returncode != 0:
                 raise CheckError(f"{rel} fails sh -n: {result.stderr.strip()}")

@@ -226,7 +226,7 @@ def fix_sol_profile() -> None:
     fully managed, so regeneration is always safe."""
     pin = load_json(STACK_PIN_PATH, required=True)
     models = pin.get("models") or {}
-    secondary = models.get("secondary", "gpt-5.6-sol")
+    secondary = models.get("secondary", "gpt-6-sol")
     effort = models.get("reasoning_effort", "xhigh")
     ctx = models.get("requested_context_window", 872000)
     compact = models.get("requested_auto_compact", 700000)

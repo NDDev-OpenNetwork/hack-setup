@@ -168,8 +168,8 @@ Refresh with `python3 scripts/check_stack.py --write`.
 ## Codex models
 
 - primary: `gpt-6-astra`
-- secondary: `gpt-5.6-sol` (`--profile sol`)
-- review_model: `gpt-5.6-sol`
+- secondary: `gpt-6-sol` (`--profile sol`)
+- review_model: `gpt-6-sol`
 - reasoning_effort: `xhigh`
 - requested window / compact: `872000` / `700000`
 - API window / max input: `1050000` / `922000`
@@ -236,7 +236,9 @@ Refresh with `python3 scripts/check_stack.py --write`.
 - Codex.app
 - gpt-5.6-luna
 - gpt-5.6-terra
-- gpt-5.6 as a Codex session slug (not a catalog slug; use gpt-5.6-sol)
+- gpt-5.6 as a Codex session slug (not a catalog slug; use gpt-6-sol)
+- gpt-5.6-sol (superseded secondary; use gpt-6-sol)
+- gpt-6-luna
 - Codex subagents / features.multi_agent / features.multi_agent_v2
 - model_reasoning_effort extra-high or x-high (wire value is xhigh)
 

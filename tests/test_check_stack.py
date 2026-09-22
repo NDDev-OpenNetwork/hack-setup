@@ -81,7 +81,7 @@ def test_standard_lists_core_pins() -> None:
         "`hack-agent-standards@saint-tibo`",
         "## Codex models",
         "`gpt-6-astra`",
-        "`gpt-5.6-sol`",
+        "`gpt-6-sol`",
         "`xhigh`",
         "`872000`",
         "`700000`",
