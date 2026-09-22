@@ -31,8 +31,14 @@ same mechanism as the root Codex setup, herdr-based orchestration.
   session-boot, github-flow, herdr-handoff (workers via
   `herdr agent start/prompt/read/wait` + session close), hack-mode,
   ship-verify, debt-ledger. Invoke `/hack-devin-workflow:<skill>`.
-- Proof: `devin-setup/scripts/check_devin_setup.py` (11 checks incl.
-  hook smoke), `just check/gate` inside devin-setup. 10 pytest tests.
+- Proof: `devin-setup/scripts/check_devin_setup.py` (12 checks incl.
+  hook smoke + `check_agents_standards` — the `## Operating standards`
+  block must be byte-identical to root AGENTS.md), `just check/gate/
+  repair` inside devin-setup (repair recipe + [windows] sync-pin added
+  in the standards-parity wave). 11 pytest tests.
+- AGENTS.md embeds the full `## Operating standards` list (not a
+  pointer) so a session opened at `devin-setup/` is always-on; the
+  hook's SETUP_NOTE also names it on every SessionStart.
 - CI: `devin-artifacts` + `devin-e2e` (ubuntu+macos) + `devin-e2e-windows`
   (native install + pinned pytest on real Windows) jobs in
   `.github/workflows/check.yml`; all green since run 35662843426.
