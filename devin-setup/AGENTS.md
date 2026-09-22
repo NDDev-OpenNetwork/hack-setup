@@ -40,8 +40,9 @@ Same loop as the root setup; do not fork numbers outside the pin.
 
 ## Team rules
 
-Same as root `AGENTS.md`: one claimed file owner, atomic Conventional
-Commits (land each slice when ready — progress lives in git history),
-merge commits only (`--no-ff`, squash/rebase merges denied by hook and
-disabled in repo settings), no secrets in the public repo, never claim
-a check you did not run.
+The root `AGENTS.md` `## Operating standards` list applies here
+unchanged — read it first (serena→github→agent state, full-auto,
+hypothesis-verified requests, research before edits, consistent synced
+code, durable state, atomic commits, merge commits only, proof before
+claims). One claimed file owner, no secrets in the public repo, never
+claim a check you did not run.

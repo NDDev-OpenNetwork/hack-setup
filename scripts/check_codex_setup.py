@@ -855,6 +855,10 @@ def check_agents_md() -> None:
         raise CheckError("AGENTS.md must name context 872_000 and compact 700_000")
     if "## Mechanism" not in text or "just check" not in text:
         raise CheckError("AGENTS.md must describe the pin → config → just check loop")
+    if "## Operating standards" not in text or "By standard," not in text:
+        raise CheckError(
+            "AGENTS.md must carry the 'By standard,' operating standards list"
+        )
     if "docs/rules" in text:
         raise CheckError("AGENTS.md must not route to stale docs/rules/")
     if "plugins/hack-agent-standards/standards" not in text:
