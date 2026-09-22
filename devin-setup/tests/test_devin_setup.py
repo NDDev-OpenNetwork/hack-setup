@@ -167,6 +167,41 @@ def test_hook_history_law_denies_squash(tmp_path: Path) -> None:
     assert not proc.stdout.strip()
 
 
+def test_hook_model_law_pins_swe_2_max(tmp_path: Path) -> None:
+    # Universal like the history law: no lanes file, no git repo needed.
+    for cmd in (
+        "devin --model opus -- fix it",
+        "devin --model=gpt-6-sol-max -p hi",
+        "DEVIN_MODEL=sonnet devin -- hi",
+        "herdr agent start w1 --kind devin -- devin --model opus",
+    ):
+        proc = run_hook(
+            "pretooluse",
+            stdin=json.dumps(
+                {"tool_input": {"command": cmd}, "cwd": str(tmp_path)}),
+            cwd=tmp_path,
+        )
+        assert proc.returncode == 0, cmd
+        payload = json.loads(proc.stdout)
+        assert payload["decision"] == "block", cmd
+        assert "model law" in payload["reason"], cmd
+    for cmd in (
+        "devin --model swe-2-max -- hi",
+        "export DEVIN_MODEL=swe-2-max",
+        "devin -c",
+        "devin models list",
+        "grep -- --model README.md",
+    ):
+        proc = run_hook(
+            "pretooluse",
+            stdin=json.dumps(
+                {"tool_input": {"command": cmd}, "cwd": str(tmp_path)}),
+            cwd=tmp_path,
+        )
+        assert proc.returncode == 0, cmd
+        assert not proc.stdout.strip(), cmd
+
+
 def test_hook_bad_input_never_crashes() -> None:
     for event in ("prompt", "pretooluse", "posttooluse", "sessionend"):
         proc = run_hook(event, stdin="{not json")

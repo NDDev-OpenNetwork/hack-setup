@@ -287,6 +287,35 @@ def _history_law_hit(command: str) -> bool:
     return any(rx.search(command) for rx in _HISTORY_LAW)
 
 
+# Model law: Devin runs the pinned model only (devin-pin.json
+# models.primary — the checker keeps this constant equal to it). An
+# agent-launched `devin … --model <other>` or a DEVIN_MODEL=<other>
+# assignment is denied on EVERY repo; `/model` and `/fusion` are
+# interactive human switches the hook never sees.
+PINNED_MODEL = "swe-2-max"
+_DEVIN_MODEL_ENV = re.compile(r"\bDEVIN_MODEL\s*=\s*[\"']?([^\s\"';&|]*)")
+
+
+def _model_law_hit(command: str) -> str | None:
+    """Return the foreign model `command` selects for a Devin session."""
+    for m in _DEVIN_MODEL_ENV.finditer(command):
+        if m.group(1) != PINNED_MODEL:
+            return m.group(1) or "<empty>"
+    for segment in re.split(r"[|;&\n\r]+", command):
+        words = _split_tokens(segment)
+        if not any(Path(w).name in ("devin", "devin.exe") for w in words):
+            continue
+        for i, word in enumerate(words):
+            value = None
+            if word == "--model" and i + 1 < len(words):
+                value = words[i + 1]
+            elif word.startswith("--model="):
+                value = word.split("=", 1)[1]
+            if value is not None and value != PINNED_MODEL:
+                return value
+    return None
+
+
 SETUP_NOTE = (
     "SETUP CHECKOUT — this is the harness repo, not the product. Proof is "
     "`just gate` / `just check`; the hack-mode ruleset (no review round, "
@@ -527,6 +556,17 @@ def pretooluse(payload: dict) -> None:
                 "history law: merges keep full history — merge commits "
                 "only (`git merge --no-ff`), never squash or rebase "
                 "merges, never rewrite shared history."
+            ),
+        }))
+        return
+    foreign = _model_law_hit(command)
+    if foreign:
+        sys.stdout.write(json.dumps({
+            "decision": "block",
+            "reason": (
+                f"model law: Devin runs {PINNED_MODEL} only — drop "
+                f"`--model {foreign}` / DEVIN_MODEL or set it to "
+                f"{PINNED_MODEL} (devin-pin.json models.primary)."
             ),
         }))
         return

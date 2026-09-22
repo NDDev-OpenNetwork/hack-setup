@@ -109,8 +109,19 @@ def check_devin_pin() -> None:
     for key in ("claude", "cursor", "windsurf", "copilot", "opencode"):
         if rcf.get(key) is not False:
             fail(f"devin-pin: read_config_from.{key} must be pinned false")
-    if not pin.get("models", {}).get("primary"):
-        fail("devin-pin: models.primary required")
+    models = pin.get("models", {})
+    primary = models.get("primary")
+    if primary != "swe-2-max":
+        fail("devin-pin: models.primary must be swe-2-max")
+    if models.get("only") is not True:
+        fail("devin-pin: models.only must be true — swe-2-max is the only model")
+    families = models.get("preferred_family_models") or {}
+    if not families or any(v != primary for v in families.values()):
+        fail("devin-pin: preferred_family_models must resolve to models.primary")
+    if models.get("model_env") != "DEVIN_MODEL":
+        fail("devin-pin: models.model_env must be DEVIN_MODEL")
+    if session.get("attribution") is not False:
+        fail("devin-pin: session.attribution must be pinned false (no AI attribution)")
     hooks = pin.get("hooks", {})
     events = set(hooks.get("events", []))
     if not events <= VALID_EVENTS:
@@ -210,9 +221,12 @@ def check_hooks() -> None:
     body = read_text(script)
     for anchor in ("DEVIN_PROJECT_DIR", "hookSpecificOutput",
                    '"decision": "block"', "lanes.json", "PostCompaction",
-                   "session-log.ndjson"):
+                   "session-log.ndjson", "_model_law_hit"):
         if anchor not in body:
             fail(f"devin_mode.py missing anchor {anchor}")
+    model = pin.get("models", {}).get("primary", "")
+    if f'PINNED_MODEL = "{model}"' not in body:
+        fail(f"devin_mode.py PINNED_MODEL must equal models.primary ({model})")
 
 
 def check_plugin() -> None:
@@ -295,9 +309,14 @@ def check_bootstrap() -> None:
     for token in ("--?member", "--?os", "--?status", "--?dry-run"):
         if token not in ps1:
             fail(f"bootstrap.ps1 lost {token}")
-    for env_file in ("env.sh", "env.ps1"):
-        if "DEVIN_PERMISSION_MODE" not in read_text(ROOT / "install" / env_file):
+    model = load_json(PIN_PATH).get("models", {}).get("primary", "")
+    for env_file, needle in (("env.sh", f'DEVIN_MODEL="{model}"'),
+                             ("env.ps1", f"$env:DEVIN_MODEL = '{model}'")):
+        text = read_text(ROOT / "install" / env_file)
+        if "DEVIN_PERMISSION_MODE" not in text:
             fail(f"install/{env_file} lost DEVIN_PERMISSION_MODE")
+        if needle not in text:
+            fail(f"install/{env_file} must export DEVIN_MODEL={model}")
     just = read_text(ROOT / "justfile")
     for recipe in ("setup", "check", "gate", "dry-run", "status", "repair",
                    "sync-pin"):

@@ -33,3 +33,6 @@ unset HACK_ENV_ROOT _hack_env_src
 # config-file key for the default permission mode, only the env var /
 # --permission-mode flag / /bypass slash command.
 export DEVIN_PERMISSION_MODE="bypass"
+# Model law: swe-2-max only (devin-pin.json models.primary). herdr
+# workers started from this shell inherit it.
+export DEVIN_MODEL="swe-2-max"

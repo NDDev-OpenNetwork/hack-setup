@@ -9,3 +9,6 @@ Remove-Variable HACK_ENV_ROOT, HACK_USER_BIN
 # Devin session law: bypass mode via env (no config key exists for the
 # default permission mode).
 $env:DEVIN_PERMISSION_MODE = 'bypass'
+# Model law: swe-2-max only (devin-pin.json models.primary). herdr
+# workers started from this shell inherit it.
+$env:DEVIN_MODEL = 'swe-2-max'

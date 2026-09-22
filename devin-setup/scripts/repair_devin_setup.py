@@ -111,7 +111,8 @@ def run(cmd: list[str], timeout: int = 30, **kw) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, **kw)
 
 
-MANAGED_TOP = ("subagents_enabled", "auto_update", "read_config_from")
+MANAGED_TOP = ("subagents_enabled", "auto_update", "read_config_from",
+               "attribution")
 
 
 def fix_user_config() -> None:
@@ -122,11 +123,13 @@ def fix_user_config() -> None:
     law = pin()
     session = law["session"]
     model = law["models"]["primary"]
+    families = law["models"]["preferred_family_models"]
     want: dict = {
-        "agent": {"model": model},
+        "agent": {"model": model, "preferred_family_models": families},
         "subagents_enabled": session["subagents_enabled"],
         "auto_update": session["auto_update"],
         "read_config_from": session["read_config_from"],
+        "attribution": session["attribution"],
     }
     existing = load_json(cfg_path) if cfg_path.is_file() else {}
     if not isinstance(existing, dict):
@@ -134,10 +137,11 @@ def fix_user_config() -> None:
         return
 
     def managed_ok() -> bool:
+        agent = existing.get("agent") or {}
         return (
-            existing.get("agent", {}).get("model") == model
-            and all(existing.get(k) == want[k] for k in ("subagents_enabled", "auto_update"))
-            and existing.get("read_config_from") == want["read_config_from"]
+            agent.get("model") == model
+            and agent.get("preferred_family_models") == families
+            and all(existing.get(k) == want[k] for k in MANAGED_TOP)
         )
 
     if managed_ok():
@@ -149,13 +153,14 @@ def fix_user_config() -> None:
     merged = dict(existing)
     agent = dict(existing.get("agent") or {})
     agent["model"] = model
+    agent["preferred_family_models"] = families
     merged["agent"] = agent
     for key in MANAGED_TOP:
         merged[key] = want[key]
     if cfg_path.is_file() and not cfg_path.with_suffix(".json.hack-bak").exists():
         shutil.copyfile(cfg_path, cfg_path.with_suffix(".json.hack-bak"))
     atomic_write(cfg_path, json.dumps(merged, indent=2, ensure_ascii=False) + "\n")
-    report("FIX", "user-config", f"{cfg_path} managed block set (model={model}, subagents off, auto_update off, imports off)")
+    report("FIX", "user-config", f"{cfg_path} managed block set (model={model} only, subagents off, auto_update off, imports off, attribution off)")
 
 
 def fix_agent_dirs() -> None:
@@ -233,11 +238,14 @@ def check_stack_pin_sync() -> None:
 
 
 def check_env_sh() -> None:
-    env_sh = ROOT / "install" / "env.sh"
-    if "DEVIN_PERMISSION_MODE" not in env_sh.read_text():
+    env_sh = (ROOT / "install" / "env.sh").read_text()
+    model = pin()["models"]["primary"]
+    if "DEVIN_PERMISSION_MODE" not in env_sh:
         report("FAIL", "env-bypass", "install/env.sh lost DEVIN_PERMISSION_MODE")
+    elif f'DEVIN_MODEL="{model}"' not in env_sh:
+        report("FAIL", "env-bypass", f"install/env.sh must export DEVIN_MODEL={model}")
     else:
-        report("PASS", "env-bypass", "session law projected (DEVIN_PERMISSION_MODE)")
+        report("PASS", "env-bypass", f"session law projected (DEVIN_PERMISSION_MODE, DEVIN_MODEL={model})")
 
 
 def check_git_sync() -> None:

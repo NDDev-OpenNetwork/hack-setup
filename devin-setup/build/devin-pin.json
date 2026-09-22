@@ -36,13 +36,18 @@
     "subagents_note": "Same law as codex `features.multi_agent=false`: the agent does all work itself; workers are real sessions via herdr, not subagents.",
     "auto_update": false,
     "auto_update_note": "Background auto-update would drift the pinned devin_cli.version.",
+    "attribution": false,
+    "attribution_note": "Devin defaults attribution=true (\"Generated with Devin\" / Co-Authored-By on commits and PRs); team law: commit messages carry only the message, no AI attribution.",
     "read_config_from": { "claude": false, "cursor": false, "windsurf": false, "copilot": false, "opencode": false },
     "read_config_from_note": "Devin defaults import foreign tool config (.claude rules+MCP+commands, .windsurf, .cursor, copilot skills, opencode MCP). The pin's projection disables silent imports — this repo's law is explicit, not inherited."
   },
 
   "models": {
     "primary": "swe-2-max",
-    "selection_note": "agent.model is user-config only (~/.config/devin/config.json); the managed block pins it. `/model` or `devin --model` can override per session."
+    "only": true,
+    "preferred_family_models": { "swe-2": "swe-2-max" },
+    "model_env": "DEVIN_MODEL",
+    "selection_note": "swe-2-max is the only Devin model. Four projections: user-config agent.model + agent.preferred_family_models (managed block), DEVIN_MODEL exported by install/env.sh|ps1 (herdr workers inherit it), and the devin_mode.py PreToolUse model law that blocks agent-launched `devin --model <other>` / DEVIN_MODEL=<other>. Interactive `/model`, `/fusion` and Adaptive are human-only switches — do not use them; org-wide enforcement is Devin Team Settings (model allowlist)."
   },
 
   "mcp_servers": {
