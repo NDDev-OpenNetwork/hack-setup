@@ -64,6 +64,15 @@ sha256-verified, `herdr integration status` shows `devin: current (v2)`,
 `devin plugins list` shows `hack-devin-workflow v0.1.0`, user config has
 6 herdr hook events + managed block, repair 10/10, checker PASS.
 
+2026-09-23: live `devin -p` inside `devin-setup/` answers as `swe-2-max`
+with SessionStart context injected and Stop/SessionEnd logging to the
+root `.agent/session-log.ndjson`. Devin project root = nearest `.git`
+(the hack-setup root), so `DEVIN_PROJECT_DIR` points there; root
+`.devin/hooks/devin_mode.py` forwards to the twin's hook (before it,
+python3 exited 2 on the missing script = Devin blocked every prompt).
+Test: `tests/test_devin_forwarder.py`. Devin workspace trust lives in
+`~/.local/share/devin/cli/trusted_workspaces.json` (this host: `~`).
+
 ## Known gaps / rules
 
 - Devin installer script is URL-versioned, no published sha256 —

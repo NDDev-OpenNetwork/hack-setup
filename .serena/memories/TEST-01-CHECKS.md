@@ -25,6 +25,7 @@ Prove Codex artifacts, the installer catalog, and required host versions.
 - `tests/test_lane_guard.py`: hack_mode.py push deny/allow — `git -C` target repos (incl. deleted caller cwd — issue #24 regression), quoted refspecs, `--all`/`--mirror`, bare HEAD, `gh pr merge`, orchestrator marker, history law (squash/rebase denied on every repo incl. orchestrator + lane-free).
 - `tests/test_repair_config_cleanup.py`: repair config-cleanup keeps foreign `[hooks.state.*]` tables + `[[array-of-tables]]`, drops stale legacy.
 - `devin-setup/tests/test_devin_setup.py`: devin checker, shared-twin byte parity, hook events incl. lane guard + history law (redirects USERPROFILE/APPDATA on nt — HOME does nothing on Windows).
+- `tests/test_devin_forwarder.py`: root `.devin/hooks/devin_mode.py` forwarder reaches the devin-setup hook and exits 0 (exit 2 = Devin blocks).
 - `tests/conftest.py`: GetShortPathNameW tempdir redirect on win32 for non-ASCII temp paths.
 - `scripts/verify_serena.py`: stdio MCP client proving handshake → activate_project → tools/list → `find_symbol` (python_ty must be up) → list/write/read/delete memory. Tool errors are `isError` results, not RPC errors — the script checks both.
 
