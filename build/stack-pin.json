@@ -64,6 +64,7 @@
     },
     "git_defaults": {
       "pull.ff": "only",
+      "merge.ff": "false",
       "push.default": "simple",
       "push.autoSetupRemote": "true",
       "init.defaultBranch": "main",

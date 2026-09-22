@@ -94,6 +94,30 @@ def test_plain_and_special_pushes_denied(repos):
         assert _denied(cmd, worker), cmd
 
 
+def test_history_law_denies_squash_everywhere(repos):
+    worker, orch, free, *_ = repos
+    # Squash/rebase merge methods are denied on EVERY repo — lane-free
+    # checkouts and the orchestrator checkout included.
+    for cmd in (
+        "gh pr merge 12 --squash",
+        "gh pr merge 12 --rebase",
+        "gh pr merge 12 --method squash",
+        "gh pr merge 12 --method=rebase",
+        "gh api repos/o/r/pulls/3/merge -f merge_method=squash",
+        "gh api repos/o/r/pulls/3/merge --input - "
+        "<<< '{\"merge_method\":\"rebase\"}'",
+        "git merge --squash feat/1-x",
+        f"git -C {free} merge --squash feat/1-x",
+    ):
+        for repo in (worker, orch, free):
+            assert _denied(cmd, repo), (cmd, repo)
+    # Merge commits stay legal: plain gh pr merge on a lane-free repo,
+    # git merge --no-ff anywhere.
+    assert not _denied("gh pr merge 12", free)
+    assert not _denied("git merge --no-ff feat/1-x", worker)
+    assert not _denied("git merge --no-ff feat/1-x", orch)
+
+
 def test_git_c_target_authority(repos):
     worker, orch, free, spaced, _ = repos
     # -C into a laned repo denies even when cwd has no lanes / is not a repo

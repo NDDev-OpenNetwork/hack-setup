@@ -503,6 +503,30 @@ def _protected_branches(root: Path) -> list[str]:
     return []
 
 
+# History law: merges keep full history. Squash/rebase merge methods are
+# denied on EVERY repo — lanes or not, orchestrator marker or not. The
+# GitHub merge settings for hack-setup disable the squash/rebase buttons
+# too; this hook is the in-session rail.
+_HISTORY_LAW = (
+    # gh pr merge --squash | --rebase | --method squash|rebase
+    re.compile(
+        r"\bgh\s+pr\s+merge\b[^|;&\n\r]*"
+        r"(?:--(?:squash|rebase)\b|--method[ =](?:squash|rebase)\b)"
+    ),
+    # gh api <merge endpoint> with merge_method squash|rebase
+    re.compile(
+        r"\bgh\s+api\b[^|;&\n\r]*(?:/merges\b|/merge\b|merge-upstream)"
+        r"[^|;&\n\r]*merge_method[ =:\"']+(?:squash|rebase)\b"
+    ),
+    # git merge --squash (any repo, any -C target)
+    re.compile(r"\bgit\s+(?:-C\s+\S+\s+)*merge\b[^|;&\n\r]*--squash\b"),
+)
+
+
+def _history_law_hit(command: str) -> bool:
+    return any(rx.search(command) for rx in _HISTORY_LAW)
+
+
 def pretooluse(payload: dict) -> None:
     """Lane enforcement: in a repo that declares `.agent/lanes.json`, only
     the orchestrator checkout (untracked `.agent/orchestrator` marker —
@@ -510,6 +534,19 @@ def pretooluse(payload: dict) -> None:
     PRs."""
     command = _tool_command(payload)
     if not command:
+        return
+    if _history_law_hit(command):
+        emit_pre(
+            {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": (
+                    "history law: merges keep full history — merge "
+                    "commits only (`git merge --no-ff`), never squash or "
+                    "rebase merges, never rewrite shared history."
+                ),
+            }
+        )
         return
     caller_cwd = Path(str(payload.get("cwd") or "."))
     root = _repo_root(str(caller_cwd))

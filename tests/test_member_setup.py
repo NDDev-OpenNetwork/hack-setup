@@ -46,6 +46,7 @@ def test_member_dry_run_lists_git_defaults() -> None:
     result = _setup("--dry-run", "--danil")
     assert result.returncode == 0, result.stderr
     assert "pull.ff only" in result.stdout
+    assert "merge.ff false" in result.stdout
     assert "merge.conflictStyle zdiff3" in result.stdout
     assert "rerere.enabled true" in result.stdout
 

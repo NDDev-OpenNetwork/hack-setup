@@ -130,6 +130,43 @@ def test_hook_orchestrator_marker_bypasses(tmp_path: Path) -> None:
     assert not proc.stdout.strip()
 
 
+def test_hook_history_law_denies_squash(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "-C", str(repo), "init", "-q"], check=True)
+    (repo / ".devin").mkdir()
+    (repo / ".devin" / "lanes.json").write_text(
+        json.dumps({"protected_branches": ["main"]}))
+    (repo / ".agent").mkdir()
+    (repo / ".agent" / "orchestrator").write_text("")
+    # Denied even from the orchestrator checkout — history law is universal.
+    for cmd in (
+        "gh pr merge 12 --squash",
+        "gh pr merge 12 --method squash",
+        "gh api repos/o/r/pulls/3/merge -f merge_method=squash",
+        "git merge --squash feat/1-x",
+    ):
+        proc = run_hook(
+            "pretooluse",
+            stdin=json.dumps(
+                {"tool_input": {"command": cmd}, "cwd": str(repo)}),
+            cwd=repo,
+        )
+        assert proc.returncode == 0, cmd
+        payload = json.loads(proc.stdout)
+        assert payload["decision"] == "block", cmd
+        assert "history law" in payload["reason"], cmd
+    # A merge-commit PR merge still passes from the orchestrator checkout.
+    proc = run_hook(
+        "pretooluse",
+        stdin=json.dumps(
+            {"tool_input": {"command": "gh pr merge 12"}, "cwd": str(repo)}),
+        cwd=repo,
+    )
+    assert proc.returncode == 0
+    assert not proc.stdout.strip()
+
+
 def test_hook_bad_input_never_crashes() -> None:
     for event in ("prompt", "pretooluse", "posttooluse", "sessionend"):
         proc = run_hook(event, stdin="{not json")
