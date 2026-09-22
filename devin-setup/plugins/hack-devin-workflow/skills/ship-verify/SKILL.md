@@ -31,12 +31,12 @@ Loop per change:
 
 - **Worker** verifies its own change in its own checkout — build, run,
   hit the local surface. That unblocks the merge into `<user>`.
-- **Verify agent** (separate herdr session, spawned by the orchestrator
-  after `<user>` → `dev`) proves the integrated lane on the live dev
-  deployment: the changed surface, deploy logs, OpenObserve
-  alerts/traces for the window. It is read-only — `LIVE-OK <sha> <url>`
-  or `LIVE-FAIL <sha>` + the failing signal; fixes route back to a
-  worker. Do not let the verify agent edit code.
+- **Verify agent** (separate herdr session, after the member merged
+  `<user>` → `dev`) proves the integrated lane on that member's live
+  dev server: the changed surface, deploy logs, OpenObserve
+  alerts/traces for the window. It is read-only — `LIVE-OK <sha>
+  <url>` or `LIVE-FAIL <sha>` + the failing signal; fixes route back to
+  a worker. Do not let the verify agent edit code.
 
 ## Rules
 

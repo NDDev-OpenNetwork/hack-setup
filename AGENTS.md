@@ -73,7 +73,8 @@ One loop: pin → projection → proof.
 
 The user talks to one main Codex App chat — the orchestrator. It
 discusses, plans, registers GitHub issues (the source of truth), spawns
-visible worker threads, merges lanes, verifies live, ships.
+visible worker threads, verifies live, ships. Each member merges their
+own lane into `dev`; the integrator alone moves `dev` → `main`.
 
 - **Spawn**: `codex_app.create_thread` / `send_message_to_thread` /
   `wait_threads` / `read_thread` — user-owned threads, not subagents.
@@ -81,16 +82,19 @@ visible worker threads, merges lanes, verifies live, ships.
 - **Worktree isolation**: each worker cuts `git worktree add
   ../<repo>-w<N> -b feat/<issue>-<slug> origin/dev` and works inside.
 - **Lanes**: `feat/<issue>-<slug>` → `<user>` (`danil`/`ivan`/`artem`)
-  → `dev` → `main`. Workers push only their own lane; the orchestrator
-  merges `<user>`→`dev` behind the merge gate and `dev`→`main` on the
-  owner's word.
+  → `dev` → `main`. Each member merges their own lane into `dev`
+  themselves: pull `dev`, make the merge green, `git merge --no-ff`,
+  push. Only `dev`→`main` is gated — the integrator (Danil) ships it
+  per standard.
 - **Lane enforcement is mechanical**: tracked `.codex/lanes.json`
-  declares protected branches; the PreToolUse hook denies protected
-  pushes and `gh pr merge` unless the checkout carries the untracked
-  `.agent/orchestrator` marker (orchestrator checkout only).
-- **Deploy**: server-side pull watchers (`install/deploy/`) — dev
-  follows `dev`, prod follows `main`, `docker compose` rebuild +
-  healthcheck on every branch move. Done means verified live.
+  declares `main` protected; the PreToolUse hook denies pushes to it
+  and `gh pr merge` unless the checkout carries the untracked
+  `.agent/orchestrator` marker (integrator checkout only). `dev` is
+  shared — every member pushes merges into it.
+- **Deploy**: server-side pull watchers (`install/deploy/`) — each
+  member's dev server follows `dev`, the single prod server follows
+  `main`; `docker compose` rebuild + healthcheck on every branch move.
+  Done means verified live.
 - **Hack mode**: laziest working solution, no review round, no test
   suite during the event; every deliberately cut corner gets a
   `hack:` comment for the debt ledger.
@@ -155,7 +159,7 @@ Every installed plugin and what each skill does. Invoke as
 | --- | --- |
 | `saint-tibo` | `saint-tibo` (project identity/summary) |
 | `hack-agent-standards` | `apply-agent-standard` (INDEX router), `core-motion`, `quality-proof`, `pin-dependencies`, `web-ui`, `python-api`, `wire-contracts`, `data-stores`, `native-clients`, `ai-models`, `identity-auth`, `text-formats`, `file-documents`, `education-lessons`, `runtime-infra` |
-| `hack-agent-workflow` | `session-boot` (serena-first open), `github-flow` (lanes + merge gate), `agent-handoff` (memories + plan + proof), `delegate-worker` (codex_app threads), `hack-mode` (delivery mode), `ship-verify` (live verification), `debt-ledger` (marker harvest) |
+| `hack-agent-workflow` | `session-boot` (serena-first open), `github-flow` (lanes + release gate), `agent-handoff` (memories + plan + proof), `delegate-worker` (codex_app threads), `hack-mode` (delivery mode), `ship-verify` (live verification), `debt-ledger` (marker harvest) |
 | `hack-agent-lsp` | `lsp-map` (one pinned server per language), `lsp-setup` (install them) |
 | `hack-agent-mcp` | `mcp-usage` (route/verify/debug), `serena-workflow` (activate_project, memories, symbol edits), `research-workflow` (context7/grep/deepwiki/keenable), `component-workflow` (shadcn registry) |
 
@@ -278,9 +282,10 @@ the toolchain refuses outright:
 
 - One claimed file owner at a time — claim files in an issue comment
   before editing.
-- Danil (`rldyourmnd`) is the default integration owner (`<user>` → `dev`
-  merge gate). Ivan or Artem integrate only when they explicitly take it.
-  Everyone codes; integration is a role, not a privilege.
+- Danil (`rldyourmnd`) is the integrator: only he moves `dev` → `main`
+  (prod autodeploys `main`). Each member merges their own lane → `dev`
+  themselves — pull `dev`, make it green, merge, push, verify on their
+  own dev server.
 - Workers spawn a separate `sync/<user>/<round>` thread for current-state
   knowledge: refresh touched `.serena/memories/<DOMAIN>-*.md`, delete
   stale notes, update `NEXT-SESSION.md`. Sync writes knowledge, never

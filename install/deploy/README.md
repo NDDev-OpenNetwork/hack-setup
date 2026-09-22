@@ -43,5 +43,6 @@ dir is all it takes for the next tick to deploy.
 ## Repo-side contract
 
 `dev` and `main` must always be deployable: the watcher pulls whatever
-the branch tip is. The merge gate in `$hack-agent-workflow:github-flow`
-is what keeps bad code off those branches.
+the branch tip is. The merge protocol in `$hack-agent-workflow:github-flow`
+is what keeps bad code off them — each member pulls `dev`, makes the
+merge green, then pushes; only the integrator moves `dev` → `main`.

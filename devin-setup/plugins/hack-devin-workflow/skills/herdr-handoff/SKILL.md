@@ -56,9 +56,11 @@ from the socket API.
 # Worker <user> round <N>
 
 Issues (SoT — `gh issue view <n>` before starting): #12, #15
-Lane: merge into `<user>` only. Never push dev or main — the
-PreToolUse hook denies it anyway; never create `.agent/orchestrator`
-in your worktree (that marker is the orchestrator's).
+Lane: merge into `<user>` only. Never push main — the PreToolUse hook
+denies it anyway; never create `.agent/orchestrator` in your worktree
+(that marker is the integrator's). When the lane is ready you merge
+`<user>` → `dev` yourself: pull dev, green, `--no-ff`, push, verify on
+your own dev server.
 Worktree: already created for you at `<abs path>` — stay inside it.
 Activate serena on the worktree root.
 
@@ -102,12 +104,12 @@ Blockers: report immediately, do not improvise scope.
 ## Verify agent (separate session, after `<user>` → `dev`)
 
 Workers verify in their own checkout; the **verify agent** proves the
-integrated lane on the live dev deployment. Spawn it after the merge
-gate push (`verify-<user>-<round>`, brief points at the dev URL and
-merged SHA). Loop: hit the changed surface live, read deploy logs,
-check OpenObserve alerts/traces for the window, report `LIVE-OK <sha>
-<url>` or `LIVE-FAIL <sha>` + the failing signal. Read-only — fixes
-route back to a worker.
+integrated lane on the member's live dev server. Spawn it after the
+dev merge push (`verify-<user>-<round>`, brief points at that member's
+dev URL and merged SHA). Loop: hit the changed surface live, read
+deploy logs, check OpenObserve alerts/traces for the window, report
+`LIVE-OK <sha> <url>` or `LIVE-FAIL <sha>` + the failing signal.
+Read-only — fixes route back to a worker.
 
 ## Close your own session (handoff)
 

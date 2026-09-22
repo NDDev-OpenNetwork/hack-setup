@@ -8,7 +8,7 @@
 
 ADR 0014 wired orchestration but left frame-survival gaps: a long worker
 session auto-compacts at 700k and can lose lane/issue context; a worker
-could `git push` straight to `dev`/`main` or `gh pr merge`; and the
+could `git push` straight to a protected branch or `gh pr merge`; and the
 ruleset lived only in injected context, not in the base instruction
 chain.
 

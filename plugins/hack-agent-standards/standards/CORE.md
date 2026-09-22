@@ -29,16 +29,18 @@ product trees to hold a standard.
    branch. Setup on this public repo may land on `main` when Danil
    asked for that.
 6. When the piece is ready, merge it into the owner's named branch.
-7. Owner merge beacons — «слить», «лить», «залить», «закинуть»,
-   «отправить в дев», «можем вливать»: update the named branch from
-   `dev`, resolve conflicts on our side, keep the piece working,
-   merge that named branch into `dev`.
-8. Owner says ship / «в прод»: treat current `dev` as the candidate.
-   Read GitHub history on `dev`, verify the candidate, merge `dev`
-   into `main`. Deploy is from `main` only.
+7. Merge to `dev` is member-run, not gated on the owner: pull `dev`,
+   resolve conflicts on our side, keep the piece working and green,
+   `git merge --no-ff` the named branch into `dev`, push, verify on
+   your own dev server. Owner beacons — «слить», «лить», «залить»,
+   «закинуть», «отправить в дев», «можем вливать» — just trigger the
+   same protocol now.
+8. Ship / «в прод» is the integrator's (Danil's) call: he treats
+   current `dev` as the candidate, reads GitHub history on `dev`,
+   verifies, merges `dev` into `main`. Deploy is from `main` only.
 
-Do not push `main` or merge to `dev` unless the owner asked for that
-step.
+Never push `main` — only the integrator ships `dev` → `main`. Merging
+your own lane into `dev` is yours — do it as soon as it is green.
 
 ## Pattern
 

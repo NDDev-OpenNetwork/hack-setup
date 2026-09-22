@@ -1,10 +1,12 @@
 ---
 name: github-flow
-description: Run the Saint Tibo GitHub-first lane model. Use when taking, doing, merging, or releasing a task — issues are the source of truth; lanes are feat/<issue> → <user> → dev → main, with the dev server proving dev and the prod server following main.
+description: Run the Saint Tibo GitHub-first lane model. Use when taking, doing, merging, or releasing a task — issues are the source of truth; lanes are feat/<issue> → <user> → dev → main; each member merges their own lane into dev and proves it on their own dev server, the integrator alone ships dev → main to prod.
 ---
 
 GitHub issues are the single source of truth for tasks. Branches form
-lanes: `feat/<issue>-<slug>` → `<user>` → `dev` → `main`.
+lanes: `feat/<issue>-<slug>` → `<user>` → `dev` → `main`. `dev` is a
+shared branch — each member merges their own lane into it; `main` is
+protected and only the integrator ships `dev` → `main`.
 
 ## Issue capture (agents file, threshold calibrated)
 
@@ -24,18 +26,18 @@ or deploy behavior — it is never trivia.
 ## Issue lifecycle (states live in issue comments)
 
 `implemented` (feature branch pushed) → `lane-ready` (merged to
-`<user>`, `done: <sha>` commented) → `integrated` (orchestrator merged
+`<user>`, `done: <sha>` commented) → `integrated` (member merged
 `<user>` → `dev`, comment `integrated: <sha>`) → `live-verified`
 (verify agent reports `LIVE-OK <sha>`) → `closed`. An issue is closed
 only on the live-verified signal — never on "code written".
 
 ## Integrator
 
-Danil (`rldyourmnd`) is the default integration owner — the merge gate
-below is his. Ivan or Artem may integrate only when they explicitly
-take it (issue comment or chat word); the orchestrator confirms who
-holds integration before merging. Everyone codes; integration is a
-role, not a privilege.
+Danil (`rldyourmnd`) is the integrator — he alone moves `dev` → `main`
+(prod autodeploys `main`). Merging `<user>` → `dev` is NOT gated on
+him: every member lands their own lane on `dev` and verifies it on
+their own dev server. Everyone codes; release is a role, not a
+privilege.
 
 ## Worker loop (implementation thread)
 
@@ -48,36 +50,32 @@ role, not a privilege.
 4. Feature verified live (`ship-verify`) → merge into **your personal
    named branch** (`danil`/`ivan`/`artem`) and push it. Comment
    `done: <sha>` on the issue. Next feature.
+5. Lane green → run **Merge to dev** below yourself and verify on your
+   own dev server — `dev` is not gated on anyone.
 
 The repo enforces lanes mechanically: `.codex/lanes.json` declares
-`dev`/`main` protected, and the PreToolUse hook denies pushes to them
-and `gh pr merge` from any checkout without the untracked
-`.agent/orchestrator` marker. The orchestrator creates it once:
-`mkdir -p .agent && touch .agent/orchestrator` in the main checkout —
-worker worktrees never have it. Workers pushing their own lane are
-unaffected.
+`main` protected, and the PreToolUse hook denies pushes to it and
+`gh pr merge` from any checkout without the untracked
+`.agent/orchestrator` marker. The integrator creates it once:
+`mkdir -p .agent && touch .agent/orchestrator` in his checkout —
+worker worktrees never have it. `dev` is shared: every member pushes
+their own merges into it, no marker needed.
 
-## Merge gate (orchestrator, before `<user>` → `dev`)
+## Merge to dev (the member does it, not the orchestrator)
 
-1. No active worker threads on that lane
-   (`codex_app.list_threads` / `read_thread`).
-2. `git fetch origin`; the `dev..<user>` diff must not touch files
-   another lane claimed on open issues.
-3. `git merge --no-ff <user>` into `dev`, push. The dev server pulls
-   `dev` itself (deploy watcher).
-4. Verify live on the dev deployment. Report one line.
+1. `git fetch origin`; check no teammate's open issue claims files your
+   `dev..<user>` diff touches — if it does, sync first.
+2. `git checkout dev && git pull` — always merge onto the latest `dev`.
+3. `git merge --no-ff <user>` into `dev`, resolve conflicts, make the
+   merge green, push. Your dev server pulls `dev` itself (deploy
+   watcher).
+4. Verify live on YOUR dev server. Report one line + comment
+   `integrated: <sha>` on the issue.
 
-## Release (owner call only)
+## Release (integrator only)
 
-`dev` → `main` only when the owner says deploy. The prod server pulls
-`main` itself; then verify prod live and report.
-
-## Merge beacons
-
-Owner words that mean "integrate `<user>` into `dev` now": **«слить»,
-«лить», «залить», «закинуть», «отправить», «влить», "merge to dev"**.
-Hearing one → run the merge gate above. They do NOT mean `dev` →
-`main`; that still waits for an explicit deploy call.
+`dev` → `main` is the integrator's (Danil's) call — the prod server
+pulls `main` itself; then verify prod live and report.
 
 ## Rules
 

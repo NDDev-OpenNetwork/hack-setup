@@ -36,10 +36,12 @@ messaging a thread.
 share a working tree.
 
 **Lanes:** `feat/<issue>-<slug>` → `<user>` (personal branch) → `dev` →
-`main`. Workers merge only into their own `<user>` lane. The
-orchestrator merges `<user>` → `dev` behind an explicit gate (no active
-workers on the lane, no claim conflicts, live-verify after the dev
-server pulls). `dev` → `main` is an owner call only.
+`main`. Workers merge only into their own `<user>` lane. Amended
+2026-09-22: each member merges `<user>` → `dev` themselves (pull `dev`,
+make the merge green, `--no-ff`, push, verify on their own dev server —
+one dev server per member); there is no orchestrator merge gate on
+`dev`. `dev` → `main` is the integrator's (Danil's) call — the single
+prod server autodeploys `main`.
 
 **Deploy:** server-side pull watcher (`install/deploy/`), a 30-second
 systemd timer running `deploy-watch.sh` — fetch, ff-only pull, deploy
@@ -61,7 +63,8 @@ always sees live state without asking.
 - The product repo (vibestrap base, adapted) must carry the same agent
   surface — AGENTS + `.codex/` are projected there when it is created.
 - Branch tips of `dev`/`main` are always deployable by definition —
-  the merge gate is the only thing protecting prod.
+  the member-merge-green protocol plus the `main`-only lane guard are
+  what protect prod.
 - Known upstream caveats honoured: whole-message-only mode commands
   (#161), no Subagent* hooks (#502), threaded+timed stdin read (#443),
   scope preservation over line-count laziness (#602).

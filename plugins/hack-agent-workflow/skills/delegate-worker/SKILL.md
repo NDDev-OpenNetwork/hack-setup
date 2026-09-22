@@ -59,9 +59,11 @@ The thread inherits your cwd, so the worktree must exist **before**
 # Worker <user> round <N>
 
 Issues (SoT — `gh issue view <n>` before starting): #12, #15
-Lane: merge into `<user>` only. Never push dev or main — the
-PreToolUse hook denies it anyway; never create `.agent/orchestrator`
-in your worktree (that marker is the orchestrator's).
+Lane: merge into `<user>` only. Never push main — the PreToolUse hook
+denies it anyway; never create `.agent/orchestrator` in your worktree
+(that marker is the integrator's). When the lane is ready you merge
+`<user>` → `dev` yourself: pull dev, green, `--no-ff`, push, verify on
+your own dev server.
 Worktree: already created for you at `<abs path>`. File tools and
 apply_patch resolve against the ORCHESTRATOR checkout (the thread
 inherits its cwd) — every edit must use an absolute worktree path, or
@@ -101,14 +103,17 @@ Blockers: report immediately, do not improvise scope.
   CLI fallback: `codex queue --thread <id> --message "..."`.
 - Finished and merged → `set_thread_archived {threadId, archived: true}`.
 
-## Merge gate (main chat, before `<user>` → `dev`)
+## Merge to dev (the member does it — not gated on the orchestrator)
 
-1. No active workers on that lane (`wait_threads` snapshot /
-   `list_threads`).
-2. `git fetch`; `dev..<user>` diff must not touch files another lane
-   claimed on open issues.
-3. `git merge --no-ff <user>` into `dev`, push — the dev server pulls.
-4. Spawn the verify agent on dev (`ship-verify`), then report.
+Each member lands their own lane on `dev` themselves:
+
+1. `git fetch`; the `dev..<user>` diff must not touch files another
+   lane claimed on open issues.
+2. `git checkout dev && git pull` — merge onto the latest `dev`.
+3. `git merge --no-ff <user>` into `dev`, make the merge green, push —
+   the member's dev server pulls `dev` itself.
+4. Verify live on that member's dev server (`ship-verify`), comment
+   `integrated: <sha>` on the issue.
 
 ## Worktree retirement (main chat, after the lane merged)
 
@@ -135,12 +140,14 @@ BEFORE deleting, never `--force` blind (issue #4):
 ## Verify agent (separate thread, after `<user>` → `dev`)
 
 Workers verify in their own checkout; the **verify agent** proves the
-integrated lane on the live dev deployment. Spawn it after the merge
-gate push: `create_thread` titled `verify/<user>/<round>`, prompt
-points at the dev URL and the merged SHA. Its loop: hit the changed
-surface live, read deploy logs (`docker compose logs`, journalctl),
-check OpenObserve alerts/traces for the window, report `LIVE-OK <sha>
-<url>` or `LIVE-FAIL <sha>` + the failing signal. It changes nothing —
-read-only verification; fixes go back through a worker.
+integrated lane on the member's live dev deployment. Spawn it after
+the dev merge push: `create_thread` titled `verify/<user>/<round>`,
+prompt points at that member's dev URL and the merged SHA. Its loop:
+hit the changed surface live, read deploy logs (`docker compose logs`,
+journalctl), check OpenObserve alerts/traces for the window, report
+`LIVE-OK <sha> <url>` or `LIVE-FAIL <sha>` + the failing signal. It
+changes nothing — read-only verification; fixes go back through a
+worker.
 
-`dev` → `main` happens only on the owner's word after dev verifies.
+`dev` → `main` is the integrator's (Danil's) call — prod autodeploys
+`main`.
