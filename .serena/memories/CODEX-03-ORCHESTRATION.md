@@ -104,7 +104,12 @@ Orchestrator/worker flow and deployment model (ADR 0014).
   relying on the subprocess cwd (a missing caller cwd used to kill
   every resolution → silent bypass), and `Path.home()` at module scope
   is guarded — a stripped env (no USERPROFILE/HOMEDRIVE on Windows)
-  crashed the hook at import. Hook commands resolve root via
+  crashed the hook at import. History law (2026-09-22): both hooks deny
+  squash/rebase merge methods on EVERY repo, marker or not —
+  `gh pr merge --squash/--rebase/--method`, `gh api` merge_method
+  squash|rebase, `git merge --squash`. Repo merge buttons are disabled
+  (allow_squash_merge/allow_rebase_merge=false) and `merge.ff=false`
+  is a pinned git default. Hook commands resolve root via
   `git rev-parse --show-toplevel` (session cwd may be a subdir);
   commandWindows cmd variants mirror all six handlers.
   PostToolUse → ship-verify nudge; SessionEnd/Interrupt (timeout≤3s) →

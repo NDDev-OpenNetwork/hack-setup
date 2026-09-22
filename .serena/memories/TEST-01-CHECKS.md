@@ -22,9 +22,9 @@ Prove Codex artifacts, the installer catalog, and required host versions.
 - `tests/test_check_stack.py`: version extract, standard contents, `doctor_decision`, live required doctor.
 - `tests/test_env_sh.py` + `tests/test_env_ps1.py`: POSIX + Windows env twins (PATH heads, HACK_USER_BIN, per-platform asserts).
 - `tests/test_member_setup.py`: member flag/module catalog contracts.
-- `tests/test_lane_guard.py`: hack_mode.py push deny/allow — `git -C` target repos (incl. deleted caller cwd — issue #24 regression), quoted refspecs, `--all`/`--mirror`, bare HEAD, `gh pr merge`, orchestrator marker.
+- `tests/test_lane_guard.py`: hack_mode.py push deny/allow — `git -C` target repos (incl. deleted caller cwd — issue #24 regression), quoted refspecs, `--all`/`--mirror`, bare HEAD, `gh pr merge`, orchestrator marker, history law (squash/rebase denied on every repo incl. orchestrator + lane-free).
 - `tests/test_repair_config_cleanup.py`: repair config-cleanup keeps foreign `[hooks.state.*]` tables + `[[array-of-tables]]`, drops stale legacy.
-- `devin-setup/tests/test_devin_setup.py`: devin checker, shared-twin byte parity, hook events incl. lane guard (redirects USERPROFILE/APPDATA on nt — HOME does nothing on Windows).
+- `devin-setup/tests/test_devin_setup.py`: devin checker, shared-twin byte parity, hook events incl. lane guard + history law (redirects USERPROFILE/APPDATA on nt — HOME does nothing on Windows).
 - `tests/conftest.py`: GetShortPathNameW tempdir redirect on win32 for non-ASCII temp paths.
 - `scripts/verify_serena.py`: stdio MCP client proving handshake → activate_project → tools/list → `find_symbol` (python_ty must be up) → list/write/read/delete memory. Tool errors are `isError` results, not RPC errors — the script checks both.
 
