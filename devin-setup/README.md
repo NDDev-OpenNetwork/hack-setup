@@ -21,7 +21,7 @@ Modules (sh + ps1 twins, discovered from `install/modules/<nn>-*`):
 | --- | --- |
 | `10-prereqs` | tar/git/gh/curl/python3 — shared with the codex setup |
 | `15-member` | per-member git identity via `gh api user` — shared |
-| `20-devin-cli` | managed user config (model, subagents off, auto_update off, imports off), pinned Devin `3000.10.31`, sha256-verified herdr `0.9.1`, `herdr integration install devin` |
+| `20-devin-cli` | managed user config (model, subagents off, auto_update off, imports off), pinned Devin `3000.11.1`, sha256-verified herdr `0.9.1`, `herdr integration install devin` |
 | `30-runtimes` | uv/Python 3.14, bun, Node 24, just — shared |
 | `40-devin-verify` | `devin plugins install --local` for `hack-devin-workflow`, repair + checker |
 

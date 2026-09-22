@@ -21,9 +21,9 @@ Same loop as the root setup; do not fork numbers outside the pin.
 
 ## Pin
 
-- Devin CLI `3000.10.31` via the versioned installer
-  (`static.devin.ai/cli/3000.10.31/setup.{sh,ps1}`). `devin --version`
-  must print `devin 3000.10.31`.
+- Devin CLI `3000.11.1` via the versioned installer
+  (`static.devin.ai/cli/3000.11.1/setup.{sh,ps1}`). `devin --version`
+  must print `devin 3000.11.1`.
 - herdr `0.9.1` from sha256-verified release assets (all five platforms
   in the pin). Windows x86_64 zip keeps its ConPTY runtime beside
   `herdr.exe`; ARM64 Windows is emulation, not a pin target.

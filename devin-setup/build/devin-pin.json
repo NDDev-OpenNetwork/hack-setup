@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "purpose": "Single law for the Devin CLI setup — the devin-setup/ twin of hack-setup's codex-pin/stack-pin. All Devin-facing versions, session law, hooks, MCP servers and orchestration surfaces are pinned here; check_devin_setup.py enforces the projection.",
-  "verified_on": "2026-09-21",
+  "verified_on": "2026-09-22",
 
   "devin_cli": {
-    "version": "3000.10.31",
-    "version_output_prefix": "devin 3000.10.31",
-    "install_sh": "https://static.devin.ai/cli/3000.10.31/setup.sh",
-    "install_ps1": "https://static.devin.ai/cli/3000.10.31/setup.ps1",
+    "version": "3000.11.1",
+    "version_output_prefix": "devin 3000.11.1",
+    "install_sh": "https://static.devin.ai/cli/3000.11.1/setup.sh",
+    "install_ps1": "https://static.devin.ai/cli/3000.11.1/setup.ps1",
     "install_layout": "installs to ~/.local/share/devin/cli/_versions/<ver> with a 'current' symlink and a ~/.local/bin/devin shim",
     "notes": "Versioned setup scripts are published per release (static.devin.ai/cli/<ver>/setup.{sh,ps1}). `devin update` would drift the pin — auto_update is pinned off in the managed user config."
   },
