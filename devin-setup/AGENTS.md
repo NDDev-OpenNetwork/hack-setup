@@ -79,6 +79,9 @@ Same loop as the root setup; do not fork numbers outside the pin.
   protocol: stdin JSON, `decision:block`, `hookSpecificOutput.
   additionalContext`, exit 2 blocks. Lane guard honors `.devin/lanes.json`
   and `.codex/lanes.json`.
+  `DEVIN_PROJECT_DIR` is the nearest `.git` root — nested inside
+  hack-setup that is the parent, so the parent carries a forwarder at
+  `.devin/hooks/devin_mode.py`. A product repo keeps `.devin/` at its root.
 
 ## Team rules
 
