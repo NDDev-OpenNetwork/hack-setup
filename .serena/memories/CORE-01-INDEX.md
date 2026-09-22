@@ -42,7 +42,7 @@ Index durable knowledge for the Codex 0.155.1 team setup repository. No applicat
 
 ## Current Behavior
 
-Author remote is `NDDev-OpenNetwork/hack-setup`. Later working remote is `BAITC-Hacks/hack-a58598e0-saint-tibo` and is not pushed unless the owner asks. `./setup --member <name>` installs member identity + Codex + Node/bun/uv/Python/`just` + all five plugins (module 15 derives git identity from the authenticated `gh` login — wrong login fails the install). `devin-setup/` is the self-contained Devin CLI twin (own entries, checker, CI jobs). Web typescript is only `7.0.2`. Codex session models are `gpt-6-astra` / `gpt-5.6-sol` at `xhigh`, window `872000` / compact `700000`. Codex subagents are off. Setup owner stream is Danil. This public repo may land setup commits on `main` when Danil asked. The catalogue and layer skills exist. Product trees do not. All GitHub issues are closed as of 2026-09-21.
+Author remote is `NDDev-OpenNetwork/hack-setup`. Later working remote is `BAITC-Hacks/hack-a58598e0-saint-tibo` and is not pushed unless the owner asks. `./setup --member <name>` installs member identity + Codex + Node/bun/uv/Python/`just` + all five plugins (module 15 derives git identity from the authenticated `gh` login — wrong login fails the install). `devin-setup/` is the self-contained Devin CLI twin (own entries, checker, CI jobs). Web typescript is only `7.0.2`. Codex session models are `gpt-6-astra` / `gpt-6-sol` at `xhigh`, window `872000` / compact `700000`. Codex subagents are off. Setup owner stream is Danil. This public repo may land setup commits on `main` when Danil asked. The catalogue and layer skills exist. Product trees do not. All GitHub issues are closed as of 2026-09-21.
 
 ## Open Items (durable)
 
@@ -51,8 +51,15 @@ Author remote is `NDDev-OpenNetwork/hack-setup`. Later working remote is `BAITC-
   provision on a real external droplet. Recorded in issue #20's body.
 - `~/.codex/config.toml` carries a foreign root `notify` (Codex
   Computer Use app) — repair warns by design; merge only if wanted.
-- vibestrap push policy: dev pushes need an owner beacon or the
-  `.agent/orchestrator` marker (lane guard denies otherwise — proven).
+- vibestrap (2026-09-23 sync): `.codex/lanes.json` protects `main`
+  only — `dev` is shared, members push their merges; `main` pushes and
+  `gh pr merge` need the `.agent/orchestrator` marker. vibestrap now
+  carries `.devin/` (byte copy of `devin-setup/.devin`) so Devin gets the
+  six MCP servers, ruleset and lane/model/history guards there too.
+- BAITC clone (hackathon day): trust the project in Codex, then
+  `python3 <hack-setup>/scripts/repair_setup.py --root . --only
+  hook-trust` — hook trust is keyed by the absolute hooks.json path;
+  the integrator checkout also needs `.agent/orchestrator`.
 - Internet-verify leftovers: remote-compaction SessionStart behavior,
   Codex App thread-instruction shadowing (openai/codex#33238).
 - `.serena/plans/NEXT-SESSION.md` is transient handoff state — deleted

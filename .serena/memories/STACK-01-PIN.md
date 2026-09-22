@@ -18,7 +18,7 @@ Frozen product + toolchain standard and host doctor.
 - `docs/adr/0003-stack-pin.md`, `docs/adr/0004-product-stack.md`, `docs/adr/0006-codex-yolo-session.md`, `docs/adr/0007-codex-models-context.md`, and `docs/adr/0008-agent-standards-plugin.md`.
 - `control.rules` is `plugins/hack-agent-standards/standards/INDEX.md`. Generated standard lists both plugins.
 - Codex session: `registered.session` (`never` + `danger-full-access` + `web_search=live`).
-- Codex models: `models.primary=gpt-6-astra`, `models.secondary=gpt-5.6-sol`, `reasoning_effort=xhigh`. Window/compact `872000`/`700000`; usable `828400`; 90% compact cap `784800`.
+- Codex models: `models.primary=gpt-6-astra`, `models.secondary=gpt-6-sol`, `reasoning_effort=xhigh`. `reject` adds the superseded `gpt-5.6-sol` and `gpt-6-luna`. `gpt-6-sol` is served by the ChatGPT-auth remote catalog (not the 0.155.1 bundled one): max `872000`, `xhigh`, no `minimal_client_version`. Window/compact `872000`/`700000`; usable `828400`; 90% compact cap `784800`.
 - `justfile` / `quality.just` `1.58.0`.
 - Codex CLI remains `build/codex-pin.json`.
 

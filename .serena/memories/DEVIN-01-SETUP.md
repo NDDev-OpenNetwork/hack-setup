@@ -18,7 +18,10 @@ same mechanism as the root Codex setup, herdr-based orchestration.
 - Session law projection: `DEVIN_PERMISSION_MODE=bypass` (env, no config
   key exists), `subagents_enabled=false`, `auto_update=false`,
   `read_config_from` all five false (`claude/cursor/windsurf/copilot/
-  opencode`), model `swe-2-max` in managed user-config block. Single
+  opencode`), `attribution=false` (Devin default adds "Generated with
+  Devin"/Co-Authored-By — team law forbids AI attribution), model
+  `swe-2-max` + `preferred_family_models {swe-2: swe-2-max}` in the
+  managed user-config block. Single
   writer: `scripts/repair_devin_setup.py` (JSONC-tolerant merge,
   `.hack-bak` backup, preserves foreign keys).
 - `.devin/` projection: `config.json` (read_config_from off, permissions
@@ -27,6 +30,14 @@ same mechanism as the root Codex setup, herdr-based orchestration.
   `.devin/hooks/devin_mode.py`, Devin protocol: `decision:block`,
   `hookSpecificOutput.additionalContext`, `DEVIN_PROJECT_DIR`).
 - Lane guard honors `.devin/lanes.json` AND `.codex/lanes.json`.
+- Model law (2026-09-23): `swe-2-max` ONLY — pin `models.only=true`;
+  projections: managed user config, `DEVIN_MODEL=swe-2-max` in
+  `install/env.sh|ps1` (herdr workers inherit), hook `PINNED_MODEL` +
+  `_model_law_hit` blocks agent-launched `devin --model <other>` /
+  `DEVIN_MODEL=<other>` on every repo (live-proven: a real session's
+  `devin --model opus` was blocked). Checker keeps all three equal to
+  the pin. `/model`, `/fusion`, Adaptive are human-only switches the
+  hook cannot see; the org-wide lock is Devin Team Settings.
 - Plugin `hack-devin-workflow` (`.devin-plugin/plugin.json`): 6 skills —
   session-boot, github-flow, herdr-handoff (workers via
   `herdr agent start/prompt/read/wait` + session close), hack-mode,
@@ -35,7 +46,7 @@ same mechanism as the root Codex setup, herdr-based orchestration.
   hook smoke + `check_agents_standards` — the `## Operating standards`
   block must be byte-identical to root AGENTS.md), `just check/gate/
   repair` inside devin-setup (repair recipe + [windows] sync-pin added
-  in the standards-parity wave). 11 pytest tests.
+  in the standards-parity wave). 12 pytest tests.
 - AGENTS.md embeds the full `## Operating standards` list (not a
   pointer) so a session opened at `devin-setup/` is always-on; the
   hook's SETUP_NOTE also names it on every SessionStart.
