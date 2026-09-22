@@ -23,19 +23,21 @@ Orchestrator/worker flow and deployment model (ADR 0014).
   brief + worktree. File/patch tools bind to the thread's inherited
   cwd, not a `cd` in exec — workers must use absolute paths or verify
   cwd first. Workers never create `.agent/orchestrator` in a worktree.
-- Lanes: feat/<issue>-<slug> → <user> → dev → main. Worker merges only
-  to own lane + `done: <sha>` issue comment + refreshes
-  `.serena/memories/<DOMAIN>-*.md`. Orchestrator merge gate: no active
-  workers, no claim conflicts, then spawn the read-only verify agent
-  thread (live dev surface + logs + OpenObserve alerts → LIVE-OK/FAIL).
+- Lanes: feat/<issue>-<slug> → <user> → dev → main. Worker merges to
+  own lane + `done: <sha>` issue comment + refreshes
+  `.serena/memories/<DOMAIN>-*.md`. Merge to dev is NOT gated on the
+  orchestrator (2026-09-22): each member merges `<user>` → `dev`
+  themselves — fetch, check no claimed-file conflicts, pull latest dev,
+  `--no-ff`, make green, push — then verifies on THEIR OWN dev server
+  (one per member, each follows `dev`). Verify agent proves the
+  integrated lane on that member's dev deployment (LIVE-OK/FAIL).
   Worktree retirement AFTER merge needs an inventory first — list
   uncommitted changes, untracked files, and ignored `.agent/` evidence
   before `worktree remove`; `--force` deletes them silently.
-  Owner merge beacons: «слить/лить/залить/закинуть/отправить в дев».
-- Integration owner: Danil by default; Ivan/Artem integrate ONLY when
-  they explicitly take the role. Issue lifecycle: implemented →
-  lane-ready → integrated → live-verified → closed. An issue is not
-  closed because code was written; `dev`→`main` is the owner's call.
+- Integrator: Danil alone moves `dev` → `main` (single prod server
+  autodeploys `main`). Issue lifecycle: implemented → lane-ready →
+  integrated → live-verified → closed. An issue is not closed because
+  code was written.
 - Issue threshold (agents do all dev): open an issue for anything that
   will be implemented and for discovered problems not fixed inline;
   dedup by root cause. Skip only trivia inside already-claimed files
@@ -53,7 +55,8 @@ Orchestrator/worker flow and deployment model (ADR 0014).
   local-ahead / diverged checkouts (ff-only when local is an ancestor),
   deploys via configured command, bounded health poll, then writes
   `.deployed-sha` = the actual checked-out HEAD after success — never
-  the merely-desired remote SHA. dev←dev, prod←main.
+  the merely-desired remote SHA. Each member's dev server ← dev;
+  prod ← main.
   `provision-server.sh` is repeatable + non-destructive: verifies
   git/docker/compose/curl/systemd, clones only when absent, NEVER
   `reset --hard` an existing checkout, refuses dirty/ahead/diverged,
@@ -85,8 +88,9 @@ Orchestrator/worker flow and deployment model (ADR 0014).
   injects ONLY where `.codex/lanes.json` exists — the harness repo gets
   SETUP:CHECK + STATUS, not the no-tests ruleset. Session log
   `.agent/session-log.ndjson` is bounded (rotated at 512 KiB).
-- Servers: two doctl droplets day-before; `provision-server.sh <host>
-  <branch> <repo>`; vibestrap compose healthchecks exist
+- Servers: one dev server per member + one prod droplet;
+  `provision-server.sh <host> <branch> <repo>` (dev servers ← dev,
+  prod ← main); vibestrap compose healthchecks exist
   (`/health/ready`, frontend fetch). BAITC repo untouched until day.
 - ADR 0015: `developer_instructions` (compaction-proof law block) +
   `compact_prompt` (preserves issue/branch/worktree/lane/hack: state) +
