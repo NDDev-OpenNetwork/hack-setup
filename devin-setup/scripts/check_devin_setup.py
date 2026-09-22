@@ -299,9 +299,34 @@ def check_bootstrap() -> None:
         if "DEVIN_PERMISSION_MODE" not in read_text(ROOT / "install" / env_file):
             fail(f"install/{env_file} lost DEVIN_PERMISSION_MODE")
     just = read_text(ROOT / "justfile")
-    for recipe in ("setup", "check", "gate", "dry-run", "status", "sync-pin"):
+    for recipe in ("setup", "check", "gate", "dry-run", "status", "repair",
+                   "sync-pin"):
         if not re.search(rf"^{recipe}[ :]?", just, re.MULTILINE):
             fail(f"justfile lost {recipe} recipe")
+
+
+def _standards_section(path: Path) -> str:
+    """The `## Operating standards` block, from its heading to the next
+    `## ` heading. Compared byte-for-byte between root and twin."""
+    text = read_text(path)
+    m = re.search(r"(?ms)^## Operating standards\n(.*?)(?=^## |\Z)", text)
+    return m.group(1).strip() if m else ""
+
+
+def check_agents_standards() -> None:
+    """The operating-standards list is law in both AGENTS.md files —
+    embedded in devin-setup's own always-on doc so a session opened here
+    gets it without a second read, and drift is a hard fail."""
+    mine = _standards_section(ROOT / "AGENTS.md")
+    theirs = _standards_section(PARENT / "AGENTS.md")
+    if not mine:
+        fail("AGENTS.md lost ## Operating standards")
+        return
+    if not theirs:
+        fail("../AGENTS.md lost ## Operating standards")
+        return
+    if mine != theirs:
+        fail("AGENTS.md ## Operating standards drifted from ../AGENTS.md")
 
 
 def check_ps1_ascii() -> None:
@@ -351,6 +376,7 @@ def main() -> int:
         check_catalog,
         check_shared_sync,
         check_bootstrap,
+        check_agents_standards,
         check_ps1_ascii,
         check_devin_mode_smoke,
     ]

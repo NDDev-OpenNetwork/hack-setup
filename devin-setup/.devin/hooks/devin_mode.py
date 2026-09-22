@@ -291,7 +291,10 @@ SETUP_NOTE = (
     "SETUP CHECKOUT — this is the harness repo, not the product. Proof is "
     "`just gate` / `just check`; the hack-mode ruleset (no review round, "
     "done=live) applies only inside lane-guarded checkouts carrying a "
-    "lanes.json."
+    "lanes.json. Operating law: read AGENTS.md `## Operating standards` "
+    "(serena→github→agent state, full-auto, atomic commits, merge commits "
+    "only — squash/rebase merges are denied, background CI/CD, proof "
+    "before claims)."
 )
 
 

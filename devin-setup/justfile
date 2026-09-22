@@ -40,9 +40,23 @@ check:
 check:
     python scripts/check_devin_setup.py
 
+# Repair safe drift (managed user config, .agent dirs), then re-check
+[unix]
+repair:
+    python3 scripts/repair_devin_setup.py
+
+[windows]
+repair:
+    python scripts/repair_devin_setup.py
+
 # Sync build/stack-pin.json from ../build/stack-pin.json (generated file)
+[unix]
 sync-pin:
     python3 scripts/sync_stack_pin.py
+
+[windows]
+sync-pin:
+    python scripts/sync_stack_pin.py
 
 # Ready gate: status + checker + pinned binaries
 [unix]
