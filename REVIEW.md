@@ -21,10 +21,11 @@
   `web_search = "live"`. Reject `default_permissions`,
   `[sandbox_workspace_write]`, `features.network_proxy`,
   `.codex/agents/*.toml`, and project `.codex/rules/*.rules`.
-- Require models ADR 0007: `gpt-6-astra` + `gpt-5.6-sol` at `xhigh`,
+- Require models ADR 0007: `gpt-6-astra` + `gpt-6-sol` at `xhigh`,
   window `872000` / compact `700000`,
   `agents.enabled = false`, `features.multi_agent` and
-  `features.multi_agent_v2` false. Reject luna/terra and bare `gpt-5.6`.
+  `features.multi_agent_v2` false. Reject luna/terra, the superseded
+  `gpt-5.6-sol`, and bare `gpt-5.6`.
 - Portable `plugins/*/plugin.json` (saint-tibo, hack-agent-standards,
   hack-agent-workflow, hack-agent-lsp, hack-agent-mcp) must keep
   `$schema` and `name` only from the Agent Plugins 1.0.0 root set.

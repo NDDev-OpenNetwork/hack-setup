@@ -39,7 +39,7 @@ projection, `just check` is proof,
 - pnpm is rejected.
 - Product web/backend/data choices: `docs/adr/0004-product-stack.md`.
   Next.js is rejected; React + Vite is the web app.
-- Codex models are `gpt-6-astra` + `gpt-5.6-sol` at `xhigh` (ADR 0007).
+- Codex models are `gpt-6-astra` + `gpt-6-sol` at `xhigh` (ADR 0007).
 - Codex session law is `registered.session` (ADR 0006): no sandbox,
   never ask.
 

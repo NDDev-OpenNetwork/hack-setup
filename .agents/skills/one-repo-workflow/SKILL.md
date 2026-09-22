@@ -12,4 +12,4 @@ Rules:
 - This staging repo is public. Keep secrets and private hackathon strategy out.
 - One claimed file owner at a time. Announce the files you will edit before changing them.
 - Use Conventional Commits. Split implementation, tests, docs, and knowledge sync.
-- Single-agent only. Do not spawn Codex subagents. Models are `gpt-6-astra` and `--profile sol` (`gpt-5.6-sol`), both `xhigh`. Context `872000` / compact `700000`.
+- Single-agent only. Do not spawn Codex subagents. Models are `gpt-6-astra` and `--profile sol` (`gpt-6-sol`), both `xhigh`. Context `872000` / compact `700000`.

@@ -19,7 +19,7 @@ Report:
    `.agents/skills` and both plugins.
 4. Marketplace: `.agents/plugins/marketplace.json` →
    `./plugins/saint-tibo` then `./plugins/hack-agent-standards`.
-5. Project config: `.codex/config.toml`. Session law is `registered.session` / ADR 0006: `approval_policy = "never"`, `sandbox_mode = "danger-full-access"`. Models: `gpt-6-astra` + `gpt-5.6-sol` / `xhigh`, window `872000` / compact `700000` (ADR 0007). `agents.enabled = false`. Do not add `.codex/agents/*.toml`.
+5. Project config: `.codex/config.toml`. Session law is `registered.session` / ADR 0006: `approval_policy = "never"`, `sandbox_mode = "danger-full-access"`. Models: `gpt-6-astra` + `gpt-6-sol` / `xhigh`, window `872000` / compact `700000` (ADR 0007). `agents.enabled = false`. Do not add `.codex/agents/*.toml`.
 6. Later working repo: `BAITC-Hacks/hack-a58598e0-saint-tibo`. Do not push it unless the owner asked.
 
 App/runtime versions live in `build/stack-pin.json` schema 2. Web is

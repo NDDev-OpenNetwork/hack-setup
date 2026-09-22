@@ -101,8 +101,8 @@ the discontinued `codex-app` cask.
    editing `plugins/*/` re-run `codex plugin add <name>@saint-tibo`;
    `just check` fails on drift.
 4. Use repo skills from `.agents/skills/`.
-5. Models: `gpt-6-astra` primary, `gpt-5.6-sol` secondary — `/review`
-   uses it; an explicit sol session here is `codex -m gpt-5.6-sol`
+5. Models: `gpt-6-astra` primary, `gpt-6-sol` secondary — `/review`
+   uses it; an explicit sol session here is `codex -m gpt-6-sol`
    (project `model` outranks profile overlays). `./setup` also installs
    `~/.codex/sol.config.toml` so `--profile sol` works in unpinned dirs.
    Both `xhigh`. Context `872000` / compact `700000`. No Codex

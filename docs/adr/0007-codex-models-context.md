@@ -1,6 +1,6 @@
 # 7. Codex models, context, no subagents
 
-- Status: accepted
+- Status: accepted (amended 2026-09-23: secondary `gpt-5.6-sol` → `gpt-6-sol`)
 - Date: 2026-09-20
 - Decision-Makers: Danil Silantyev
 
@@ -15,13 +15,13 @@ catalog-honest Codex context budget, and no Codex subagents.
 match.
 
 - Primary: `gpt-6-astra` + `model_reasoning_effort = "xhigh"`.
-- Secondary: `gpt-5.6-sol` + `xhigh`. `/review` uses project
-  `review_model = "gpt-5.6-sol"`. An explicit sol session in a pinned
-  project is `codex -m gpt-5.6-sol`: project `model` sits above profile
+- Secondary: `gpt-6-sol` + `xhigh`. `/review` uses project
+  `review_model = "gpt-6-sol"`. An explicit sol session in a pinned
+  project is `codex -m gpt-6-sol`: project `model` sits above profile
   overlays in the 0.155.1 precedence chain (CLI > project > profile >
   user base).
-- Reject `gpt-5.6-luna`, `gpt-5.6-terra`, bare `gpt-5.6` / `gpt-6` as
-  session slugs. Wire effort is `xhigh`, not `extra-high`.
+- Reject `gpt-6-luna`, the superseded `gpt-5.6-sol`, `gpt-5.6-luna`,
+  `gpt-5.6-terra`, bare `gpt-5.6` / `gpt-6` as session slugs. Wire effort is `xhigh`, not `extra-high`.
 - Write the values 0.155.1 actually honors for both slugs:
   `model_context_window = 872_000`,
   `model_auto_compact_token_limit = 700_000`.
@@ -55,6 +55,11 @@ match.
 
 Astra is in the 0.155.1 bundled catalog (`visibility: list`,
 `minimal_client_version` `0.153.0`). Access is still account-gated.
+`gpt-6-sol` is not in the 0.155.1 bundled catalog; the ChatGPT-auth
+remote catalog serves it to 0.155.x (`visibility: list`, no
+`minimal_client_version`, max `872000`, `xhigh` supported) — the same
+window/compact pair applies. Under API-key auth the bundled catalog has
+no metadata for it; the explicit window/compact keys still apply.
 Astra safety monitoring can end a CLI task; that is not a project-config
 switch.
 
@@ -62,4 +67,5 @@ switch.
 
 - `python3 scripts/check_codex_setup.py`
 - `.codex/config.toml` matches `models`
-- `codex debug models --bundled` still shows max `872000` for both slugs
+- `codex debug models --bundled` still shows max `872000` for astra;
+  the remote catalog (`~/.codex/models_cache.json`) shows it for `gpt-6-sol`

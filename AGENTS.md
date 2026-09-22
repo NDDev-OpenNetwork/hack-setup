@@ -125,8 +125,8 @@ Playbooks: `$hack-agent-workflow:delegate-worker`,
   `sandbox_mode = "danger-full-access"`, `allow_login_shell = true`,
   `web_search = "live"` — the pinned full-access posture (ADR 0006;
   `--full-auto` is a different, weaker flag).
-- Models: `gpt-6-astra` primary, `gpt-5.6-sol` secondary
-  (`/review`, `codex -m gpt-5.6-sol`, or `--profile sol` outside this
+- Models: `gpt-6-astra` primary, `gpt-6-sol` secondary
+  (`/review`, `codex -m gpt-6-sol`, or `--profile sol` outside this
   tree via `~/.codex/sol.config.toml`). Both run
   `model_reasoning_effort = "xhigh"`, context `872_000`, auto-compact
   `700_000` (usable `/status` `828400` — the catalog max is `872000`).
@@ -276,8 +276,9 @@ the toolchain refuses outright:
 - The JS toolchain is bun and the Python toolchain is uv — pnpm, npm
   installs, `pip` and `typescript@6`/`typescript-eslint`/`@next` in web
   are off-standard (`build/stack-pin.json` `do_not_use` lists the rest).
-- Models are the pinned pair — `gpt-5.6-luna`, `gpt-5.6-terra` and bare
-  `gpt-5.6` are off-standard.
+- Models are the pinned pair — `gpt-6-luna`, the superseded
+  `gpt-5.6-sol`, `gpt-5.6-luna`, `gpt-5.6-terra` and bare `gpt-5.6` are
+  off-standard. Devin runs `swe-2-max` only.
 
 ## Team rules
 
