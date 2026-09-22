@@ -43,7 +43,14 @@ Modules (sh + ps1 twins, discovered from `install/modules/<nn>-*`):
 - `auto_update=false` — background updates would drift the CLI pin.
 - `read_config_from` all false — no silent imports from
   `.claude`/`.cursor`/`.windsurf`/copilot/opencode config.
-- Primary model `swe-2-max` (user config `agent.model`).
+- `attribution=false` — no "Generated with Devin" / Co-Authored-By on
+  commits and PRs (team law: no AI attribution).
+- Model `swe-2-max` ONLY: user config `agent.model` +
+  `preferred_family_models`, `DEVIN_MODEL=swe-2-max` exported by
+  `install/env.sh` (herdr workers inherit it), and the hook's model law
+  blocks agent-launched `devin --model <other>` / `DEVIN_MODEL=<other>`.
+  Do not use `/model`, `/fusion` or Adaptive; org-wide lock is Devin
+  Team Settings.
 
 ## Orchestration — herdr, not threads
 

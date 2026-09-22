@@ -71,7 +71,12 @@ Same loop as the root setup; do not fork numbers outside the pin.
   `herdr.exe`; ARM64 Windows is emulation, not a pin target.
 - Session law: `DEVIN_PERMISSION_MODE=bypass` (env — there is no config
   key for the default mode), `subagents_enabled=false`,
-  `auto_update=false`, `read_config_from` all false, model `swe-2-max`.
+  `auto_update=false`, `read_config_from` all false, `attribution=false`
+  (no "Generated with Devin" / Co-Authored-By).
+- Model law: `swe-2-max` ONLY — user-config `agent.model` +
+  `preferred_family_models`, `DEVIN_MODEL` in `install/env.sh|ps1`, and
+  the hook blocks agent-launched `devin --model <other>` /
+  `DEVIN_MODEL=<other>`. Never `/model`, `/fusion` or Adaptive.
 - Orchestration: workers are real Devin sessions in herdr panes
   (`herdr agent start/prompt/read/wait`, `devin -c`/`--resume`). Do NOT
   enable subagents — that is the codex no-subagents law, ported.
