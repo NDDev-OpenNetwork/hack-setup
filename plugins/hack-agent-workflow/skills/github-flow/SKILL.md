@@ -82,6 +82,13 @@ Hearing one → run the merge gate above. They do NOT mean `dev` →
 ## Rules
 
 - Status lives in issues and PRs, not in chat.
+- Commit atomically and early — each logical slice lands as its own
+  Conventional Commit so GitHub history tracks progress.
+- Merges keep full history: `git merge --no-ff` only — never squash or
+  rebase merge methods, never rewrite shared history. The hook denies
+  `gh pr merge --squash/--rebase/--method`, `gh api` squash/rebase
+  `merge_method`, and `git merge --squash`; repo merge settings disable
+  the buttons too.
 - Never push `BAITC-Hacks/hack-a58598e0-saint-tibo` until the owner
   says go. The staging repo is public — no secrets, tokens, or private
   hackathon strategy.

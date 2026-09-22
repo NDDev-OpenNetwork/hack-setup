@@ -245,7 +245,13 @@ the toolchain refuses outright:
   product code.
 - Discovered problems become issues immediately (dedup by root cause);
   trivia fixed inside already-claimed files needs none.
-- Conventional Commits; split implementation, docs, and knowledge sync.
+- Atomic commits: land each logical slice as soon as it is ready so the
+  GitHub history shows progress. Conventional Commits; split
+  implementation, docs, and knowledge sync.
+- Merges keep full history: `git merge --no-ff` only — never squash or
+  rebase merges, never rewrite or delete shared history. GitHub
+  squash/rebase merge buttons are disabled on this repo and the hooks
+  deny those methods in-session.
 - Commit messages carry only the message itself — the repo owner is the
   sole author. No `Co-Authored-By` lines, no "Generated with" trailers,
   no AI attribution of any kind.

@@ -40,5 +40,8 @@ Same loop as the root setup; do not fork numbers outside the pin.
 
 ## Team rules
 
-Same as root `AGENTS.md`: one claimed file owner, Conventional Commits,
-no secrets in the public repo, never claim a check you did not run.
+Same as root `AGENTS.md`: one claimed file owner, atomic Conventional
+Commits (land each slice when ready — progress lives in git history),
+merge commits only (`--no-ff`, squash/rebase merges denied by hook and
+disabled in repo settings), no secrets in the public repo, never claim
+a check you did not run.
